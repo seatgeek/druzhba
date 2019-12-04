@@ -35,8 +35,8 @@ class MysqlTypes:
     numeric_types_always_promote = ['tinyint', 'mediumint', 'float', 'double']
     numeric_type_promotions = {
         'tinyint': 'smallint',
-        'mediumint': 'int',
-        'smallint': 'int',
+        'mediumint': 'integer',
+        'smallint': 'integer',
         'int': 'bigint',
         'bigint': 'numeric(65, 0)',
         'float': 'real',
@@ -48,7 +48,7 @@ class MysqlTypes:
         'time': 'varchar(40)',
         'datetime': 'timestamp',
         'timestamp': 'timestamp',
-        'year': 'int'
+        'year': 'integer'
     }
     string_types = ['char', 'varchar']
     cmax = 65535
@@ -173,7 +173,10 @@ class MySQLTableConfig(TableConfig):
             return MysqlTypes.numeric_type_promotions[type_name]
         elif type_name in MysqlTypes.numeric_type_promotions:
             if not unsigned:
-                return type_name
+                if type_name == 'int':
+                    return 'integer'
+                else:
+                    return type_name
             else:
                 return MysqlTypes.numeric_type_promotions[type_name]
         elif type_name in MysqlTypes.fixed_types:

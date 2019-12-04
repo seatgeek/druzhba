@@ -24,22 +24,28 @@ class MysqlTest(unittest.TestCase):
         self.assertEqual(t, 'smallint')
 
         t = table._mysql_to_redshift_type('BIGINT(1)')
-        self.assertEqual(t, 'smallint')
+        self.assertEqual(t, 'bigint')
+
+        t = table._mysql_to_redshift_type('INT(40)')
+        self.assertEqual(t, 'integer')
+
+        t = table._mysql_to_redshift_type('INT(40) UNSIGNED')
+        self.assertEqual(t, 'bigint')
 
         t = table._mysql_to_redshift_type('TINYINT(2)')
         self.assertEqual(t, 'smallint')
 
         t = table._mysql_to_redshift_type('SMALLINT(2)')
-        self.assertEqual(t, 'integer')
+        self.assertEqual(t, 'smallint')
 
         t = table._mysql_to_redshift_type('MEDIUMINT(3)')
         self.assertEqual(t, 'integer')
 
         t = table._mysql_to_redshift_type('INT(4)')
-        self.assertEqual(t, 'bigint')
+        self.assertEqual(t, 'integer')
 
         t = table._mysql_to_redshift_type('BIGINT(8)')
-        self.assertEqual(t, 'varchar(80)')
+        self.assertEqual(t, 'bigint')
 
         t = table._mysql_to_redshift_type('FLOAT')
         self.assertEqual(t, 'real')
@@ -96,4 +102,4 @@ class MysqlTest(unittest.TestCase):
         self.assertEqual(t, 'date')
 
         t = table._mysql_to_redshift_type("year")
-        self.assertEqual(t, 'varchar(4)')
+        self.assertEqual(t, 'integer')
