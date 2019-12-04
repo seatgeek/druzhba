@@ -1,0 +1,17 @@
+boto>=2.49.0
+cython>=0.29.14
+fastavro>=0.22.7
+Jinja2>=2.10.3
+psycopg2>=2.8.4
+pyaml-19.4.1
+#
+# TODO: pymssql is deprecated and should be replaced with
+# Microsoft backed PyODBC
+#
+# It should also be marked optional
+#
+pymssql<3.0
+pymysql>=0.9.3
+requests>=2.22.0
+sentry-sdk>=0.13.4 # TODO: remove
+statsd>=3.3.0 # TODO: remove
