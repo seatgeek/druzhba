@@ -12,7 +12,7 @@ from jinja2 import (
     Environment,
     FileSystemLoader,
     StrictUndefined,
-    select_autoescape
+    select_autoescape,
 )
 
 from druzhba.config import S3Config, CONFIG_DIR
@@ -50,18 +50,18 @@ class MigrationError(Exception):
     pass
 
 
-class Permissions(namedtuple('Permissions', ['name', 'is_group', 'grants', 'owner'])):
-    all_str = 'arwdRxt'
-    all_grants = 'ALL PRIVILEGES'
+class Permissions(namedtuple("Permissions", ["name", "is_group", "grants", "owner"])):
+    all_str = "arwdRxt"
+    all_grants = "ALL PRIVILEGES"
     char_to_grant = {
-        'r': 'SELECT',  # read
-        'w': 'UPDATE',  # write
-        'a': 'INSERT',  # append
-        'd': 'DELETE',
-        'D': 'TRUNCATE',
-        'x': 'REFERENCES',
-        't': 'TRIGGER',
-        'R': 'RULE'  # not documented, apparently
+        "r": "SELECT",  # read
+        "w": "UPDATE",  # write
+        "a": "INSERT",  # append
+        "d": "DELETE",
+        "D": "TRUNCATE",
+        "x": "REFERENCES",
+        "t": "TRIGGER",
+        "R": "RULE",  # not documented, apparently
     }
 
     @classmethod
@@ -79,27 +79,26 @@ class Permissions(namedtuple('Permissions', ['name', 'is_group', 'grants', 'owne
         """
         if not raw_permissions:
             return []
-        elif raw_permissions[0] != '{' or raw_permissions[-1] != '}':
+        elif raw_permissions[0] != "{" or raw_permissions[-1] != "}":
             return None
         else:
             output = []
-            for p in raw_permissions.strip('{}').split(','):
-                user, permission = p.strip('"').split('=')
+            for p in raw_permissions.strip("{}").split(","):
+                user, permission = p.strip('"').split("=")
                 levels, owner = permission.split("/")
-                if user == '':
-                    name, is_group = 'PUBLIC', True
-                elif user.startswith('group '):
+                if user == "":
+                    name, is_group = "PUBLIC", True
+                elif user.startswith("group "):
                     name, is_group = user[6:], True
                 else:
                     name, is_group = user, False
 
                 # A following * represents WITH GRANT OPTION - ignore
-                levels_stripped = levels.replace('*', '')
+                levels_stripped = levels.replace("*", "")
                 if levels_stripped == cls.all_str:
                     grants = [cls.all_grants]
                 else:
-                    grants = [cls.char_to_grant[c]
-                              for c in levels_stripped]
+                    grants = [cls.char_to_grant[c] for c in levels_stripped]
 
                 output.append(cls(name, is_group, grants, owner))
             return output
@@ -209,20 +208,37 @@ class TableConfig(object):
     All parameters are also set as attributes
     """
 
-    DESTINATION_TABLE_OK = 'ok'
-    DESTINATION_TABLE_REBUILD = 'rebuild'
-    DESTINATION_TABLE_DNE = 'non-existent'
-    DESTINATION_TABLE_INCORRECT = 'incorrect'
+    DESTINATION_TABLE_OK = "ok"
+    DESTINATION_TABLE_REBUILD = "rebuild"
+    DESTINATION_TABLE_DNE = "non-existent"
+    DESTINATION_TABLE_INCORRECT = "incorrect"
 
     max_file_size = 100 * 1024 ** 2
 
-    def __init__(self, database_alias, db_connection_params, destination_table_name,
-                 destination_schema_name, source_table_name, query_file=None,
-                 distribution_key=None, sort_keys=None, index_column=None,
-                 index_sql=None, truncate_file=None, columns_to_drop=None, type_map=None,
-                 primary_key=None, not_null_date=False, full_refresh=False, rebuild=False,
-                 schema_file=None, table_template_data=None, append_only=False,
-                 db_template_data=None):
+    def __init__(
+        self,
+        database_alias,
+        db_connection_params,
+        destination_table_name,
+        destination_schema_name,
+        source_table_name,
+        query_file=None,
+        distribution_key=None,
+        sort_keys=None,
+        index_column=None,
+        index_sql=None,
+        truncate_file=None,
+        columns_to_drop=None,
+        type_map=None,
+        primary_key=None,
+        not_null_date=False,
+        full_refresh=False,
+        rebuild=False,
+        schema_file=None,
+        table_template_data=None,
+        append_only=False,
+        db_template_data=None,
+    ):
 
         self.database_alias = database_alias
         self.db_host = db_connection_params.host
@@ -246,19 +262,22 @@ class TableConfig(object):
         self.full_refresh = full_refresh
         self.rebuild = rebuild
         self.type_map = self._clean_type_map(type_map)
-        self.primary_key = [primary_key] if isinstance(primary_key, str) else primary_key
+        self.primary_key = (
+            [primary_key] if isinstance(primary_key, str) else primary_key
+        )
         self.not_null_date = not_null_date
         self.foreign_keys = []
         self.comments = []
         self.pks = []
-        self._old_index_value = 'notset'
-        self._new_index_value = 'notset'
+        self._old_index_value = "notset"
+        self._new_index_value = "notset"
         self._destination_table_status = None
         self.table_template_data = table_template_data
         self.db_template_data = db_template_data
 
         self.date_key = datetime.datetime.strftime(
-            datetime.datetime.utcnow(), "%Y%m%dT%H%M%S")
+            datetime.datetime.utcnow(), "%Y%m%dT%H%M%S"
+        )
 
         self.row_count = None
         self.upload_size = 0
@@ -271,10 +290,8 @@ class TableConfig(object):
         self.num_data_files = 0
         self.manifest_mode = False
 
-        self.logger = logging.getLogger(
-            f'druzhba.{database_alias}.{source_table_name}'
-        )
-        self.s3 = Session().client('s3')
+        self.logger = logging.getLogger(f"druzhba.{database_alias}.{source_table_name}")
+        self.s3 = Session().client("s3")
 
     @classmethod
     def _clean_type_map(cls, type_map):
@@ -291,44 +308,39 @@ class TableConfig(object):
         config, since full_refresh may be forced even when it would fail these checks.
         """
 
-        table = yaml_config['source_table_name']
-        index_column = yaml_config.get('index_column')
-        index_sql = yaml_config.get('index_sql')
-        append_only = yaml_config.get('append_only')
-        full_refresh = yaml_config.get('full_refresh')
-        primary_key = yaml_config.get('primary_key')
-        query_file = yaml_config.get('query_file')
-        schema_file = yaml_config.get('schema_file')
+        table = yaml_config["source_table_name"]
+        index_column = yaml_config.get("index_column")
+        index_sql = yaml_config.get("index_sql")
+        append_only = yaml_config.get("append_only")
+        full_refresh = yaml_config.get("full_refresh")
+        primary_key = yaml_config.get("primary_key")
+        query_file = yaml_config.get("query_file")
+        schema_file = yaml_config.get("schema_file")
 
         has_incremental_index = index_column or index_sql
 
         if not has_incremental_index and append_only:
-            raise ConfigurationError(
-                "Append_only without incremental index", table)
+            raise ConfigurationError("Append_only without incremental index", table)
         if full_refresh and append_only:
-            raise ConfigurationError(
-                "Append_only with full_refresh", table)
+            raise ConfigurationError("Append_only with full_refresh", table)
         elif not has_incremental_index and not full_refresh:
             raise ConfigurationError(
-                "Incremental update with no specified index", table)
+                "Incremental update with no specified index", table
+            )
         elif index_column and full_refresh:
-            raise ConfigurationError(
-                "Full refresh with index_column", table)
+            raise ConfigurationError("Full refresh with index_column", table)
         elif index_sql and full_refresh:
-            raise ConfigurationError(
-                "Full refresh with index_sql", table)
+            raise ConfigurationError("Full refresh with index_sql", table)
         elif index_sql and index_column:
-            raise ConfigurationError(
-                "index_sql and index_column", table)
+            raise ConfigurationError("index_sql and index_column", table)
         elif query_file and not primary_key and not append_only and not full_refresh:
             raise ConfigurationError(
-                "incremental query_file without primary_key", table)
+                "incremental query_file without primary_key", table
+            )
         elif query_file and not os.path.isfile(os.path.join(CONFIG_DIR, query_file)):
-            raise ConfigurationError(
-                "nonexistent query_file", table)
+            raise ConfigurationError("nonexistent query_file", table)
         elif schema_file and not os.path.isfile(os.path.join(CONFIG_DIR, schema_file)):
-            raise ConfigurationError(
-                "nonexistent schema_file", table)
+            raise ConfigurationError("nonexistent schema_file", table)
 
     def validate_runtime_configuration(self):
         """
@@ -337,35 +349,38 @@ class TableConfig(object):
         connecting to the database.
         """
         if self.rebuild and self.truncate_file:
-            msg = "Cannot rebuild a table with a truncate_file " \
-                  "because it would not be correct to drop the table."
+            msg = (
+                "Cannot rebuild a table with a truncate_file "
+                "because it would not be correct to drop the table."
+            )
             raise ConfigurationError(msg, self.source_table_name)
         elif self.rebuild and self.schema_file:
-            msg = "Cannot rebuild a table with a schema file, need " \
-                  "support for passing in the table name to create."
+            msg = (
+                "Cannot rebuild a table with a schema file, need "
+                "support for passing in the table name to create."
+            )
             raise ConfigurationError(msg, self.source_table_name)
 
     @property
     def s3_key_prefix(self):
-        return '{}/{}.{}.{}'.format(
-            S3Config.prefix,
-            self.database_alias,
-            self.source_table_name,
-            self.date_key
+        return "{}/{}.{}.{}".format(
+            S3Config.prefix, self.database_alias, self.source_table_name, self.date_key,
         )
 
     def single_s3_data_key(self):
         """Returns the S3 path to upload a single avro file to"""
         if self.manifest_mode:
             raise TableStateError(
-                'Attempted to treat a manifest upload as a single file')
+                "Attempted to treat a manifest upload as a single file"
+            )
 
         return "{}.avro".format(self.s3_key_prefix)
 
     def manifest_s3_data_key(self):
         if not self.manifest_mode:
             raise TableStateError(
-                'Attempted to treat a single file upload as a manifest')
+                "Attempted to treat a single file upload as a manifest"
+            )
 
         return "{}.manifest".format(self.s3_key_prefix)
 
@@ -407,13 +422,15 @@ class TableConfig(object):
     def get_query_from_file(self):
         env = Environment(
             loader=FileSystemLoader(os.path.join(CONFIG_DIR)),
-            autoescape=select_autoescape(['sql']),
-            undefined=StrictUndefined
+            autoescape=select_autoescape(["sql"]),
+            undefined=StrictUndefined,
         )
         template = env.get_template(self.query_file)
-        return template.render(db=self.db_template_data,
-                               table=self.table_template_data,
-                               run=self.run_template_data)
+        return template.render(
+            db=self.db_template_data,
+            table=self.table_template_data,
+            run=self.run_template_data,
+        )
 
     def get_sql_description(self, sql):
         raise NotImplementedError
@@ -446,10 +463,12 @@ class TableConfig(object):
         """Returns true if new index is greater than old index and defined"""
         if self.full_refresh:
             if self.index_column or self.index_sql:
-                msg = ('Index was found, but %s was forced. '
-                       'Old index value will be ignored, but new '
-                       'index value will be recorded.')
-                self.logger.info(msg, 'rebuild' if self.rebuild else 'full-refresh')
+                msg = (
+                    "Index was found, but %s was forced. "
+                    "Old index value will be ignored, but new "
+                    "index value will be recorded."
+                )
+                self.logger.info(msg, "rebuild" if self.rebuild else "full-refresh")
             return True
 
         if self.append_only:
@@ -461,8 +480,9 @@ class TableConfig(object):
 
         # There's an old index but can't load a new value.
         if self.new_index_value is None and self.old_index_value is not None:
-            msg = ('Index expected but not found. Last value was %s. Dumping '
-                   'full table')
+            msg = (
+                "Index expected but not found. Last value was %s. Dumping " "full table"
+            )
             self.logger.warning(msg, self.old_index_value)
             return False
 
@@ -473,47 +493,46 @@ class TableConfig(object):
                 is_inverted = int(self.old_index_value) > self.new_index_value
             elif isinstance(self.new_index_value, datetime.datetime):
                 old_index_dt = datetime.datetime.strptime(
-                    self.old_index_value,
-                    '%Y-%m-%d %H:%M:%S.%f')
+                    self.old_index_value, "%Y-%m-%d %H:%M:%S.%f"
+                )
                 is_inverted = old_index_dt > self.new_index_value
             else:
                 self.logger.warning(
-                    'Unknown type %s for index %s',
+                    "Unknown type %s for index %s",
                     type(self.new_index_value),
-                    self.old_index_value
+                    self.old_index_value,
                 )
                 return False
         except (ValueError, TypeError) as ex:
-            self.logger.warning('Could not check index: %s', str(ex))
+            self.logger.warning("Could not check index: %s", str(ex))
             return False
 
         if is_inverted:
             self.logger.warning(
-                'Index value has decreased for table %s.%s. '
-                'May need to do full refresh',
-                self.db_name, self.source_table_name)
+                "Index value has decreased for table %s.%s. "
+                "May need to do full refresh",
+                self.db_name,
+                self.source_table_name,
+            )
         return not is_inverted
 
     def row_generator(self):
         sql = self.get_query_sql()
         self._check_index_values()
-        self.logger.info(
-            'Extracting %s table %s',
-            self.db_name,
-            self.source_table_name)
-        self.logger.debug('Running SQL: %s', sql)
+        self.logger.info("Extracting %s table %s", self.db_name, self.source_table_name)
+        self.logger.debug("Running SQL: %s", sql)
         return self.query(sql)
 
     @property
     def run_template_data(self):
         return {
-            'destination_schema_name': self.destination_schema_name,
-            'destination_table_name': self.destination_table_name,
-            'db_name': self.db_name,
-            'source_table_name': self.source_table_name,
-            'index_column': self.index_column,
-            'new_index_value': self.new_index_value,
-            'old_index_value': self.old_index_value
+            "destination_schema_name": self.destination_schema_name,
+            "destination_table_name": self.destination_table_name,
+            "db_name": self.db_name,
+            "source_table_name": self.source_table_name,
+            "index_column": self.index_column,
+            "new_index_value": self.new_index_value,
+            "old_index_value": self.old_index_value,
         }
 
     def _load_old_index_value(self):
@@ -540,14 +559,14 @@ class TableConfig(object):
         self.logger.debug("Querying Redshift for last updated index")
         with r.cursor() as cur:
             cur.execute(
-                query,
-                (self.database_alias, self.db_name, self.source_table_name))
+                query, (self.database_alias, self.db_name, self.source_table_name)
+            )
             index_value = cur.fetchone()
 
         if index_value is None:
             self.logger.info(
-                "No index found. Dumping entire table: %s.",
-                self.source_table_name)
+                "No index found. Dumping entire table: %s.", self.source_table_name
+            )
             return index_value
         else:
             self.logger.info("Index found: {}".format(index_value[0]))
@@ -556,33 +575,32 @@ class TableConfig(object):
     @property
     def old_index_value(self):
         # we use 'notset' rather than None because None is a valid output
-        if self._old_index_value is 'notset':
+        if self._old_index_value is "notset":
             self._old_index_value = self._load_old_index_value()
         return self._old_index_value
 
     def _load_new_index_value(self):
         if self.index_sql:
             env = Environment(
-                autoescape=select_autoescape(['sql']),
-                undefined=StrictUndefined
+                autoescape=select_autoescape(["sql"]), undefined=StrictUndefined
             )
             template = env.from_string(self.index_sql)
             query = template.render(
-                db=self.db_template_data,
-                table=self.table_template_data
+                db=self.db_template_data, table=self.table_template_data
             )
-            return self.query_fetchone(query)['index_value']
+            return self.query_fetchone(query)["index_value"]
         elif self.index_column:
             query = "SELECT MAX({}) AS index_value FROM {};".format(
-                self.index_column, self.source_table_name)
-            return self.query_fetchone(query)['index_value']
+                self.index_column, self.source_table_name
+            )
+            return self.query_fetchone(query)["index_value"]
         else:
             return None
 
     @property
     def new_index_value(self):
         # we use 'notset' rather than None because None is a valid output
-        if self._new_index_value is 'notset':
+        if self._new_index_value is "notset":
             self._new_index_value = self._load_new_index_value()
         if self.query_file and self.index_sql and self._new_index_value is None:
             # Handles a special case where the index_sql query returns no rows
@@ -603,21 +621,19 @@ class TableConfig(object):
         if not self.index_column or self.full_refresh:
             # If no index_column, there is no where clause. The whole
             # source table is dumped.
-            return ''
+            return ""
 
         if self.new_index_value is None:
             # Either the table is empty or the index_column is all NULL
-            return ''
+            return ""
 
         if self.old_index_value:
             # This should always happen except on the initial load
             where_clause += "{} > '{}' AND ".format(
-                self.index_column,
-                self.old_index_value)
+                self.index_column, self.old_index_value
+            )
 
-        where_clause += "{} <= '{}'".format(
-            self.index_column,
-            self.new_index_value)
+        where_clause += "{} <= '{}'".format(self.index_column, self.new_index_value)
         return where_clause
 
     def get_destination_table_columns(self):
@@ -630,8 +646,8 @@ class TableConfig(object):
         with r.cursor() as cur:
             self.set_search_path(cur)
             cur.execute(
-                query,
-                (self.destination_schema_name, self.destination_table_name))
+                query, (self.destination_schema_name, self.destination_table_name)
+            )
             results = cur.fetchall()
 
         return [x[0] for x in results]
@@ -668,14 +684,18 @@ class TableConfig(object):
         elif dw_columns == expected:
             return self.DESTINATION_TABLE_OK
         elif len(unexpected_dw_columns) > 0:
-            msg = ('Columns exist in the warehouse table that are not in '
-                   'the source: `%s`')
-            self.logger.warning(msg, '`, `'.join(unexpected_dw_columns))
+            msg = (
+                "Columns exist in the warehouse table that are not in "
+                "the source: `%s`"
+            )
+            self.logger.warning(msg, "`, `".join(unexpected_dw_columns))
             return self.DESTINATION_TABLE_INCORRECT
         elif len(unexpected_source_columns) > 0:
-            msg = ('Columns exist in the source table that are not in the ' +
-                   'warehouse. Skipping column(s): `%s`')
-            self.logger.warning(msg, '`, `'.join(unexpected_source_columns))
+            msg = (
+                "Columns exist in the source table that are not in the "
+                + "warehouse. Skipping column(s): `%s`"
+            )
+            self.logger.warning(msg, "`, `".join(unexpected_source_columns))
 
             # Copy from avro will just ignore the extra columns so we can proceed
             return self.DESTINATION_TABLE_OK
@@ -688,32 +708,32 @@ class TableConfig(object):
 
         for col_desc in desc:
             col_name = col_desc[0]
-            schema = {'name': col_name}
+            schema = {"name": col_name}
             try:
-                col_type = col_desc[1].split('(')[0]
+                col_type = col_desc[1].split("(")[0]
             except AttributeError:
                 col_type = col_desc[1]
-            if col_type in self.avro_type_map['string']:
-                schema['type'] = ['null', 'string']
-            elif col_type in self.avro_type_map['int']:
-                schema['type'] = ['null', 'int']
-            elif col_type in self.avro_type_map['double']:
-                schema['type'] = ['null', 'double']
-            elif col_type in self.avro_type_map['long']:
-                schema['type'] = ['null', 'long']
-            elif col_type in self.avro_type_map['boolean']:
-                schema['type'] = ['null', 'boolean']
-            elif col_type in self.avro_type_map['decimal']:
+            if col_type in self.avro_type_map["string"]:
+                schema["type"] = ["null", "string"]
+            elif col_type in self.avro_type_map["int"]:
+                schema["type"] = ["null", "int"]
+            elif col_type in self.avro_type_map["double"]:
+                schema["type"] = ["null", "double"]
+            elif col_type in self.avro_type_map["long"]:
+                schema["type"] = ["null", "long"]
+            elif col_type in self.avro_type_map["boolean"]:
+                schema["type"] = ["null", "boolean"]
+            elif col_type in self.avro_type_map["decimal"]:
                 # fastavro now supports decimal types, but Redshift does not
-                schema['type'] = ['null', 'string']
+                schema["type"] = ["null", "string"]
             else:
                 self.logger.warn(
-                    'unmatched data type for column %s in %s table %s',
+                    "unmatched data type for column %s in %s table %s",
                     col_desc[0],
                     self.db_name,
-                    self.source_table_name
+                    self.source_table_name,
                 )
-                schema['type'] = ['null', 'string']
+                schema["type"] = ["null", "string"]
 
             fields.append(schema)
         return fields
@@ -733,11 +753,10 @@ class TableConfig(object):
         if isinstance(self.new_index_value, int):
             new_index_value = str(self.new_index_value)
         elif isinstance(self.new_index_value, datetime.datetime):
-            new_index_value = self.new_index_value.strftime('%Y-%m-%d %H:%M:%S.%f')
+            new_index_value = self.new_index_value.strftime("%Y-%m-%d %H:%M:%S.%f")
         else:
             msg = "Don't know how to handle index {} of type {}".format(
-                self.new_index_value,
-                str(type(self.new_index_value))
+                self.new_index_value, str(type(self.new_index_value))
             )
             raise TypeError(msg)
 
@@ -747,21 +766,21 @@ class TableConfig(object):
                 self.database_alias,
                 self.db_name,
                 self.source_table_name,
-                new_index_value
+                new_index_value,
             )
             self.logger.debug(cur.mogrify(query, args))
             cur.execute(query, args)
 
     def create_table_keys(self, distkey=None, sortkeys=None):
-        output = ''
+        output = ""
         distkey = distkey or self.distribution_key
         if distkey:
-            output += 'distkey({})\n'.format(distkey)
+            output += "distkey({})\n".format(distkey)
 
         sortkeys = sortkeys or self.sort_keys
         if sortkeys:
-            output += 'compound ' if len(sortkeys) > 1 else ''
-            output += 'sortkey({})\n'.format(",".join(sortkeys))
+            output += "compound " if len(sortkeys) > 1 else ""
+            output += "sortkey({})\n".format(",".join(sortkeys))
         return output
 
     def query_to_redshift_create_table(self, sql, table_name):
@@ -788,19 +807,23 @@ class TableConfig(object):
 
         self._destination_table_status = self.get_destination_table_status()
 
-        if self._destination_table_status in (self.DESTINATION_TABLE_DNE,
-                                              self.DESTINATION_TABLE_REBUILD):
+        if self._destination_table_status in (
+            self.DESTINATION_TABLE_DNE,
+            self.DESTINATION_TABLE_REBUILD,
+        ):
             self.logger.info("Verifying that the table can be created.")
             try:
                 # Only called to see if it raises, the actual table
                 # will be created later
                 self.query_to_redshift_create_table(
-                    self.get_query_sql(), self.destination_table_name)
+                    self.get_query_sql(), self.destination_table_name
+                )
             except NotImplementedError:
                 raise MigrationError("Could not create %s.%s, manual migration needed.")
         elif self._destination_table_status == self.DESTINATION_TABLE_INCORRECT:
             raise InvalidSchemaError(
-                "Extra columns exist in redshift table %s.%s. Migration needed")
+                "Extra columns exist in redshift table %s.%s. Migration needed"
+            )
 
     def register_extract_monitor(self, starttime, endtime):
         """Adds an entry into the extract monitor for a given extract task
@@ -823,23 +846,24 @@ class TableConfig(object):
         );
         """
         args = {
-            'task_id': "{}(alias={}, database={}, table={})".format(
+            "task_id": "{}(alias={}, database={}, table={})".format(
                 self.__class__.__name__,
                 self.database_alias,
                 self.db_name,
-                self.source_table_name),
-            'class_name': self.__class__.__name__,
-            'task_date_params': None,
-            'task_other_params': None,
-            'start_dt': starttime.replace(microsecond=0),
-            'end_dt': endtime.replace(microsecond=0),
-            'run_time_sec': (endtime - starttime).total_seconds(),
-            'manifest_path': self.copy_target_url,
-            'data_path': "s3://{}/{}".format(S3Config.bucket, self.s3_key_prefix),
-            'output_exists': self.row_count > 0,
-            'row_count': self.row_count,
-            'upload_size': self.upload_size,
-            'exception': None,
+                self.source_table_name,
+            ),
+            "class_name": self.__class__.__name__,
+            "task_date_params": None,
+            "task_other_params": None,
+            "start_dt": starttime.replace(microsecond=0),
+            "end_dt": endtime.replace(microsecond=0),
+            "run_time_sec": (endtime - starttime).total_seconds(),
+            "manifest_path": self.copy_target_url,
+            "data_path": "s3://{}/{}".format(S3Config.bucket, self.s3_key_prefix),
+            "output_exists": self.row_count > 0,
+            "row_count": self.row_count,
+            "upload_size": self.upload_size,
+            "exception": None,
         }
 
         self.logger.info("Inserting record into table_extract_detail")
@@ -877,28 +901,27 @@ class TableConfig(object):
             self.__class__.__name__,
             self.database_alias,
             self.db_name,
-            self.source_table_name
+            self.source_table_name,
         )
         target_table = "{}.{}".format(
-            self.destination_schema_name,
-            self.destination_table_name
+            self.destination_schema_name, self.destination_table_name
         )
         args = {
-            'task_id': task_id,
-            'class_name': self.__class__.__name__,
-            'task_date_params': None,
-            'task_other_params': None,
-            'target_table': target_table,
-            'start_dt': self.starttime.replace(microsecond=0),
-            'end_dt': self.endtime.replace(microsecond=0),
-            'run_time_sec': (self.endtime - self.starttime).total_seconds(),
-            'extract_task_update_id': task_id,
-            'data_path': self.copy_target_url,
-            'manifest_cleaned': False,
-            'rows_inserted': self.rows_inserted,
-            'rows_deleted': self.rows_deleted,
-            'load_size': self.upload_size,
-            'exception': None,
+            "task_id": task_id,
+            "class_name": self.__class__.__name__,
+            "task_date_params": None,
+            "task_other_params": None,
+            "target_table": target_table,
+            "start_dt": self.starttime.replace(microsecond=0),
+            "end_dt": self.endtime.replace(microsecond=0),
+            "run_time_sec": (self.endtime - self.starttime).total_seconds(),
+            "extract_task_update_id": task_id,
+            "data_path": self.copy_target_url,
+            "manifest_cleaned": False,
+            "rows_inserted": self.rows_inserted,
+            "rows_deleted": self.rows_deleted,
+            "load_size": self.upload_size,
+            "exception": None,
         }
 
         self.logger.info("Inserting record into table_load_detail")
@@ -922,8 +945,10 @@ class TableConfig(object):
 
         if self.num_data_files == 0:
             self.logger.info(
-                'No data extracted; not uploading to s3 for %s table %s',
-                self.db_name, self.source_table_name)
+                "No data extracted; not uploading to s3 for %s table %s",
+                self.db_name,
+                self.source_table_name,
+            )
 
         if self.manifest_mode:
             self.write_manifest_file()
@@ -943,7 +968,8 @@ class TableConfig(object):
                 results_iter,
                 results_schema,
                 self.destination_table_name,
-                self.max_file_size)
+                self.max_file_size,
+            )
 
             if self.row_count is None:
                 self.row_count = row_count
@@ -963,13 +989,13 @@ class TableConfig(object):
 
     def write_manifest_file(self):
         if not self.manifest_mode:
-            raise TableStateError('Cannot write manifest when not in manifest mode')
+            raise TableStateError("Cannot write manifest when not in manifest mode")
 
         entries = [
-            {'url': _s3_url(S3Config.bucket, key), 'mandatory': True}
+            {"url": _s3_url(S3Config.bucket, key), "mandatory": True}
             for key in self.data_file_keys()
         ]
-        manifest = {'entries': entries}
+        manifest = {"entries": entries}
 
         with BytesIO() as f:
             f.write(json.dumps(manifest).encode())
@@ -995,8 +1021,7 @@ class TableConfig(object):
         retries_remaining = retries
         while retries_remaining > 0:
             try:
-                self.s3.upload_fileobj(f, bucket, key,
-                                       Config=s3_config)
+                self.s3.upload_fileobj(f, bucket, key, Config=s3_config)
                 self.logger.info("Wrote s3 file %s", _s3_url(bucket, key))
                 return
             except KeyError:
@@ -1026,17 +1051,19 @@ class TableConfig(object):
         if self.full_refresh:
             if self._destination_table_status == self.DESTINATION_TABLE_REBUILD:
                 # We'll just drop it
-                return ''
+                return ""
             if self.truncate_file:
                 env = Environment(
-                    loader=FileSystemLoader(os.path.join('datacfg')),
-                    autoescape=select_autoescape(['sql']),
-                    undefined=StrictUndefined
+                    loader=FileSystemLoader(os.path.join("datacfg")),
+                    autoescape=select_autoescape(["sql"]),
+                    undefined=StrictUndefined,
                 )
                 template = env.get_template(self.truncate_file)
-                return template.render(db=self.db_template_data,
-                                       table=self.table_template_data,
-                                       run=self.run_template_data)
+                return template.render(
+                    db=self.db_template_data,
+                    table=self.table_template_data,
+                    run=self.run_template_data,
+                )
             else:
                 return 'DELETE FROM "{}";'.format(self.destination_table_name)
         elif not self.append_only:
@@ -1058,16 +1085,13 @@ class TableConfig(object):
 
             constraints = [
                 '"{0}"."{2}" = "{1}"."{2}"'.format(
-                    self.staging_table_name,
-                    self.destination_table_name,
-                    pk
-                ) for pk in pks
+                    self.staging_table_name, self.destination_table_name, pk
+                )
+                for pk in pks
             ]
-            constraint_string = ' AND '.join(constraints)
+            constraint_string = " AND ".join(constraints)
             return 'DELETE FROM "{}" USING "{}" WHERE {};'.format(
-                self.destination_table_name,
-                self.staging_table_name,
-                constraint_string
+                self.destination_table_name, self.staging_table_name, constraint_string,
             )
         else:
             # Should only land here when append_only
@@ -1090,8 +1114,7 @@ class TableConfig(object):
             AND nsp.nspname = '{schema}'
             AND c.relname = '{table}'
         """.format(
-            schema=self.destination_schema_name,
-            table=self.destination_table_name
+            schema=self.destination_schema_name, table=self.destination_table_name
         )
         cursor.execute(get_permissions_sql)
         permissions_result = cursor.fetchall()
@@ -1106,31 +1129,34 @@ class TableConfig(object):
         if not is_owner:
             raise MigrationError("Can't rebuild %s.%s because it has another owner")
 
-        self.logger.info('Got existing permissions for table to add to %s: %s',
-                         self.staging_table_name, permissions_str)
+        self.logger.info(
+            "Got existing permissions for table to add to %s: %s",
+            self.staging_table_name,
+            permissions_str,
+        )
         permissions = Permissions.parse(permissions_str)
         if permissions is None:
             raise MigrationError(
-                "Couldn't parse permissions {} to rebuild %s.%s".format(permissions_str))
+                "Couldn't parse permissions {} to rebuild %s.%s".format(permissions_str)
+            )
 
-        grant_template = 'GRANT {grant} ON {table} TO {group}{name};'
+        grant_template = "GRANT {grant} ON {table} TO {group}{name};"
         grant_sqls = [
             grant_template.format(
                 grant=g,
                 table=self.staging_table_name,
                 # Should we not restore users?
-                group='GROUP ' if p.is_group else '',
-                name=p.name
+                group="GROUP " if p.is_group else "",
+                name=p.name,
             )
             for p in permissions
             for g in p.grants
         ]
-        return '\n'.join(grant_sqls)
+        return "\n".join(grant_sqls)
 
     @property
     def staging_table_name(self):
-        return '{}_{}_staging'.format(self.database_alias,
-                                      self.destination_table_name)
+        return "{}_{}_staging".format(self.database_alias, self.destination_table_name)
 
     def load(self):
         """The Load phase of the pipeline. Takes a file in S3 and issues a
@@ -1156,19 +1182,21 @@ class TableConfig(object):
             # If table does not exist, create it
             if is_dne:
                 create_table = self.query_to_redshift_create_table(
-                        self.get_query_sql(), self.destination_table_name)
+                    self.get_query_sql(), self.destination_table_name
+                )
                 cur.execute(create_table)
             elif not is_normal_load and not is_rebuild:
                 raise RuntimeError(
                     "Invalid table status in redshift_copy: {}".format(
-                        self._destination_table_status)
+                        self._destination_table_status
+                    )
                 )
 
             # If there is no row updates, just skip copy and return
             if self.row_count == 0:
                 return
 
-            cur.execute('BEGIN TRANSACTION;')
+            cur.execute("BEGIN TRANSACTION;")
             # Lock the table early to avoid deadlocks in many-to-one pipelines.
             query = generate_lock_query(destination_table)
             cur.execute(query)
@@ -1178,19 +1206,27 @@ class TableConfig(object):
 
             if is_rebuild:
                 # Build staging table anew and grant it appropriate permissions
-                self.logger.info("Creating staging table to rebuild %s", destination_table)
+                self.logger.info(
+                    "Creating staging table to rebuild %s", destination_table
+                )
                 create_staging_table = self.query_to_redshift_create_table(
-                    self.get_query_sql(), staging_table)
+                    self.get_query_sql(), staging_table
+                )
                 permissions_sql = self.get_grant_sql(cur)
                 cur.execute(create_staging_table)
                 if permissions_sql:
-                    self.logger.info("Copying permissions onto %s:\n%s",
-                                        staging_table, permissions_sql)
+                    self.logger.info(
+                        "Copying permissions onto %s:\n%s",
+                        staging_table,
+                        permissions_sql,
+                    )
                     cur.execute(permissions_sql)
             else:
                 # If not rebuilding, create staging with LIKE
                 self.logger.info("Creating staging table {}".format(staging_table))
-                query = generate_create_table_like_query(staging_table, destination_table)
+                query = generate_create_table_like_query(
+                    staging_table, destination_table
+                )
                 cur.execute(query)
 
             # Issuing Copy Command
@@ -1199,7 +1235,7 @@ class TableConfig(object):
                 staging_table,
                 self.copy_target_url,
                 r.iam_copy_role,
-                self.manifest_mode
+                self.manifest_mode,
             )
             self.logger.debug(query)
             cur.execute(query)
@@ -1244,4 +1280,6 @@ class TableConfig(object):
             self.s3.delete_object(Bucket=S3Config.bucket, Key=key)
 
         if self.manifest_mode:
-            self.s3.delete_object(Bucket=S3Config.bucket, Key=self.manifest_s3_data_key())
+            self.s3.delete_object(
+                Bucket=S3Config.bucket, Key=self.manifest_s3_data_key()
+            )

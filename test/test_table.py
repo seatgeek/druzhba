@@ -10,8 +10,14 @@ from mock import patch, MagicMock, PropertyMock, Mock, call, ANY
 
 from druzhba.config import S3Config
 from druzhba.db import ConnectionParams
-from druzhba.table import TableConfig, ConfigurationError, InvalidSchemaError, \
-    TableStateError, MigrationError, Permissions
+from druzhba.table import (
+    TableConfig,
+    ConfigurationError,
+    InvalidSchemaError,
+    TableStateError,
+    MigrationError,
+    Permissions,
+)
 
 
 class IgnoreWhitespace(str):
@@ -21,13 +27,12 @@ class IgnoreWhitespace(str):
     r = re.compile(r"(\s+)")
 
     def __eq__(self, other):
-        self_clean = self.r.sub(' ', self)
-        other_clean = self.r.sub(' ', other)
+        self_clean = self.r.sub(" ", self)
+        other_clean = self.r.sub(" ", other)
         return self_clean == other_clean
 
 
 class MockBytesIO(object):
-
     def __init__(self, b):
         self.b = b
 
@@ -38,112 +43,121 @@ class MockBytesIO(object):
         pass
 
 
-mock_conn = ConnectionParams(
-    'name', 'host', 'port', 'user', 'password'
-)
+mock_conn = ConnectionParams("name", "host", "port", "user", "password")
 
 
 class TableTest(unittest.TestCase):
     def test_validate_config(self):
         # Full refresh should pass
         table_config = {
-            'database_alias': 'alias',
-            'destination_table_name': 'table',
-            'destination_schema_name': 'schema',
-            'source_table_name': 'source',
-            'full_refresh': True
+            "database_alias": "alias",
+            "destination_table_name": "table",
+            "destination_schema_name": "schema",
+            "source_table_name": "source",
+            "full_refresh": True,
         }
         # Shouldn't raise anything
         TableConfig.validate_yaml_configuration(table_config)
 
         # With index column should pass
         table_config = {
-            'database_alias': 'alias',
-            'destination_table_name': 'table',
-            'destination_schema_name': 'schema',
-            'source_table_name': 'source',
-            'index_column': 'id'
+            "database_alias": "alias",
+            "destination_table_name": "table",
+            "destination_schema_name": "schema",
+            "source_table_name": "source",
+            "index_column": "id",
         }
         TableConfig.validate_yaml_configuration(table_config)
 
         # With index SQL should pass
         table_config = {
-            'database_alias': 'alias',
-            'destination_table_name': 'table',
-            'destination_schema_name': 'schema',
-            'source_table_name': 'source',
-            'index_sql': 'coalesce(id_1, id2)'
+            "database_alias": "alias",
+            "destination_table_name": "table",
+            "destination_schema_name": "schema",
+            "source_table_name": "source",
+            "index_sql": "coalesce(id_1, id2)",
         }
         TableConfig.validate_yaml_configuration(table_config)
 
         # No index and not full refresh should fail.
         with self.assertRaises(ConfigurationError):
             table_config = {
-                'database_alias': 'alias',
-                'destination_table_name': 'table',
-                'destination_schema_name': 'schema',
-                'source_table_name': 'source',
+                "database_alias": "alias",
+                "destination_table_name": "table",
+                "destination_schema_name": "schema",
+                "source_table_name": "source",
             }
             TableConfig.validate_yaml_configuration(table_config)
 
         # Append only without incremental column should fail
         with self.assertRaises(ConfigurationError):
             table_config = {
-                'database_alias': 'alias',
-                'destination_table_name': 'table',
-                'destination_schema_name': 'schema',
-                'source_table_name': 'source',
-                'append_only': True
+                "database_alias": "alias",
+                "destination_table_name": "table",
+                "destination_schema_name": "schema",
+                "source_table_name": "source",
+                "append_only": True,
             }
             TableConfig.validate_yaml_configuration(table_config)
 
         # Full refresh and index column should fail
         with self.assertRaises(ConfigurationError):
             table_config = {
-                'database_alias': 'alias',
-                'destination_table_name': 'table',
-                'destination_schema_name': 'schema',
-                'source_table_name': 'source',
-                'full_refresh': True,
-                'index_column': 'id'
+                "database_alias": "alias",
+                "destination_table_name": "table",
+                "destination_schema_name": "schema",
+                "source_table_name": "source",
+                "full_refresh": True,
+                "index_column": "id",
             }
             TableConfig.validate_yaml_configuration(table_config)
 
     def test_where_clause(self):
         # no index column
-        table_config = TableConfig('alias', mock_conn, 'table', 'schema', 'source', full_refresh=True)
-        self.assertEqual(table_config.where_clause(), '')
+        table_config = TableConfig(
+            "alias", mock_conn, "table", "schema", "source", full_refresh=True
+        )
+        self.assertEqual(table_config.where_clause(), "")
 
         # no saved index
-        with patch('druzhba.table.TableConfig.new_index_value',
-                   new_callable=PropertyMock) as m:
+        with patch(
+            "druzhba.table.TableConfig.new_index_value", new_callable=PropertyMock
+        ) as m:
             m.return_value = None
-            table_config = TableConfig('alias', mock_conn, 'table', 'schema', 'source',
-                                       index_column='id')
-            self.assertEqual(table_config.where_clause(), '')
+            table_config = TableConfig(
+                "alias", mock_conn, "table", "schema", "source", index_column="id"
+            )
+            self.assertEqual(table_config.where_clause(), "")
 
         # new index only
-        with patch('druzhba.table.TableConfig.old_index_value',
-                   new_callable=PropertyMock) as oiv:
+        with patch(
+            "druzhba.table.TableConfig.old_index_value", new_callable=PropertyMock
+        ) as oiv:
             oiv.return_value = None
-            with patch('druzhba.table.TableConfig.new_index_value',
-                       new_callable=PropertyMock) as niv:
+            with patch(
+                "druzhba.table.TableConfig.new_index_value", new_callable=PropertyMock
+            ) as niv:
                 niv.return_value = 42
-                table_config = TableConfig('alias', mock_conn, 'table', 'schema', 'source',
-                                           index_column='id')
+                table_config = TableConfig(
+                    "alias", mock_conn, "table", "schema", "source", index_column="id"
+                )
                 self.assertEqual(table_config.where_clause(), "\nWHERE id <= '42'")
 
         # new and old index
-        with patch('druzhba.table.TableConfig.old_index_value',
-                   new_callable=PropertyMock) as oiv:
+        with patch(
+            "druzhba.table.TableConfig.old_index_value", new_callable=PropertyMock
+        ) as oiv:
             oiv.return_value = 13
-            with patch('druzhba.table.TableConfig.new_index_value',
-                       new_callable=PropertyMock) as niv:
+            with patch(
+                "druzhba.table.TableConfig.new_index_value", new_callable=PropertyMock
+            ) as niv:
                 niv.return_value = 42
-                table_config = TableConfig('alias', mock_conn, 'table', 'schema', 'source',
-                                           index_column='id')
-                self.assertEqual(table_config.where_clause(),
-                                 "\nWHERE id > '13' AND id <= '42'")
+                table_config = TableConfig(
+                    "alias", mock_conn, "table", "schema", "source", index_column="id"
+                )
+                self.assertEqual(
+                    table_config.where_clause(), "\nWHERE id > '13' AND id <= '42'"
+                )
 
 
 class TestTableIndexLogic(unittest.TestCase):
@@ -152,7 +166,8 @@ class TestTableIndexLogic(unittest.TestCase):
     class MockTable(TableConfig):
         def __init__(self, oiv, niv, append_only=False, full_refresh=False):
             super(TestTableIndexLogic.MockTable, self).__init__(
-                'my_db', mock_conn, 'my_table', 'my_schema', 'org_table')
+                "my_db", mock_conn, "my_table", "my_schema", "org_table"
+            )
 
             self._oiv = oiv
             self._niv = niv
@@ -160,8 +175,8 @@ class TestTableIndexLogic(unittest.TestCase):
             self.full_refresh = full_refresh
 
             # mocking placeholders
-            self.db_name = 'my_db'
-            self.logger = logging.getLogger('test_logger')
+            self.db_name = "my_db"
+            self.logger = logging.getLogger("test_logger")
 
         def _load_old_index_value(self):
             return self._oiv
@@ -177,35 +192,35 @@ class TestTableIndexLogic(unittest.TestCase):
             pass
 
     def test_check_index_append_only(self):
-        tt = self.MockTable('123', 124, append_only=True, full_refresh=False)
+        tt = self.MockTable("123", 124, append_only=True, full_refresh=False)
         self.assertTrue(tt._check_index_values())
 
     def test_check_index_full_refresh(self):
-        tt = self.MockTable('123', 124, append_only=False, full_refresh=True)
+        tt = self.MockTable("123", 124, append_only=False, full_refresh=True)
         self.assertTrue(tt._check_index_values())
 
     def test_check_index_missing_old(self):
-        tt = self.MockTable(None, '')
+        tt = self.MockTable(None, "")
         self.assertTrue(tt._check_index_values())
 
     def test_check_index_missing_new(self):
-        tt = self.MockTable('123', None)
+        tt = self.MockTable("123", None)
         self.assertFalse(tt._check_index_values())
 
     def test_int_index_check(self):
-        tt = self.MockTable('123', 126)
+        tt = self.MockTable("123", 126)
         self.assertTrue(tt._check_index_values())
 
-        tt = self.MockTable('123', 121)
+        tt = self.MockTable("123", 121)
         self.assertFalse(tt._check_index_values())
 
     def test_dt_ms_index_check(self):
         dts = datetime(2018, 10, 28, 11, 6, 34)
         dtu = datetime(2018, 10, 28, 11, 6, 34, 543217)
 
-        dss3 = '2018-10-28 11:06:33.980'
-        dss4 = '2018-10-28 11:06:34.418'
-        dss5 = '2018-10-28 11:06:34.632'
+        dss3 = "2018-10-28 11:06:33.980"
+        dss4 = "2018-10-28 11:06:34.418"
+        dss5 = "2018-10-28 11:06:34.632"
 
         tt = self.MockTable(dss3, dts)
         self.assertTrue(tt._check_index_values())
@@ -223,9 +238,9 @@ class TestTableIndexLogic(unittest.TestCase):
         dts = datetime(2018, 10, 28, 11, 6, 34)
         dtu = datetime(2018, 10, 28, 11, 6, 34, 543217)
 
-        dss3 = '2018-10-28 11:06:33.980293'
-        dss4 = '2018-10-28 11:06:34.418490'
-        dss5 = '2018-10-28 11:06:34.632398'
+        dss3 = "2018-10-28 11:06:33.980293"
+        dss4 = "2018-10-28 11:06:34.418490"
+        dss5 = "2018-10-28 11:06:34.632398"
 
         tt = self.MockTable(dss3, dts)
         self.assertTrue(tt._check_index_values())
@@ -240,17 +255,17 @@ class TestTableIndexLogic(unittest.TestCase):
         self.assertFalse(tt._check_index_values())
 
     def test_invalid_index_check(self):
-        tt = self.MockTable('abcd', 123)
+        tt = self.MockTable("abcd", 123)
         self.assertFalse(tt._check_index_values())
 
         # currently unable to handle strings this functionality may change
-        tt = self.MockTable('abcd', 'abcd')
+        tt = self.MockTable("abcd", "abcd")
         self.assertFalse(tt._check_index_values())
 
-        tt = self.MockTable('abcd', set('abc'))
+        tt = self.MockTable("abcd", set("abc"))
         self.assertFalse(tt._check_index_values())
 
-        tt = self.MockTable('12:23:291 32/13/19', datetime(2018, 10, 28, 11, 6, 34))
+        tt = self.MockTable("12:23:291 32/13/19", datetime(2018, 10, 28, 11, 6, 34))
         self.assertFalse(tt._check_index_values())
 
 
@@ -258,13 +273,14 @@ class TestSetLastUpdateIndex(unittest.TestCase):
     class MockTable(TableConfig):
         def __init__(self, niv):
             super(TestSetLastUpdateIndex.MockTable, self).__init__(
-                'my_db', mock_conn, 'my_table', 'my_schema', 'org_table')
+                "my_db", mock_conn, "my_table", "my_schema", "org_table"
+            )
 
             self._niv = niv
 
             # mocking placeholders
-            self.db_name = 'my_db'
-            self.logger = logging.getLogger('test_logger')
+            self.db_name = "my_db"
+            self.logger = logging.getLogger("test_logger")
 
         def _load_new_index_value(self):
             return self._niv
@@ -290,14 +306,14 @@ class TestSetLastUpdateIndex(unittest.TestCase):
         (%s, %s, %s, %s)
         """
 
-    @patch('druzhba.table.r')
+    @patch("druzhba.table.r")
     def test_missing_index(self, r):
         r.cursor = Mock()
         tt = self.MockTable(None)
         tt.set_last_updated_index()
         r.cursor.assert_not_called()
 
-    @patch('druzhba.table.r')
+    @patch("druzhba.table.r")
     def test_int_index(self, r):
         m, c = self.mock_cursor()
         r.cursor = Mock(return_value=m)
@@ -305,10 +321,10 @@ class TestSetLastUpdateIndex(unittest.TestCase):
         tt = self.MockTable(123)
         tt.set_last_updated_index()
 
-        expected_args = ('my_db', 'my_db', 'org_table', '123')
+        expected_args = ("my_db", "my_db", "org_table", "123")
         c.execute.assert_called_once_with(self.query, expected_args)
 
-    @patch('druzhba.table.r')
+    @patch("druzhba.table.r")
     def test_dt_sec_index(self, r):
         m, c = self.mock_cursor()
         r.cursor = Mock(return_value=m)
@@ -316,26 +332,25 @@ class TestSetLastUpdateIndex(unittest.TestCase):
         tt = self.MockTable(datetime(2018, 10, 27, 12, 6, 34))
         tt.set_last_updated_index()
 
-        expected_args = ('my_db', 'my_db', 'org_table', '2018-10-27 12:06:34.000000')
+        expected_args = ("my_db", "my_db", "org_table", "2018-10-27 12:06:34.000000")
         c.execute.assert_called_once_with(self.query, expected_args)
 
-    @patch('druzhba.table.r')
+    @patch("druzhba.table.r")
     def test_unknown_index_type(self, r):
         m, c = self.mock_cursor()
         r.cursor = Mock(return_value=m)
 
-        tt = self.MockTable([3, ['asdf']])
+        tt = self.MockTable([3, ["asdf"]])
         with self.assertRaises(TypeError):
             tt.set_last_updated_index()
 
 
 class TestUnloadCopy(unittest.TestCase):
-
     class MockTable(TableConfig):
-
         def __init__(self):
             super(TestUnloadCopy.MockTable, self).__init__(
-                'my_db', mock_conn, 'my_table', 'my_schema', 'org_table')
+                "my_db", mock_conn, "my_table", "my_schema", "org_table"
+            )
             self._dw_columns = None  # overrides get_destination_table_columns below
             self._columns = None  # overrides columns property
             self._can_create = True
@@ -345,12 +360,12 @@ class TestUnloadCopy(unittest.TestCase):
             self.rebuild = False
             self.full_refresh = False
             self.s3 = Mock()
-            self.key_name = 'key_name'
+            self.key_name = "key_name"
 
-            self.logger = logging.getLogger('test_logger')
+            self.logger = logging.getLogger("test_logger")
 
         def get_query_sql(self):
-            return 'Test SQL'
+            return "Test SQL"
 
         def row_generator(self):
             for row in self._results_iter:
@@ -395,7 +410,7 @@ class TestUnloadCopy(unittest.TestCase):
         m.__exit__ = Mock(return_value=False)
         return m, cur
 
-    @patch('druzhba.table.r')
+    @patch("druzhba.table.r")
     def test_create_redshift_table_if_dne(self, r):
         m, c = self.mock_cursor()
         r.cursor = Mock(return_value=m)
@@ -418,7 +433,7 @@ class TestUnloadCopy(unittest.TestCase):
         with self.assertRaises(MigrationError):
             tt2.check_destination_table_status()
 
-    @patch('druzhba.table.r')
+    @patch("druzhba.table.r")
     def test_dont_create_redshift_table_if_exists(self, r):
         m, c = self.mock_cursor()
         r.cursor = Mock(return_value=m)
@@ -437,9 +452,11 @@ class TestUnloadCopy(unittest.TestCase):
         tt2._can_create = True
         tt2.check_destination_table_status()
         # We should still rebuild if instructed, even if the table is correct
-        self.assertEqual(tt2._destination_table_status, TableConfig.DESTINATION_TABLE_REBUILD)
+        self.assertEqual(
+            tt2._destination_table_status, TableConfig.DESTINATION_TABLE_REBUILD
+        )
 
-    @patch('druzhba.table.r')
+    @patch("druzhba.table.r")
     def test_error_if_destination_table_incorrect(self, r):
         m, c = self.mock_cursor()
         r.cursor = Mock(return_value=m)
@@ -471,82 +488,72 @@ class TestUnloadCopy(unittest.TestCase):
 
     def test_query_description_to_avro(self):
         tt = self.MockTable()
-        tt._desc = [
-            ['column_1', 'db_str('],
-            ['column_2', 'db_int']
-        ]
+        tt._desc = [["column_1", "db_str("], ["column_2", "db_int"]]
         tt._avro_type_map = {
-            'string': {'db_str'},
-            'int': {'db_int'},
-            'double': {},
-            'long': {},
-            'boolean': {},
-            'decimal': {}
+            "string": {"db_str"},
+            "int": {"db_int"},
+            "double": {},
+            "long": {},
+            "boolean": {},
+            "decimal": {},
         }
         fields = tt.query_description_to_avro(None)
 
         target_fields = [
-            {'name': 'column_1', 'type': ['null', 'string']},
-            {'name': 'column_2', 'type': ['null', 'int']}
+            {"name": "column_1", "type": ["null", "string"]},
+            {"name": "column_2", "type": ["null", "int"]},
         ]
 
         self.assertListEqual(fields, target_fields)
 
-    @patch('druzhba.table.BytesIO')
+    @patch("druzhba.table.BytesIO")
     def test_avro_to_s3(self, mock_io):
         tt = self.MockTable()
         tt.s3 = Mock()
         tt.key_name = None
-        tt._desc = [
-            ['column_1', 'db_str('],
-            ['column_2', 'db_int']
-        ]
+        tt._desc = [["column_1", "db_str("], ["column_2", "db_int"]]
         tt._avro_type_map = {
-            'string': {'db_str'},
-            'int': {'db_int'},
-            'double': {},
-            'long': {},
-            'boolean': {},
-            'decimal': {}
+            "string": {"db_str"},
+            "int": {"db_int"},
+            "double": {},
+            "long": {},
+            "boolean": {},
+            "decimal": {},
         }
         tt._results_iter = [
-            {'column_1': 'first', 'column_2': 1},
-            {'column_1': 'second', 'column_2': 2},
-            {'column_1': None, 'column_2': None}
+            {"column_1": "first", "column_2": 1},
+            {"column_1": "second", "column_2": 2},
+            {"column_1": None, "column_2": None},
         ]
 
         b = BytesIO()
         mock_io.return_value = MockBytesIO(b)
         tt.avro_to_s3(
-            tt.row_generator(),
-            tt.query_description_to_avro(tt.get_query_sql())
+            tt.row_generator(), tt.query_description_to_avro(tt.get_query_sql())
         )
         b.seek(0)
         for record, target in zip(fastavro.reader(b), tt._results_iter):
             self.assertEqual(record, target)
 
-    @patch('druzhba.table.BytesIO')
+    @patch("druzhba.table.BytesIO")
     def test_extract_full_single(self, mock_io):
         tt = self.MockTable()
-        tt.date_key = '20190101T010203'
+        tt.date_key = "20190101T010203"
         tt.s3 = Mock()
         tt.key_name = None
-        tt._desc = [
-            ['column_1', 'db_str('],
-            ['column_2', 'db_int']
-        ]
+        tt._desc = [["column_1", "db_str("], ["column_2", "db_int"]]
         tt._avro_type_map = {
-            'string': {'db_str'},
-            'int': {'db_int'},
-            'double': {},
-            'long': {},
-            'boolean': {},
-            'decimal': {}
+            "string": {"db_str"},
+            "int": {"db_int"},
+            "double": {},
+            "long": {},
+            "boolean": {},
+            "decimal": {},
         }
         tt._results_iter = [
-            {'column_1': 'first', 'column_2': 1},
-            {'column_1': 'second', 'column_2': 2},
-            {'column_1': None, 'column_2': None}
+            {"column_1": "first", "column_2": 1},
+            {"column_1": "second", "column_2": 2},
+            {"column_1": None, "column_2": None},
         ]
 
         tt.write_manifest_file = MagicMock()
@@ -561,34 +568,29 @@ class TestUnloadCopy(unittest.TestCase):
 
         tt.write_manifest_file.assert_not_called()
         tt._upload_s3.assert_called_once_with(
-            ANY,
-            S3Config.bucket,
-            'pipeline/my_db.org_table.20190101T010203.avro'
+            ANY, S3Config.bucket, "pipeline/my_db.org_table.20190101T010203.avro"
         )
 
         self.assertEqual(tt.row_count, 3)
 
     def test_extract_full_multi(self):
         tt = self.MockTable()
-        tt.date_key = '20190101T010203'
+        tt.date_key = "20190101T010203"
         tt.s3 = Mock()
-        tt.s3_path, tt.key_name = 's3_path', None
-        tt._desc = [
-            ['column_1', 'db_str('],
-            ['column_2', 'db_int']
-        ]
+        tt.s3_path, tt.key_name = "s3_path", None
+        tt._desc = [["column_1", "db_str("], ["column_2", "db_int"]]
         tt._avro_type_map = {
-            'string': {'db_str'},
-            'int': {'db_int'},
-            'double': {},
-            'long': {},
-            'boolean': {},
-            'decimal': {}
+            "string": {"db_str"},
+            "int": {"db_int"},
+            "double": {},
+            "long": {},
+            "boolean": {},
+            "decimal": {},
         }
         tt._results_iter = [
-            {'column_1': 'first', 'column_2': 1},
-            {'column_1': 'second', 'column_2': 2},
-            {'column_1': None, 'column_2': None}
+            {"column_1": "first", "column_2": 1},
+            {"column_1": "second", "column_2": 2},
+            {"column_1": None, "column_2": None},
         ] * 100
 
         # At this size we can fit 146 records so we should end up with 3 data
@@ -614,143 +616,158 @@ class TestUnloadCopy(unittest.TestCase):
 
     maxDiff = None
 
-    @patch('druzhba.table.r')
+    @patch("druzhba.table.r")
     def test_redshift_copy_create(self, r):
         m, c = self.mock_cursor()
         r.cursor = Mock(return_value=m)
-        r.iam_copy_role = 'iam_copy_role'
+        r.iam_copy_role = "iam_copy_role"
 
         tt = self.MockTable()
-        tt.primary_key = ['pk']
-        tt.date_key = '20190101T010203'
+        tt.primary_key = ["pk"]
+        tt.date_key = "20190101T010203"
         tt.full_refresh = True
         tt._can_create = True
         tt._destination_table_status = TableConfig.DESTINATION_TABLE_DNE
         tt.load()
 
         target_call_args = [
-            call('CREATE TABLE my_table ();'),
-            call('BEGIN TRANSACTION;'),
+            call("CREATE TABLE my_table ();"),
+            call("BEGIN TRANSACTION;"),
             call('LOCK TABLE "my_table";'),
             call('DROP TABLE IF EXISTS "my_db_my_table_staging";'),
             call('CREATE TABLE "my_db_my_table_staging" (LIKE "my_table");'),
-            call(IgnoreWhitespace("""
+            call(
+                IgnoreWhitespace(
+                    """
             COPY "my_db_my_table_staging" FROM 's3://test-bucket/pipeline/my_db.org_table.20190101T010203.avro'
             CREDENTIALS 'aws_iam_role=iam_copy_role'
             FORMAT AS AVRO 'auto'
             EXPLICIT_IDS ACCEPTINVCHARS TRUNCATECOLUMNS
             COMPUPDATE OFF STATUPDATE OFF;
-            """)),
+            """
+                )
+            ),
             call('DELETE FROM "my_table";'),
             call('INSERT INTO "my_table" SELECT * FROM "my_db_my_table_staging";'),
             call('DROP TABLE "my_db_my_table_staging";'),
-            call('END TRANSACTION;')
+            call("END TRANSACTION;"),
         ]
 
         call_args = c.execute.call_args_list
         self.assertListEqual(call_args, target_call_args)
 
-    @patch('druzhba.table.r')
+    @patch("druzhba.table.r")
     def test_redshift_copy_incremental_single(self, r):
         m, c = self.mock_cursor()
         r.cursor = Mock(return_value=m)
-        r.iam_copy_role = 'iam_copy_role'
+        r.iam_copy_role = "iam_copy_role"
 
         tt = self.MockTable()
-        tt.date_key = '20190101T010203'
+        tt.date_key = "20190101T010203"
         tt.s3, tt.key_name = Mock(), None
-        tt.primary_key = ['pk']
-        tt.index_column, tt.full_refresh = 'index_col', False
+        tt.primary_key = ["pk"]
+        tt.index_column, tt.full_refresh = "index_col", False
         tt._destination_table_status = TableConfig.DESTINATION_TABLE_OK
-        where_clause = 'USING "my_db_my_table_staging" WHERE ' + \
-            '"my_db_my_table_staging"."pk" = "my_table"."pk"'
+        where_clause = (
+            'USING "my_db_my_table_staging" WHERE '
+            + '"my_db_my_table_staging"."pk" = "my_table"."pk"'
+        )
         tt.load()
 
         target_call_args = [
-            call('BEGIN TRANSACTION;'),
+            call("BEGIN TRANSACTION;"),
             call('LOCK TABLE "my_table";'),
             call('DROP TABLE IF EXISTS "my_db_my_table_staging";'),
             call('CREATE TABLE "my_db_my_table_staging" (LIKE "my_table");'),
-            call(IgnoreWhitespace("""
+            call(
+                IgnoreWhitespace(
+                    """
             COPY "my_db_my_table_staging" FROM 's3://test-bucket/pipeline/my_db.org_table.20190101T010203.avro'
             CREDENTIALS 'aws_iam_role=iam_copy_role'
             FORMAT AS AVRO 'auto'
             EXPLICIT_IDS ACCEPTINVCHARS TRUNCATECOLUMNS
             COMPUPDATE OFF STATUPDATE OFF;
-            """)),
-            call('DELETE FROM "my_table" ' + where_clause + ';'),
+            """
+                )
+            ),
+            call('DELETE FROM "my_table" ' + where_clause + ";"),
             call('INSERT INTO "my_table" SELECT * FROM "my_db_my_table_staging";'),
             call('DROP TABLE "my_db_my_table_staging";'),
-            call('END TRANSACTION;')
+            call("END TRANSACTION;"),
         ]
 
         call_args = c.execute.call_args_list
         self.assertListEqual(call_args, target_call_args)
 
-    @patch('druzhba.table.r')
+    @patch("druzhba.table.r")
     def test_redshift_copy_incremental_manifest(self, r):
         m, c = self.mock_cursor()
         r.cursor = Mock(return_value=m)
 
         tt = self.MockTable()
-        tt.date_key = '20190101T010203'
+        tt.date_key = "20190101T010203"
         tt.manifest_mode = True
         tt.s3 = Mock()
-        tt.s3.list_objects = Mock(return_value=[
-            {'ContentLength': 30},
-            {'ContentLength': 21},
-        ])
+        tt.s3.list_objects = Mock(
+            return_value=[{"ContentLength": 30}, {"ContentLength": 21},]
+        )
         tt.key_name = None
         tt._destination_table_status = tt.DESTINATION_TABLE_OK
-        tt.primary_key = ['pk']
-        tt.index_column, tt.full_refresh = 'index_col', False
-        r.iam_copy_role = 'iam_copy_role'
-        where_clause = 'USING "my_db_my_table_staging" WHERE ' + \
-                       '"my_db_my_table_staging"."pk" = "my_table"."pk"'
+        tt.primary_key = ["pk"]
+        tt.index_column, tt.full_refresh = "index_col", False
+        r.iam_copy_role = "iam_copy_role"
+        where_clause = (
+            'USING "my_db_my_table_staging" WHERE '
+            + '"my_db_my_table_staging"."pk" = "my_table"."pk"'
+        )
         tt.load()
 
         target_call_args = [
-            call('BEGIN TRANSACTION;'),
+            call("BEGIN TRANSACTION;"),
             call('LOCK TABLE "my_table";'),
             call('DROP TABLE IF EXISTS "my_db_my_table_staging";'),
             call('CREATE TABLE "my_db_my_table_staging" (LIKE "my_table");'),
-            call(IgnoreWhitespace("""
+            call(
+                IgnoreWhitespace(
+                    """
             COPY "my_db_my_table_staging" FROM 's3://test-bucket/pipeline/my_db.org_table.20190101T010203.manifest'
             CREDENTIALS 'aws_iam_role=iam_copy_role'
             MANIFEST
             FORMAT AS AVRO 'auto'
             EXPLICIT_IDS ACCEPTINVCHARS TRUNCATECOLUMNS
             COMPUPDATE OFF STATUPDATE OFF;
-            """)),
-            call('DELETE FROM "my_table" ' + where_clause + ';'),
+            """
+                )
+            ),
+            call('DELETE FROM "my_table" ' + where_clause + ";"),
             call('INSERT INTO "my_table" SELECT * FROM "my_db_my_table_staging";'),
             call('DROP TABLE "my_db_my_table_staging";'),
-            call('END TRANSACTION;')
+            call("END TRANSACTION;"),
         ]
 
         call_args = c.execute.call_args_list
         self.assertListEqual(call_args, target_call_args)
 
-    @patch('druzhba.table.r')
+    @patch("druzhba.table.r")
     def test_redshift_copy_raises_error_without_pks(self, r):
         m, c = self.mock_cursor()
         r.cursor = Mock(return_value=m)
 
         tt = self.MockTable()
         tt.primary_key, tt.pks = None, None
-        tt.index_column, tt.full_refresh = 'index_col', False
+        tt.index_column, tt.full_refresh = "index_col", False
         with self.assertRaises(InvalidSchemaError):
             tt.load()
 
-    @patch('druzhba.table.r')
+    @patch("druzhba.table.r")
     def test_redshift_copy_full_refresh(self, r):
         m, c = self.mock_cursor()
         r.cursor = Mock(return_value=m)
-        r.iam_copy_role = 'iam_copy_role'
+        r.iam_copy_role = "iam_copy_role"
 
         tt = self.MockTable()
 
-        tt.date_key = '20190101T010203'
+        tt.date_key = "20190101T010203"
         tt.s3, tt.key_name = Mock(), None
         tt.pks, tt.index_column = None, None
         tt.full_refresh = True
@@ -758,36 +775,40 @@ class TestUnloadCopy(unittest.TestCase):
         tt.load()
 
         target_call_args = [
-            call('BEGIN TRANSACTION;'),
+            call("BEGIN TRANSACTION;"),
             call('LOCK TABLE "my_table";'),
             call('DROP TABLE IF EXISTS "my_db_my_table_staging";'),
             call('CREATE TABLE "my_db_my_table_staging" (LIKE "my_table");'),
-            call(IgnoreWhitespace("""
+            call(
+                IgnoreWhitespace(
+                    """
             COPY "my_db_my_table_staging" FROM 's3://test-bucket/pipeline/my_db.org_table.20190101T010203.avro'
             CREDENTIALS 'aws_iam_role=iam_copy_role'
             FORMAT AS AVRO 'auto'
             EXPLICIT_IDS ACCEPTINVCHARS TRUNCATECOLUMNS
             COMPUPDATE OFF STATUPDATE OFF;
-            """)),
+            """
+                )
+            ),
             call('DELETE FROM "my_table";'),
             call('INSERT INTO "my_table" SELECT * FROM "my_db_my_table_staging";'),
             call('DROP TABLE "my_db_my_table_staging";'),
-            call('END TRANSACTION;')
+            call("END TRANSACTION;"),
         ]
 
         call_args = c.execute.call_args_list
         self.assertListEqual(call_args, target_call_args)
 
-    @patch('druzhba.table.BytesIO')
+    @patch("druzhba.table.BytesIO")
     def test_write_manifest_file_invalid(self, _):
         tt = self.MockTable()
-        tt.date_key = '20190101T010203'
+        tt.date_key = "20190101T010203"
         tt.s3 = Mock()
 
         with self.assertRaises(TableStateError):
             tt.write_manifest_file()
 
-    @patch('druzhba.table.BytesIO')
+    @patch("druzhba.table.BytesIO")
     def test_write_manifest_file(self, mock_io):
         expected_json = """
         {
@@ -799,10 +820,10 @@ class TestUnloadCopy(unittest.TestCase):
         }
         """
 
-        expected_entries = json.loads(expected_json)['entries']
+        expected_entries = json.loads(expected_json)["entries"]
 
         tt = self.MockTable()
-        tt.date_key = '20190101T010203'
+        tt.date_key = "20190101T010203"
         tt.manifest_mode = True
         tt.num_data_files = 3
 
@@ -815,12 +836,10 @@ class TestUnloadCopy(unittest.TestCase):
         b.seek(0)
 
         manifest = json.load(b)
-        self.assertListEqual(manifest['entries'], expected_entries)
+        self.assertListEqual(manifest["entries"], expected_entries)
 
         tt._upload_s3.assert_called_once_with(
-            ANY,
-            S3Config.bucket,
-            'pipeline/my_db.org_table.20190101T010203.manifest'
+            ANY, S3Config.bucket, "pipeline/my_db.org_table.20190101T010203.manifest"
         )
 
     def test_invalid_manifest_state(self):
@@ -833,78 +852,83 @@ class TestUnloadCopy(unittest.TestCase):
         with self.assertRaises(TableStateError):
             tt.single_s3_data_key()
 
-    @patch('druzhba.table.r')
+    @patch("druzhba.table.r")
     def test_redshift_copy_full_refresh_with_index_col(self, r):
         m, c = self.mock_cursor()
         r.cursor = Mock(return_value=m)
-        r.iam_copy_role = 'iam_copy_role'
+        r.iam_copy_role = "iam_copy_role"
 
         tt = self.MockTable()
-        tt.date_key = '20190101T010203'
+        tt.date_key = "20190101T010203"
         tt._destination_table_status = TableConfig.DESTINATION_TABLE_OK
-        tt.pks, tt.index_column = None, 'index_col'
+        tt.pks, tt.index_column = None, "index_col"
         tt.full_refresh = True
         tt.load()
 
         target_call_args = [
-            call('BEGIN TRANSACTION;'),
+            call("BEGIN TRANSACTION;"),
             call('LOCK TABLE "my_table";'),
             call('DROP TABLE IF EXISTS "my_db_my_table_staging";'),
             call('CREATE TABLE "my_db_my_table_staging" (LIKE "my_table");'),
-            call(IgnoreWhitespace("""
+            call(
+                IgnoreWhitespace(
+                    """
             COPY "my_db_my_table_staging" FROM 's3://test-bucket/pipeline/my_db.org_table.20190101T010203.avro'
             CREDENTIALS 'aws_iam_role=iam_copy_role'
             FORMAT AS AVRO 'auto'
             EXPLICIT_IDS ACCEPTINVCHARS TRUNCATECOLUMNS
             COMPUPDATE OFF STATUPDATE OFF;
-            """)),
+            """
+                )
+            ),
             call('DELETE FROM "my_table";'),
             call('INSERT INTO "my_table" SELECT * FROM "my_db_my_table_staging";'),
             call('DROP TABLE "my_db_my_table_staging";'),
-            call('END TRANSACTION;')
+            call("END TRANSACTION;"),
         ]
 
         call_args = c.execute.call_args_list
         self.assertListEqual(call_args, target_call_args)
 
-    @patch('druzhba.table.r')
+    @patch("druzhba.table.r")
     def test_redshift_copy_rebuild(self, r):
         m, c = self.mock_cursor()
         r.cursor = Mock(return_value=m)
-        r.iam_copy_role = 'iam_copy_role'
+        r.iam_copy_role = "iam_copy_role"
 
-        c.fetchall = Mock(
-            return_value=[(True, '{"group group_name=r/owner_name"}')]
-        )
+        c.fetchall = Mock(return_value=[(True, '{"group group_name=r/owner_name"}')])
 
         tt = self.MockTable()
-        tt.date_key = '20190101T010203'
+        tt.date_key = "20190101T010203"
         tt.rebuild = True
-        tt.primary_key = ['pk']
+        tt.primary_key = ["pk"]
         tt.full_refresh = True
         tt._can_create = True
-        tt._destination_table_status = \
-            TableConfig.DESTINATION_TABLE_REBUILD
+        tt._destination_table_status = TableConfig.DESTINATION_TABLE_REBUILD
         tt.load()
 
         target_call_args = [
-            call('BEGIN TRANSACTION;'),
+            call("BEGIN TRANSACTION;"),
             call('LOCK TABLE "my_table";'),
             call('DROP TABLE IF EXISTS "my_db_my_table_staging";'),
             call(ANY),  # big get permissions query
-            call('CREATE TABLE my_db_my_table_staging ();'),
-            call('GRANT SELECT ON my_db_my_table_staging TO GROUP group_name;'),
-            call(IgnoreWhitespace("""
+            call("CREATE TABLE my_db_my_table_staging ();"),
+            call("GRANT SELECT ON my_db_my_table_staging TO GROUP group_name;"),
+            call(
+                IgnoreWhitespace(
+                    """
             COPY "my_db_my_table_staging" FROM 's3://test-bucket/pipeline/my_db.org_table.20190101T010203.avro'
             CREDENTIALS 'aws_iam_role=iam_copy_role'
             FORMAT AS AVRO 'auto'
             EXPLICIT_IDS ACCEPTINVCHARS TRUNCATECOLUMNS
             COMPUPDATE OFF STATUPDATE OFF;
-            """)),
+            """
+                )
+            ),
             call('DROP TABLE "my_table";'),
             call('ALTER TABLE "my_db_my_table_staging" RENAME TO "my_table";'),
-            call('SELECT COUNT(*) FROM my_table;'),
-            call('END TRANSACTION;')
+            call("SELECT COUNT(*) FROM my_table;"),
+            call("END TRANSACTION;"),
         ]
 
         call_args = c.execute.call_args_list
@@ -913,7 +937,7 @@ class TestUnloadCopy(unittest.TestCase):
 
 class TestPermissions(unittest.TestCase):
     def test_parse(self):
-        x = '{user1=arwdRxt/admin,user2=r/admin,user3=a*r*w*d*R*x*t*/admin,group group1=r/admin,group group2=r/admin}'
+        x = "{user1=arwdRxt/admin,user2=r/admin,user3=a*r*w*d*R*x*t*/admin,group group1=r/admin,group group2=r/admin}"
         output = Permissions.parse(x)
         expected = [
             Permissions("user1", False, [Permissions.all_grants], "admin"),
@@ -925,7 +949,7 @@ class TestPermissions(unittest.TestCase):
         self.assertListEqual(output, expected)
 
     def test_parse_public(self):
-        x = '{=r/admin}'
+        x = "{=r/admin}"
         output = Permissions.parse(x)
         expected = [
             Permissions("PUBLIC", True, ["SELECT"], "admin"),
@@ -933,11 +957,11 @@ class TestPermissions(unittest.TestCase):
         self.assertListEqual(output, expected)
 
     def test_parse_empty(self):
-        x = ''
+        x = ""
         output = Permissions.parse(x)
         self.assertEqual(output, [])
 
     def test_parse_invalid(self):
-        x = 'something'
+        x = "something"
         output = Permissions.parse(x)
         self.assertEqual(output, None)

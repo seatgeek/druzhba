@@ -11,7 +11,7 @@ from druzhba.table import load_query, TableConfig
 psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
 psycopg2.extensions.register_type(psycopg2.extensions.UNICODEARRAY)
 
-ENCODING = 'UTF8'
+ENCODING = "UTF8"
 
 
 class PostgreSQLTableConfig(TableConfig):
@@ -23,26 +23,39 @@ class PostgreSQLTableConfig(TableConfig):
     ----------
     see TableConfig
     """
-    database_type = 'postgresql'
+
+    database_type = "postgresql"
     avro_type_map = {
-        'string': {'xml', 'char', 'text', 'bytea', 'name', 'json', 'jsonb',
-                   'varchar', 'timestamp', 'date', 'time', 'timestampz'},
-        'int': {},  # prefer long to int
-        'long': {'int2', 'int4', 'oid', 'int8', 'serial8'},
-        'double': {'float4', 'float8'},
-        'boolean': {'bool'},
-        'decimal': {'decimal', 'numeric', 'money'}
+        "string": {
+            "xml",
+            "char",
+            "text",
+            "bytea",
+            "name",
+            "json",
+            "jsonb",
+            "varchar",
+            "timestamp",
+            "date",
+            "time",
+            "timestampz",
+        },
+        "int": {},  # prefer long to int
+        "long": {"int2", "int4", "oid", "int8", "serial8"},
+        "double": {"float4", "float8"},
+        "boolean": {"bool"},
+        "decimal": {"decimal", "numeric", "money"},
     }
     _pg_types = None
 
     def __init__(self, *args, **kwargs):
         super(PostgreSQLTableConfig, self).__init__(*args, **kwargs)
         type_map_defaults = {
-            'text': 'varchar(max)',
-            'jsonb': 'varchar(max)',
-            'json': 'varchar(max)',
-            'array': 'varchar(max)',
-            'uuid': 'char(36)'
+            "text": "varchar(max)",
+            "jsonb": "varchar(max)",
+            "json": "varchar(max)",
+            "array": "varchar(max)",
+            "uuid": "char(36)",
         }
 
         type_map_defaults.update(self.type_map)
@@ -51,11 +64,11 @@ class PostgreSQLTableConfig(TableConfig):
     @property
     def connection_vars(self):
         return {
-            'database': self.db_name,
-            'host': self.db_host,
-            'port': self.db_port,
-            'user': self.db_user,
-            'password': self.db_password
+            "database": self.db_name,
+            "host": self.db_host,
+            "port": self.db_port,
+            "user": self.db_user,
+            "password": self.db_password,
         }
 
     @property
@@ -63,9 +76,15 @@ class PostgreSQLTableConfig(TableConfig):
         if self._pg_types is None:
             with closing(psycopg2.connect(**self.connection_vars)) as conn:
                 conn.set_client_encoding(ENCODING)
-                with closing(conn.cursor(cursor_factory=psycopg2.extras.DictCursor, name='druzhba')) as cursor:
-                    cursor.execute('select oid, typname from pg_type')
-                    self._pg_types = dict([(t['oid'], t['typname']) for t in cursor.fetchall()])
+                with closing(
+                    conn.cursor(
+                        cursor_factory=psycopg2.extras.DictCursor, name="druzhba"
+                    )
+                ) as cursor:
+                    cursor.execute("select oid, typname from pg_type")
+                    self._pg_types = dict(
+                        [(t["oid"], t["typname"]) for t in cursor.fetchall()]
+                    )
         return self._pg_types
 
     def _get_column_is_nullable(self):
@@ -75,10 +94,12 @@ class PostgreSQLTableConfig(TableConfig):
         FROM information_schema.columns
         WHERE table_name = '{0}';
 
-        """.format(self.source_table_name)
+        """.format(
+            self.source_table_name
+        )
 
         return {
-            row['column_name']: row['is_nullable']
+            row["column_name"]: row["is_nullable"]
             for row in self.query(is_nullable_query)
         }
 
@@ -90,55 +111,68 @@ class PostgreSQLTableConfig(TableConfig):
 
         with closing(psycopg2.connect(**self.connection_vars)) as conn:
             conn.set_client_encoding(ENCODING)
-            with closing(conn.cursor(cursor_factory=psycopg2.extras.DictCursor)) as cursor:
-                cursor.execute(sql.rstrip('; \n') + ' LIMIT 1')
-                return ((col.name,
-                         self.type_map.get(self.pg_types[col.type_code],
-                                           self.pg_types[col.type_code]),
-                         None,
-                         col.internal_size,
-                         col.precision,
-                         col.scale,
-                         column_is_nullable.get(col.name))
-                        for col in cursor.description)
+            with closing(
+                conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+            ) as cursor:
+                cursor.execute(sql.rstrip("; \n") + " LIMIT 1")
+                return (
+                    (
+                        col.name,
+                        self.type_map.get(
+                            self.pg_types[col.type_code], self.pg_types[col.type_code],
+                        ),
+                        None,
+                        col.internal_size,
+                        col.precision,
+                        col.scale,
+                        column_is_nullable.get(col.name),
+                    )
+                    for col in cursor.description
+                )
 
     def query_to_redshift_create_table(self, sql, table_name):
         if self.schema_file:
-            create_table = load_query(self.schema_file, CONFIG_DIR).rstrip('; \n\t')
+            create_table = load_query(self.schema_file, CONFIG_DIR).rstrip("; \n\t")
             create_table += self.create_table_keys()
             return create_table
         else:
             if self.query_file is not None:
-                self.logger.warn((
-                    'Cannot obtain `null_ok` attribute for columns in postgres '
-                    'source necessary to create target table "%s", assuming '
-                    'that all columns should be NOT NULL. Please manually '
-                    'rebuild the target table if some columns should be '
-                    'nullable.'
-                ), table_name)
+                self.logger.warn(
+                    (
+                        "Cannot obtain `null_ok` attribute for columns in postgres "
+                        'source necessary to create target table "%s", assuming '
+                        "that all columns should be NOT NULL. Please manually "
+                        "rebuild the target table if some columns should be "
+                        "nullable."
+                    ),
+                    table_name,
+                )
 
             desc = self.get_sql_description(sql)
             create_table = """CREATE TABLE "{}"."{}" (\n    """.format(
-                self.destination_schema_name,
-                table_name)
+                self.destination_schema_name, table_name
+            )
             field_strs = []
-            for name, type_code, _, internal_size, precision, scale, null_ok in desc:
-                size_str = '({}'.format(precision) if precision else ''
-                size_str += ',{}'.format(scale) if scale else ''
-                size_str += ')' if size_str else ''
-                if self.type_map.get(type_code, type_code) == 'varchar':
-                    length = internal_size if internal_size > 0 else 'max'
-                    size_str = '({})'.format(length)
+            for (name, type_code, _, internal_size, precision, scale, null_ok,) in desc:
+                size_str = "({}".format(precision) if precision else ""
+                size_str += ",{}".format(scale) if scale else ""
+                size_str += ")" if size_str else ""
+                if self.type_map.get(type_code, type_code) == "varchar":
+                    length = internal_size if internal_size > 0 else "max"
+                    size_str = "({})".format(length)
 
-                red_type = '{}{}'.format(self.type_map.get(type_code, type_code),
-                                         size_str)
+                red_type = "{}{}".format(
+                    self.type_map.get(type_code, type_code), size_str
+                )
                 field_strs.append(
                     '"{name}" {type}{null_ok}'.format(
                         name=name,
                         type=red_type,
-                        null_ok='' if null_ok else ' NOT NULL'))
+                        null_ok="" if null_ok else " NOT NULL",
+                    )
+                )
 
-            create_table += '\n  , '.join(field_strs)
+            create_table += "\n  , ".join(field_strs)
             create_table += "\n)\n"
             create_table += self.create_table_keys()
             return create_table
@@ -161,12 +195,13 @@ class PostgreSQLTableConfig(TableConfig):
 
         self.logger.debug("Running query: {}".format(sql))
 
-        cursor_name = '{}_{}'.format(self.source_table_name, self.date_key)
+        cursor_name = "{}_{}".format(self.source_table_name, self.date_key)
         with closing(psycopg2.connect(**self.connection_vars)) as conn:
             conn.set_client_encoding(ENCODING)
 
-            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor,
-                             name=cursor_name) as cursor:
+            with conn.cursor(
+                cursor_factory=psycopg2.extras.RealDictCursor, name=cursor_name
+            ) as cursor:
                 cursor.execute(sql)
                 for dict_row in cursor:
                     yield dict_row
@@ -176,24 +211,38 @@ class PostgreSQLTableConfig(TableConfig):
             return self.get_query_from_file()
 
         if not self.pks:
-            self.pks = [c['attname'] for c in self.query("""
+            self.pks = [
+                c["attname"]
+                for c in self.query(
+                    """
                 SELECT a.attname
                 FROM pg_index i
                     JOIN pg_attribute a ON a.attrelid = i.indrelid
                                         AND a.attnum = ANY(i.indkey)
                 WHERE i.indrelid = '{}'::regclass
                     AND i.indisprimary;
-                """.format(self.source_table_name))]
+                """.format(
+                        self.source_table_name
+                    )
+                )
+            ]
 
-        columns = [c['column_name'] for c in self.query("""
+        columns = [
+            c["column_name"]
+            for c in self.query(
+                """
             SELECT column_name
             FROM information_schema.columns
             WHERE table_schema = CURRENT_SCHEMA
                 AND "table_name"= '{}'
                 AND column_name NOT IN ('{}')
             ORDER BY ordinal_position
-            """.format(self.source_table_name,
-                       "','".join(self.columns_to_drop)))]
+            """.format(
+                    self.source_table_name, "','".join(self.columns_to_drop)
+                )
+            )
+        ]
 
-        return 'SELECT\n    {}\nFROM "{}"'.format('\n  , '.join(columns),
-                                                  self.source_table_name)
+        return 'SELECT\n    {}\nFROM "{}"'.format(
+            "\n  , ".join(columns), self.source_table_name
+        )

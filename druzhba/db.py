@@ -12,8 +12,7 @@ from druzhba.postgres import PostgreSQLTableConfig
 
 
 ConnectionParams = namedtuple(
-    'ConnectionParams',
-    ['name', 'host', 'port', 'user', 'password']
+    "ConnectionParams", ["name", "host", "port", "user", "password"]
 )
 
 
@@ -54,9 +53,15 @@ class DatabaseConfig(object):
         python namespace for appropriate DBAPI errors
     """
 
-    def __init__(self, database_alias, database_type,
-                 connection_string=None, connection_string_env=None,
-                 object_schema_name=None, db_template_data=None):
+    def __init__(
+        self,
+        database_alias,
+        database_type,
+        connection_string=None,
+        connection_string_env=None,
+        object_schema_name=None,
+        db_template_data=None,
+    ):
         self.database_alias = database_alias
         self.database_type = database_type
 
@@ -65,17 +70,17 @@ class DatabaseConfig(object):
         self._object_schema_name = object_schema_name
         self._db_template_data = db_template_data
 
-        if self.database_type == 'mysql':
+        if self.database_type == "mysql":
             self._table_conf_cls = MySQLTableConfig
             self.db_errors = pymysql.err
-        elif self.database_type == 'postgres':
+        elif self.database_type == "postgres":
             self._table_conf_cls = PostgreSQLTableConfig
             self.db_errors = psycopg2
-        elif self.database_type == 'mssql':
+        elif self.database_type == "mssql":
             self._table_conf_cls = MSSQLTableConfig
             self.db_errors = pymssql
         else:
-            msg = 'Unknown database type {}'.format(self.database_type)
+            msg = "Unknown database type {}".format(self.database_type)
             raise ValueError(msg)
 
     def get_table_config(self, table_params):
@@ -93,19 +98,19 @@ class DatabaseConfig(object):
             if self._connection_string_env:
                 env_path = self._connection_string_env
             else:
-                env_path = self.database_alias.upper() + '_DATABASE_URL'
+                env_path = self.database_alias.upper() + "_DATABASE_URL"
             db_url = os.getenv(env_path)
             if db_url is None:
                 raise RuntimeError(
-                    "Environment variable {} was not set".format(env_path))
+                    "Environment variable {} was not set".format(env_path)
+                )
 
         parsed = urlparse(db_url)
 
         return ConnectionParams(
-            name=self._object_schema_name or parsed.path.lstrip('/'),
+            name=self._object_schema_name or parsed.path.lstrip("/"),
             host=parsed.hostname,
             port=parsed.port,
             user=parsed.username,
-            password=parsed.password
+            password=parsed.password,
         )
-

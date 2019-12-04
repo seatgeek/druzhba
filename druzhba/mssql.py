@@ -15,28 +15,27 @@ class MSSQLTableConfig(TableConfig):
     ----------
     see TableConfig
     """
-    database_type = 'mssql'
+
+    database_type = "mssql"
     avro_type_map = {
-        'string': {pymssql.STRING.value,
-                   pymssql.DATETIME.value,
-                   pymssql.BINARY.value},
-        'int': {},  # prefer long to int
-        'long': {pymssql.NUMBER.value},
-        'double': {},
-        'boolean': {},
-        'decimal': {pymssql.DECIMAL.value}
+        "string": {pymssql.STRING.value, pymssql.DATETIME.value, pymssql.BINARY.value,},
+        "int": {},  # prefer long to int
+        "long": {pymssql.NUMBER.value},
+        "double": {},
+        "boolean": {},
+        "decimal": {pymssql.DECIMAL.value},
     }
 
     @property
     def connection_vars(self):
         return {
-            'server': self.db_host,
-            'user': self.db_user,
-            'password': self.db_password,
-            'database': self.db_name,
-            'port': self.db_port,
-            'login_timeout': 10,
-            'charset': 'UTF-8'  # default, but be explicit
+            "server": self.db_host,
+            "user": self.db_user,
+            "password": self.db_password,
+            "database": self.db_name,
+            "port": self.db_port,
+            "login_timeout": 10,
+            "charset": "UTF-8",  # default, but be explicit
         }
 
     def get_sql_description(self, sql):
@@ -48,7 +47,7 @@ class MSSQLTableConfig(TableConfig):
     def query_to_redshift_create_table(self, sql, table_name):
         if self.schema_file:
             query = load_query(self.schema_file, CONFIG_DIR)
-            create_table = query.rstrip('; \n')
+            create_table = query.rstrip("; \n")
             create_table += self.create_table_keys()
             return create_table
         else:

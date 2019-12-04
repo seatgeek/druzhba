@@ -16,7 +16,7 @@ def _avro_format(inp):
     if type(inp) == datetime.datetime:
         # datetime is a subclass of date but the api for isoformat is different
         # so we can't use isinstance here
-        return inp.isoformat(' ')
+        return inp.isoformat(" ")
     if isinstance(inp, datetime.date):
         return inp.isoformat()
     if isinstance(inp, datetime.timedelta):
@@ -24,7 +24,9 @@ def _avro_format(inp):
     if isinstance(inp, decimal.Decimal):
         return str(inp)
     if isinstance(inp, str):
-        return unicodedata.normalize('NFKD', inp).encode('ascii', 'ignore').decode('ascii')
+        return (
+            unicodedata.normalize("NFKD", inp).encode("ascii", "ignore").decode("ascii")
+        )
     return inp
 
 
@@ -49,13 +51,9 @@ def write_avro_file(f, results_iter, fields, table, max_size=100 * 1024 ** 2):
     """
 
     if table in WRITERS:
-        table += 'zzz'
+        table += "zzz"
 
-    schema = {
-        'type': 'record',
-        'name': table,
-        'fields': fields
-    }
+    schema = {"type": "record", "name": table, "fields": fields}
 
     writer = Writer(f, schema)
 

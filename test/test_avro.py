@@ -6,16 +6,13 @@ from druzhba.avro import write_avro_file
 
 
 class TestS3AvroRs(unittest.TestCase):
-    fields = [
-        {'name': 'a', 'type': 'int'},
-        {'name': 'b', 'type': 'string'}
-    ]
+    fields = [{"name": "a", "type": "int"}, {"name": "b", "type": "string"}]
 
     def test_write_avro_increment_full(self):
-        data = itertools.repeat({'a': 1, 'b': 'foo'}, 10)
+        data = itertools.repeat({"a": 1, "b": "foo"}, 10)
 
         with BytesIO() as f:
-            out = write_avro_file(f, data, self.fields, 'tbl', 1024)
+            out = write_avro_file(f, data, self.fields, "tbl", 1024)
 
         # method should return true if we fully drain the iterator
         self.assertTrue(out)
@@ -25,10 +22,10 @@ class TestS3AvroRs(unittest.TestCase):
         self.assertEqual(remaining, 0)
 
     def test_write_avro_increment_partial(self):
-        data = itertools.repeat({'a': 1, 'b': 'foo'}, 10000)
+        data = itertools.repeat({"a": 1, "b": "foo"}, 10000)
 
         with BytesIO() as f:
-            complete, nrows = write_avro_file(f, data, self.fields, 'tbl', 1024)
+            complete, nrows = write_avro_file(f, data, self.fields, "tbl", 1024)
 
         remaining = len([x for x in data])
 
