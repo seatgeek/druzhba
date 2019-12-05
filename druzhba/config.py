@@ -6,7 +6,7 @@ import statsd
 CONFIG_DIR = os.getenv("DRUZHBA_CONFIG_DIR")
 
 
-statsd_client = statsd.StatsClient()
+statsd_client = statsd.StatsClient(os.getenv('STATSD_HOST'), os.getenv('STATSD_PORT'))
 
 
 class S3Config(object):

@@ -13,5 +13,6 @@ pip install -e .
 To run tests:
 
 ```
+source .env.test
 python setup.py nosetests
 ```

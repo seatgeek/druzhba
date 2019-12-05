@@ -45,6 +45,9 @@ class MysqlTest(unittest.TestCase):
         t = table._mysql_to_redshift_type("BIGINT(8)")
         self.assertEqual(t, "bigint")
 
+        t = table._mysql_to_redshift_type("BIGINT(8) UNSIGNED")
+        self.assertEqual(t, "numeric(65, 0)")
+
         t = table._mysql_to_redshift_type("FLOAT")
         self.assertEqual(t, "real")
 

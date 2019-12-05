@@ -297,7 +297,7 @@ class TableConfig(object):
     def _clean_type_map(cls, type_map):
         if not type_map:
             return {}
-        for k, v in type_map:
+        for k, v in type_map.items():
             type_map[k.lower()] = v
         return type_map
 
