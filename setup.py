@@ -32,6 +32,7 @@ setuptools.setup(
     # TODO: move specific DBs into extras
     install_requires=[
         "boto3>=1.4.8",
+        "botocore>=1.13.32",
         "fastavro>=0.21.22",
         "Jinja2>=2.10",
         "psycopg2>=2.7.3.2",
