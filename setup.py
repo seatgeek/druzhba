@@ -35,9 +35,9 @@ setuptools.setup(
         "botocore>=1.13.32",
         "fastavro>=0.21.22",
         "Jinja2>=2.10",
-        "psycopg2>=2.7.3.2",
-        "pyaml>=17.10.0",  # TODO: replace with PyODBC
-        "pymssql<3.0",
+        "psycopg2>=2.7.3.2",  # TODO: This requires libpq-dev python-dev make optional
+        "pyaml>=17.10.0",
+        "pymssql<3.0",  # TODO: replace with PyODBC
         "pymysql>=0.7.11",
         "statsd>=3.3.0",
     ],
