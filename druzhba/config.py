@@ -20,8 +20,8 @@ class FakeStatsd(object):
 
 
 def get_statsd_client():
-    host = os.getenv('STATSD_HOST')
-    port = os.getenv('STATSD_PORT')
+    host = os.getenv("STATSD_HOST")
+    port = os.getenv("STATSD_PORT")
     if host and port:
         return statsd.StatsClient(host, port)
     else:

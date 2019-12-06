@@ -25,14 +25,12 @@ setuptools.setup(
     ],
     python_requires=">=3.6",
     setup_requires=[
-        "nose>=1.3.7",
-        "mock>=2.0.0",
-        "cython>=0.29.7",  # TODO: find a way to not pre-install this (needed for mssql)
+        "cython>=0.29.7"  # TODO: find a way to not pre-install this (needed for mssql)
     ],
     # TODO: move specific DBs into extras
     install_requires=[
-        "boto3>=1.4.8",
-        "botocore>=1.13.32",
+        "boto3>=1.10.34",
+        "botocore>=1.13.34",
         "fastavro>=0.21.22",
         "Jinja2>=2.10",
         "psycopg2>=2.7.3.2",  # TODO: This requires libpq-dev python-dev make optional
@@ -41,7 +39,9 @@ setuptools.setup(
         "pymysql>=0.7.11",
         "statsd>=3.3.0",
     ],
-    extras_require={},
-    entry_points={"console_scripts": ["druzhba=druzhba.main:main",],},
+    extras_require={"dev": "black"},
+    entry_points={"console_scripts": ["druzhba=druzhba.main:main"]},
     scripts=[],
+    tests_require=["nose>=1.3.7", "mock>=2.0.0"],
+    test_suite="nose.collector",
 )

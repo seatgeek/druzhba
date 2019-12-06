@@ -14,5 +14,5 @@ To run tests:
 
 ```
 source .env.test
-python setup.py nosetests
+python setup.py test
 ```
