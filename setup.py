@@ -9,7 +9,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="druzhba",
-    version="0.1.0",
+    version="0.1.1",
     author="todo",
     author_email="todo",
     description="A friendly ETL pipeline",
@@ -31,7 +31,7 @@ setuptools.setup(
     install_requires=[
         "boto3>=1.10.34",
         "botocore>=1.13.34",
-        "fastavro>=0.21.22",
+        "fastavro>=0.21.22,<0.22",
         "Jinja2>=2.10",
         "psycopg2>=2.7.3.2",  # TODO: This requires libpq-dev python-dev make optional
         "pyaml>=17.10.0",
