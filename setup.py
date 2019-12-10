@@ -32,7 +32,7 @@ setuptools.setup(
     # TODO: move specific DBs into extras
     install_requires=[
         "boto3>=1.10.34",
-        "botocore>=1.13.34",
+        "botocore>=1.13.35",
         "fastavro>=0.21.22,<0.22",
         "Jinja2>=2.10",
         "psycopg2>=2.7.3.2",  # TODO: This requires libpq-dev python-dev make optional
