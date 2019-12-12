@@ -15,6 +15,9 @@ class FakeStatsd(object):
         finally:
             pass
 
+    def timing(self, *args, **kwargs):
+        pass
+
     def incr(self, *args, **kwargs):
         pass
 
@@ -76,7 +79,7 @@ class MonitoringProvider(object):
             The name of the table currently being processed
 
         error: Exception (optional)
-            The exception tha occured within the relevant processing step. This
+            The exception tha occurred within the relevant processing step. This
             exception is passed for logging or monitoring purposes and will be
             reraised within the Druzhba application after the on_event method
             is invoked.
@@ -139,13 +142,22 @@ class DefaultMonitoringProvider(MonitoringProvider):
     def on_event(self, event, event_state, **kwargs):
         db_alias = kwargs.get("db_alias")
         table = kwargs.get("table")
+        elapsed_time = kwargs.get("et")
+
+        if db_alias and table:
+            full_event_name = f"druzhba.db.{event}.{db_alias}.{table}"
+        elif db_alias:
+            full_event_name = f"druzhba.db.{event}.{db_alias}"
+        else:
+            full_event_name = f"druzhba.db.{event}"
+
         if event_state == EventState.COMPLETE:
             if event in ["extract-table", "create-redshift-table", "load-table"]:
-                statsd_client.incr(f"druzhba.db.{event}.{db_alias}")
-            if event in ["full-run-time", "run-time"]:
-                statsd_client.timing(event, 1e6 * kwargs["et"])
+                statsd_client.incr(full_event_name)
+            if event in ['run-time', 'full-run-time']:
+                statsd_client.timing(full_event_name, elapsed_time)
+
+        # Errors in timers currently go unhandled
 
         if event == "disconnect-error":
-            statsd_client.incr(f"druzhba.db.disconnect-error.{db_alias}")
-
-        self.on_event(event, event_state, db_alias=db_alias, table=table)
+            statsd_client.incr(f"druzhba.db.{event}.{db_alias}")
