@@ -1,34 +1,8 @@
-from contextlib import contextmanager
 import logging.config
 import os
 
-import statsd
 
 CONFIG_DIR = os.getenv("DRUZHBA_CONFIG_DIR")
-
-
-class FakeStatsd(object):
-    @contextmanager
-    def timer(self, *args, **kwargs):
-        try:
-            yield None
-        finally:
-            pass
-
-    def incr(self, *args, **kwargs):
-        pass
-
-
-def get_statsd_client():
-    host = os.getenv("STATSD_HOST")
-    port = os.getenv("STATSD_PORT")
-    if host and port:
-        return statsd.StatsClient(host, port)
-    else:
-        return FakeStatsd()
-
-
-statsd_client = get_statsd_client()
 
 
 class S3Config(object):

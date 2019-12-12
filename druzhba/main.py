@@ -11,8 +11,9 @@ import psycopg2
 import yaml
 from botocore.vendored.requests.exceptions import SSLError
 
-from druzhba.config import CONFIG_DIR, statsd_client, configure_logging
+from druzhba.config import CONFIG_DIR, configure_logging
 from druzhba.db import DatabaseConfig
+from druzhba.monitoring import DefaultMonitoringProvider
 from druzhba.redshift import create_index_table
 from druzhba.table import (
     ConfigurationError,
@@ -21,7 +22,9 @@ from druzhba.table import (
     InvalidSchemaError,
 )
 
+
 logger = logging.getLogger("druzhba.main")
+monitor = DefaultMonitoringProvider()
 
 
 def process_database(
@@ -31,7 +34,7 @@ def process_database(
 ):
     logger.info("Beginning database %s", db_alias)
     try:
-        with statsd_client.timer(f"druzhba.db.run-time.{db_alias}"):
+        with monitor.wrap("run-time", database=db_alias):
             _process_database(
                 index_schema, index_table,
                 db_alias, db_type, only_table_names, full_refresh, rebuild
@@ -120,13 +123,18 @@ def _process_database(
         advance_to_next_table = False
         while not advance_to_next_table and retries_remaining > 0:
             try:
-                table.check_destination_table_status()
-                statsd_client.incr(f"druzhba.db.create-redshift-table.{db_alias}")
+                with monitor.wrap("create-redshift-table", database=db_alias):
+                    table.check_destination_table_status()
 
-                table.extract()
-                statsd_client.incr(f"druzhba.db.extract-table.{db_alias}")
-                table.load()
-                statsd_client.incr(f"druzhba.db.load-table.{db_alias}")
+                with monitor.wrap(
+                    "extract-table", database=db_alias, table=table.source_table_name
+                ):
+                    table.extract()
+
+                with monitor.wrap(
+                    "load-table", database=db_alias, table=table.source_table_name
+                ):
+                    table.load()
 
                 advance_to_next_table = True
 
@@ -166,7 +174,7 @@ def _process_database(
                         table.source_table_name,
                     )
                     logger.info(e)
-                    statsd_client.incr(f"druzhba.db.disconnect-error.{db_alias}")
+                    monitor.record_error("disconnect-error", db_alias=db_alias)
                     time.sleep((5.0 - retries_remaining) ** 2)
                 else:
                     logger.error(
@@ -198,7 +206,7 @@ def _process_database(
         )
 
 
-@statsd_client.timer("druzhba.full-run-time")
+@monitor.timer("full-run-time")
 def run(args):
     if args.log_level:
         logger.setLevel(args.log_level)
