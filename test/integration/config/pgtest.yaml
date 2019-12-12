@@ -1,0 +1,45 @@
+---
+database_name: druzhba_test
+tables:
+  - source_table_name: test_basic
+    destination_table_name: test_basic
+    destination_schema_name: druzhba_test
+    distribution_key: pk1
+    sort_keys:
+      - updated_at1
+    index_column: updated_at1
+    primary_key:
+      - pk1
+    columns_to_drop:
+      - drop1
+      - drop2
+    type_map:
+      enum1: varchar(15)
+
+#  - source_table_name: test_infer_primary_key
+#    destination_table_name: test_infer_primary_key
+#    destination_schema_name: druzhba_test
+#    index_column: created_at
+#
+#  - source_table_name: test_always_refresh
+#    destination_table_name: test_always_refresh
+#    destination_schema_name: druzhba_test
+#    full_refresh: true
+#
+#  - source_table_name: test_append_only
+#    destination_table_name: test_append_only
+#    destination_schema_name: druzhba_test
+#    index_column: created_at
+#    append_only: true
+#
+#  - source_table_name: test_index_sql
+#    destination_table_name: test_index_sql
+#    destination_schema_name: druzhba_test
+#    distribution_key: foo_value
+#    sort_keys:
+#      - foo_value
+#    index_column: created_at
+#    primary_key:
+#      - foo_value
+
+# Test other types of incremental columns

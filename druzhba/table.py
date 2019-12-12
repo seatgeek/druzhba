@@ -19,8 +19,6 @@ from druzhba.config import S3Config, CONFIG_DIR
 from druzhba.avro import write_avro_file
 from druzhba.redshift import *
 
-r = RedshiftConfigMixin()
-
 
 def load_query(query, query_dir):
     with open(os.path.join(query_dir, query)) as f:
@@ -148,7 +146,7 @@ class TableConfig(object):
         Default: None
     index_column : str, optional
         Column used to identify new or updated rows in the source table.
-        Persisted in public.pipeline_table_index.
+        Persisted in the index table.
     index_sql : str, optional
         Custom SQL to be run against the source DB to find the current
         max index. Standard templating for the table applies and Druzhba expects
@@ -222,6 +220,8 @@ class TableConfig(object):
         destination_table_name,
         destination_schema_name,
         source_table_name,
+        index_schema,
+        index_table,
         query_file=None,
         distribution_key=None,
         sort_keys=None,
@@ -274,6 +274,8 @@ class TableConfig(object):
         self._destination_table_status = None
         self.table_template_data = table_template_data
         self.db_template_data = db_template_data
+        self.index_schema = index_schema
+        self.index_table = index_table
 
         self.date_key = datetime.datetime.strftime(
             datetime.datetime.utcnow(), "%Y%m%dT%H%M%S"
@@ -547,9 +549,9 @@ class TableConfig(object):
             value found
         """
 
-        query = """
+        query = f"""
         SELECT index_value
-          FROM "public"."pipeline_table_index"
+          FROM "{self.index_schema}"."{self.index_table}"
          WHERE datastore_name = %s
            AND database_name = %s
            AND table_name = %s
@@ -557,7 +559,7 @@ class TableConfig(object):
         LIMIT 1;
         """
         self.logger.debug("Querying Redshift for last updated index")
-        with r.cursor() as cur:
+        with redshift.cursor() as cur:
             cur.execute(
                 query, (self.database_alias, self.db_name, self.source_table_name)
             )
@@ -643,7 +645,7 @@ class TableConfig(object):
          WHERE schemaname = %s
            AND tablename = %s;
         """
-        with r.cursor() as cur:
+        with redshift.cursor() as cur:
             self.set_search_path(cur)
             cur.execute(
                 query, (self.destination_schema_name, self.destination_table_name)
@@ -745,8 +747,8 @@ class TableConfig(object):
         if self.new_index_value is None:
             return
 
-        query = """
-        INSERT INTO "public"."pipeline_table_index" VALUES
+        query = f"""
+        INSERT INTO "{self.index_schema}"."{self.index_table}" VALUES
         (%s, %s, %s, %s)
         """
 
@@ -760,8 +762,8 @@ class TableConfig(object):
             )
             raise TypeError(msg)
 
-        self.logger.info("Updating pipeline_table_index")
-        with r.cursor() as cur:
+        self.logger.info("Updating index table")
+        with redshift.cursor() as cur:
             args = (
                 self.database_alias,
                 self.db_name,
@@ -867,7 +869,7 @@ class TableConfig(object):
         }
 
         self.logger.info("Inserting record into table_extract_detail")
-        with r.cursor() as cur:
+        with redshift.cursor() as cur:
             cur.execute(query, args)
 
     def register_load_monitor(self):
@@ -925,7 +927,7 @@ class TableConfig(object):
         }
 
         self.logger.info("Inserting record into table_load_detail")
-        with r.cursor() as cur:
+        with redshift.cursor() as cur:
             cur.execute(query, args)
 
     def extract(self):
@@ -954,7 +956,7 @@ class TableConfig(object):
             self.write_manifest_file()
 
         endtime = datetime.datetime.utcnow()
-        self.register_extract_monitor(starttime, endtime)
+        # self.register_extract_monitor(starttime, endtime)
 
     def avro_to_s3(self, results_iter, results_schema):
         """Attempts to serialize a result set to an AVRO file
@@ -1176,7 +1178,7 @@ class TableConfig(object):
         is_rebuild = self._destination_table_status == self.DESTINATION_TABLE_REBUILD
         is_dne = self._destination_table_status == self.DESTINATION_TABLE_DNE
 
-        with r.cursor() as cur:
+        with redshift.cursor() as cur:
             self.set_search_path(cur)
 
             # If table does not exist, create it
@@ -1234,7 +1236,7 @@ class TableConfig(object):
             query = generate_copy_query(
                 staging_table,
                 self.copy_target_url,
-                r.iam_copy_role,
+                redshift.iam_copy_role,
                 self.manifest_mode,
             )
             self.logger.debug(query)
@@ -1268,12 +1270,12 @@ class TableConfig(object):
             self.register_and_cleanup()
 
     def register_and_cleanup(self):
-        # Register in pipeline_table_index
+        # Register in index table.
         self.set_last_updated_index()
 
         # Register in monitor table
         self.endtime = datetime.datetime.utcnow()
-        self.register_load_monitor()
+        # self.register_load_monitor()
 
         # Clean up S3
         for key in self.data_file_keys():

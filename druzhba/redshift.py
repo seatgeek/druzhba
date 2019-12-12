@@ -1,3 +1,4 @@
+import logging
 from contextlib import contextmanager
 
 import psycopg2
@@ -5,20 +6,31 @@ import psycopg2
 from druzhba.config import RedshiftConfig
 
 
-class RedshiftConfigMixin(RedshiftConfig):
+logger = logging.getLogger("druzhba.redshift")
+
+
+class Redshift(RedshiftConfig):
     """Mixin for Redshift connection configs"""
 
     @contextmanager
-    def connection(self, sslmode="verify-ca"):
-        connection = psycopg2.connect(
-            host=self.host,
-            port=self.port,
-            database=self.database,
-            user=self.user,
-            password=self.password,
-            sslmode=sslmode,
-            sslrootcert=self.redshift_cert_path,
-        )
+    def connection(self):
+        if self.url:
+            redshift_kwargs = {"dsn": self.url}
+        else:
+            redshift_kwargs = {
+                "host": self.host,
+                "port": self.port,
+                "database": self.database,
+                "user": self.user,
+                "password": self.password,
+            }
+
+        if self.redshift_cert_path:
+            redshift_kwargs.update(
+                {"sslmode": "verify-ca", "sslrootcert": self.redshift_cert_path}
+            )
+
+        connection = psycopg2.connect(**redshift_kwargs)
         connection.set_client_encoding("utf-8")
         connection.autocommit = True
         try:
@@ -27,13 +39,16 @@ class RedshiftConfigMixin(RedshiftConfig):
             connection.close()
 
     @contextmanager
-    def cursor(self, sslmode="verify-ca", cursor_factory=None):
-        with self.connection(sslmode) as connection:
+    def cursor(self, cursor_factory=None):
+        with self.connection() as connection:
             cursor = connection.cursor(cursor_factory=cursor_factory)
             try:
                 yield cursor
             finally:
                 cursor.close()
+
+
+redshift = Redshift()
 
 
 def generate_copy_query(table_to_copy, copy_target_url, iam_copy_role, manifest_mode):
@@ -84,3 +99,34 @@ def generate_drop_exists_query(table):
 
 def generate_lock_query(table):
     return 'LOCK TABLE "{}";'.format(table)
+
+
+def create_index_table(index_schema, index_table):
+    logger.info("Checking for existence of index table %s.%s", index_schema, index_table)
+    with redshift.cursor() as cur:
+        cur.execute(
+            """
+                SELECT COUNT(*) = 1 
+                FROM pg_catalog.pg_class c
+                JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+                WHERE n.nspname = %s 
+                    AND c.relname = %s
+                    AND c.relkind = 'r'    -- only tables
+            """,
+            (index_schema, index_table),
+        )
+        if not cur.fetchone()[0]:
+            logger.warning("Index table %s.%s does not exist, creating", index_schema, index_table)
+            cur.execute(f"""
+                CREATE TABLE {index_schema}.{index_table} (
+                    datastore_name VARCHAR(127) NOT NULL,
+                    database_name  VARCHAR(127) NOT NULL,
+                    table_name     VARCHAR(127) NOT NULL,
+                    index_value    VARCHAR(256) NOT NULL,
+                    created_ts     TIMESTAMP DEFAULT getdate()
+                )
+                DISTSTYLE even
+                SORTKEY(created_ts)
+                ;
+            """)
+            logger.info("Index table %s.%s created", index_schema, index_table)

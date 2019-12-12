@@ -37,11 +37,16 @@ class S3Config(object):
 
 
 class RedshiftConfig(object):
-    host = os.getenv("DW_REDSHIFT_HOST")
-    port = os.getenv("DW_REDSHIFT_PORT", 5439)
-    database = os.getenv("DW_REDSHIFT_DATABASE")
-    user = os.getenv("DW_REDSHIFT_USER")
-    password = os.getenv("DW_REDSHIFT_PASSWORD")
+    """Either a URL or a host/port/database/user may be used."""
+
+    url = os.getenv("REDSHIFT_URL")
+
+    host = os.getenv("REDSHIFT_HOST")
+    port = os.getenv("REDSHIFT_PORT", 5439)
+    database = os.getenv("REDSHIFT_DATABASE")
+    user = os.getenv("REDSHIFT_USER")
+    password = os.getenv("REDSHIFT_PASSWORD")
+
     iam_copy_role = os.getenv("IAM_COPY_ROLE")
     redshift_cert_path = os.getenv("REDSHIFT_CERT_PATH")
 

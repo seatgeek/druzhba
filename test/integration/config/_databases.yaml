@@ -1,0 +1,7 @@
+---
+index:
+  schema: druzhba_test
+  table: pipeline_table_index
+databases:
+  - alias: pgtest
+    type: postgres

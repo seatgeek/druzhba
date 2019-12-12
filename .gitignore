@@ -57,6 +57,7 @@ target/
 
 # dotenv
 .env
+.env.test
 
 # virtualenv
 .venv

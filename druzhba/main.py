@@ -13,6 +13,7 @@ from botocore.vendored.requests.exceptions import SSLError
 
 from druzhba.config import CONFIG_DIR, statsd_client, configure_logging
 from druzhba.db import DatabaseConfig
+from druzhba.redshift import create_index_table
 from druzhba.table import (
     ConfigurationError,
     TableConfig,
@@ -24,12 +25,15 @@ logger = logging.getLogger("druzhba.main")
 
 
 def process_database(
-    db_alias, db_type, only_table_names, full_refresh=None, rebuild=None
+    index_schema, index_table,
+    db_alias, db_type, only_table_names,
+    full_refresh=None, rebuild=None
 ):
     logger.info("Beginning database %s", db_alias)
     try:
         with statsd_client.timer(f"druzhba.db.run-time.{db_alias}"):
             _process_database(
+                index_schema, index_table,
                 db_alias, db_type, only_table_names, full_refresh, rebuild
             )
         logger.info("Done with database %s", db_alias)
@@ -40,7 +44,9 @@ def process_database(
 
 
 def _process_database(
-    db_alias, db_type, only_table_names, full_refresh=None, rebuild=None
+    index_schema, index_table,
+    db_alias, db_type, only_table_names,
+    full_refresh=None, rebuild=None
 ):
     with open("{}/{}.yaml".format(CONFIG_DIR, db_alias), "r") as f:
         dbconfig = yaml.safe_load(f)
@@ -88,7 +94,7 @@ def _process_database(
             table_params["full_refresh"] = True
         elif full_refresh:
             table_params["full_refresh"] = True
-        table = db.get_table_config(table_params)
+        table = db.get_table_config(table_params, index_schema=index_schema, index_table=index_table)
         table.validate_runtime_configuration()
 
         if COMPILE_ONLY:
@@ -222,11 +228,20 @@ def run(args):
 
     with open("{}/_databases.yaml".format(CONFIG_DIR), "r") as f:
         yaml_read = yaml.safe_load(f)
+        index_schema = yaml_read["index"]["schema"]
+        index_table = yaml_read["index"]["table"]
+
+    # Create the index table if it doesn't exist
+    create_index_table(index_schema, index_table)
 
     if args.database:
         dbs = [
-            (db["alias"], db["type"], args.tables, args.full_refresh, args.rebuild)
-            for db in yaml_read
+            (
+                index_schema, index_table,
+                db["alias"], db["type"],
+                args.tables, args.full_refresh, args.rebuild,
+            )
+            for db in yaml_read["databases"]
             if db["alias"] == args.database
         ]
         if not dbs:
@@ -234,8 +249,12 @@ def run(args):
             raise ValueError(msg)
     else:
         dbs = [
-            (db["alias"], db["type"], args.tables, None, None)
-            for db in yaml_read
+            (
+                index_schema, index_table,
+                db["alias"], db["type"],
+                args.tables, None, None,
+            )
+            for db in yaml_read["databases"]
             if db.get("enabled", True)
         ]
 

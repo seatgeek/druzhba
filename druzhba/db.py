@@ -83,11 +83,13 @@ class DatabaseConfig(object):
             msg = "Unknown database type {}".format(self.database_type)
             raise ValueError(msg)
 
-    def get_table_config(self, table_params):
+    def get_table_config(self, table_params, index_schema, index_table):
         return self._table_conf_cls(
             self.database_alias,
             self.get_connection_params(),
             db_template_data=self._db_template_data,
+            index_schema=index_schema,
+            index_table=index_table,
             **table_params
         )
 

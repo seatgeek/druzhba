@@ -115,7 +115,7 @@ class TableTest(unittest.TestCase):
     def test_where_clause(self):
         # no index column
         table_config = TableConfig(
-            "alias", mock_conn, "table", "schema", "source", full_refresh=True
+            "alias", mock_conn, "table", "schema", "source", "index_schema", "index_table", full_refresh=True
         )
         self.assertEqual(table_config.where_clause(), "")
 
@@ -125,7 +125,7 @@ class TableTest(unittest.TestCase):
         ) as m:
             m.return_value = None
             table_config = TableConfig(
-                "alias", mock_conn, "table", "schema", "source", index_column="id"
+                "alias", mock_conn, "table", "schema", "source", "index_schema", "index_table", index_column="id"
             )
             self.assertEqual(table_config.where_clause(), "")
 
@@ -139,7 +139,7 @@ class TableTest(unittest.TestCase):
             ) as niv:
                 niv.return_value = 42
                 table_config = TableConfig(
-                    "alias", mock_conn, "table", "schema", "source", index_column="id"
+                    "alias", mock_conn, "table", "schema", "source", "index_schema", "index_table", index_column="id"
                 )
                 self.assertEqual(table_config.where_clause(), "\nWHERE id <= '42'")
 
@@ -153,7 +153,7 @@ class TableTest(unittest.TestCase):
             ) as niv:
                 niv.return_value = 42
                 table_config = TableConfig(
-                    "alias", mock_conn, "table", "schema", "source", index_column="id"
+                    "alias", mock_conn, "table", "schema", "source", "index_schema", "index_table", index_column="id"
                 )
                 self.assertEqual(
                     table_config.where_clause(), "\nWHERE id > '13' AND id <= '42'"
@@ -166,7 +166,7 @@ class TestTableIndexLogic(unittest.TestCase):
     class MockTable(TableConfig):
         def __init__(self, oiv, niv, append_only=False, full_refresh=False):
             super(TestTableIndexLogic.MockTable, self).__init__(
-                "my_db", mock_conn, "my_table", "my_schema", "org_table"
+                "my_db", mock_conn, "my_table", "my_schema", "org_table", "index_schema", "index_table"
             )
 
             self._oiv = oiv
@@ -273,7 +273,7 @@ class TestSetLastUpdateIndex(unittest.TestCase):
     class MockTable(TableConfig):
         def __init__(self, niv):
             super(TestSetLastUpdateIndex.MockTable, self).__init__(
-                "my_db", mock_conn, "my_table", "my_schema", "org_table"
+                "my_db", mock_conn, "my_table", "my_schema", "org_table", "index_schema", "index_table"
             )
 
             self._niv = niv
@@ -302,18 +302,18 @@ class TestSetLastUpdateIndex(unittest.TestCase):
     @property
     def query(self):
         return """
-        INSERT INTO "public"."pipeline_table_index" VALUES
+        INSERT INTO "index_schema"."index_table" VALUES
         (%s, %s, %s, %s)
         """
 
-    @patch("druzhba.table.r")
+    @patch("druzhba.table.redshift")
     def test_missing_index(self, r):
         r.cursor = Mock()
         tt = self.MockTable(None)
         tt.set_last_updated_index()
         r.cursor.assert_not_called()
 
-    @patch("druzhba.table.r")
+    @patch("druzhba.table.redshift")
     def test_int_index(self, r):
         m, c = self.mock_cursor()
         r.cursor = Mock(return_value=m)
@@ -324,7 +324,7 @@ class TestSetLastUpdateIndex(unittest.TestCase):
         expected_args = ("my_db", "my_db", "org_table", "123")
         c.execute.assert_called_once_with(self.query, expected_args)
 
-    @patch("druzhba.table.r")
+    @patch("druzhba.table.redshift")
     def test_dt_sec_index(self, r):
         m, c = self.mock_cursor()
         r.cursor = Mock(return_value=m)
@@ -335,7 +335,7 @@ class TestSetLastUpdateIndex(unittest.TestCase):
         expected_args = ("my_db", "my_db", "org_table", "2018-10-27 12:06:34.000000")
         c.execute.assert_called_once_with(self.query, expected_args)
 
-    @patch("druzhba.table.r")
+    @patch("druzhba.table.redshift")
     def test_unknown_index_type(self, r):
         m, c = self.mock_cursor()
         r.cursor = Mock(return_value=m)
@@ -349,7 +349,7 @@ class TestUnloadCopy(unittest.TestCase):
     class MockTable(TableConfig):
         def __init__(self):
             super(TestUnloadCopy.MockTable, self).__init__(
-                "my_db", mock_conn, "my_table", "my_schema", "org_table"
+                "my_db", mock_conn, "my_table", "my_schema", "org_table", "index_schema", "index_table"
             )
             self._dw_columns = None  # overrides get_destination_table_columns below
             self._columns = None  # overrides columns property
@@ -410,7 +410,7 @@ class TestUnloadCopy(unittest.TestCase):
         m.__exit__ = Mock(return_value=False)
         return m, cur
 
-    @patch("druzhba.table.r")
+    @patch("druzhba.table.redshift")
     def test_create_redshift_table_if_dne(self, r):
         m, c = self.mock_cursor()
         r.cursor = Mock(return_value=m)
@@ -433,7 +433,7 @@ class TestUnloadCopy(unittest.TestCase):
         with self.assertRaises(MigrationError):
             tt2.check_destination_table_status()
 
-    @patch("druzhba.table.r")
+    @patch("druzhba.table.redshift")
     def test_dont_create_redshift_table_if_exists(self, r):
         m, c = self.mock_cursor()
         r.cursor = Mock(return_value=m)
@@ -456,7 +456,7 @@ class TestUnloadCopy(unittest.TestCase):
             tt2._destination_table_status, TableConfig.DESTINATION_TABLE_REBUILD
         )
 
-    @patch("druzhba.table.r")
+    @patch("druzhba.table.redshift")
     def test_error_if_destination_table_incorrect(self, r):
         m, c = self.mock_cursor()
         r.cursor = Mock(return_value=m)
@@ -568,7 +568,7 @@ class TestUnloadCopy(unittest.TestCase):
 
         tt.write_manifest_file.assert_not_called()
         tt._upload_s3.assert_called_once_with(
-            ANY, S3Config.bucket, "pipeline/my_db.org_table.20190101T010203.avro"
+            ANY, S3Config.bucket, f"{S3Config.prefix}/my_db.org_table.20190101T010203.avro"
         )
 
         self.assertEqual(tt.row_count, 3)
@@ -616,7 +616,7 @@ class TestUnloadCopy(unittest.TestCase):
 
     maxDiff = None
 
-    @patch("druzhba.table.r")
+    @patch("druzhba.table.redshift")
     def test_redshift_copy_create(self, r):
         m, c = self.mock_cursor()
         r.cursor = Mock(return_value=m)
@@ -638,8 +638,8 @@ class TestUnloadCopy(unittest.TestCase):
             call('CREATE TABLE "my_db_my_table_staging" (LIKE "my_table");'),
             call(
                 IgnoreWhitespace(
-                    """
-            COPY "my_db_my_table_staging" FROM 's3://test-bucket/pipeline/my_db.org_table.20190101T010203.avro'
+                    f"""
+            COPY "my_db_my_table_staging" FROM 's3://{S3Config.bucket}/{S3Config.prefix}/my_db.org_table.20190101T010203.avro'
             CREDENTIALS 'aws_iam_role=iam_copy_role'
             FORMAT AS AVRO 'auto'
             EXPLICIT_IDS ACCEPTINVCHARS TRUNCATECOLUMNS
@@ -656,7 +656,7 @@ class TestUnloadCopy(unittest.TestCase):
         call_args = c.execute.call_args_list
         self.assertListEqual(call_args, target_call_args)
 
-    @patch("druzhba.table.r")
+    @patch("druzhba.table.redshift")
     def test_redshift_copy_incremental_single(self, r):
         m, c = self.mock_cursor()
         r.cursor = Mock(return_value=m)
@@ -681,8 +681,8 @@ class TestUnloadCopy(unittest.TestCase):
             call('CREATE TABLE "my_db_my_table_staging" (LIKE "my_table");'),
             call(
                 IgnoreWhitespace(
-                    """
-            COPY "my_db_my_table_staging" FROM 's3://test-bucket/pipeline/my_db.org_table.20190101T010203.avro'
+                    f"""
+            COPY "my_db_my_table_staging" FROM 's3://{S3Config.bucket}/{S3Config.prefix}/my_db.org_table.20190101T010203.avro'
             CREDENTIALS 'aws_iam_role=iam_copy_role'
             FORMAT AS AVRO 'auto'
             EXPLICIT_IDS ACCEPTINVCHARS TRUNCATECOLUMNS
@@ -699,7 +699,7 @@ class TestUnloadCopy(unittest.TestCase):
         call_args = c.execute.call_args_list
         self.assertListEqual(call_args, target_call_args)
 
-    @patch("druzhba.table.r")
+    @patch("druzhba.table.redshift")
     def test_redshift_copy_incremental_manifest(self, r):
         m, c = self.mock_cursor()
         r.cursor = Mock(return_value=m)
@@ -729,8 +729,8 @@ class TestUnloadCopy(unittest.TestCase):
             call('CREATE TABLE "my_db_my_table_staging" (LIKE "my_table");'),
             call(
                 IgnoreWhitespace(
-                    """
-            COPY "my_db_my_table_staging" FROM 's3://test-bucket/pipeline/my_db.org_table.20190101T010203.manifest'
+                    f"""
+            COPY "my_db_my_table_staging" FROM 's3://{S3Config.bucket}/{S3Config.prefix}/my_db.org_table.20190101T010203.manifest'
             CREDENTIALS 'aws_iam_role=iam_copy_role'
             MANIFEST
             FORMAT AS AVRO 'auto'
@@ -748,7 +748,7 @@ class TestUnloadCopy(unittest.TestCase):
         call_args = c.execute.call_args_list
         self.assertListEqual(call_args, target_call_args)
 
-    @patch("druzhba.table.r")
+    @patch("druzhba.table.redshift")
     def test_redshift_copy_raises_error_without_pks(self, r):
         m, c = self.mock_cursor()
         r.cursor = Mock(return_value=m)
@@ -759,7 +759,7 @@ class TestUnloadCopy(unittest.TestCase):
         with self.assertRaises(InvalidSchemaError):
             tt.load()
 
-    @patch("druzhba.table.r")
+    @patch("druzhba.table.redshift")
     def test_redshift_copy_full_refresh(self, r):
         m, c = self.mock_cursor()
         r.cursor = Mock(return_value=m)
@@ -781,8 +781,8 @@ class TestUnloadCopy(unittest.TestCase):
             call('CREATE TABLE "my_db_my_table_staging" (LIKE "my_table");'),
             call(
                 IgnoreWhitespace(
-                    """
-            COPY "my_db_my_table_staging" FROM 's3://test-bucket/pipeline/my_db.org_table.20190101T010203.avro'
+                    f"""
+            COPY "my_db_my_table_staging" FROM 's3://{S3Config.bucket}/{S3Config.prefix}/my_db.org_table.20190101T010203.avro'
             CREDENTIALS 'aws_iam_role=iam_copy_role'
             FORMAT AS AVRO 'auto'
             EXPLICIT_IDS ACCEPTINVCHARS TRUNCATECOLUMNS
@@ -810,17 +810,18 @@ class TestUnloadCopy(unittest.TestCase):
 
     @patch("druzhba.table.BytesIO")
     def test_write_manifest_file(self, mock_io):
-        expected_json = """
-        {
-            "entries": [
-                {"url": "s3://test-bucket/pipeline/my_db.org_table.20190101T010203/00000.avro", "mandatory": true},
-                {"url": "s3://test-bucket/pipeline/my_db.org_table.20190101T010203/00001.avro", "mandatory": true},
-                {"url": "s3://test-bucket/pipeline/my_db.org_table.20190101T010203/00002.avro", "mandatory": true}
-            ]
-        }
-        """
-
-        expected_entries = json.loads(expected_json)["entries"]
+        expected_entries = [
+            {
+                'url': f's3://{S3Config.bucket}/{S3Config.prefix}/my_db.org_table.20190101T010203/00000.avro',
+                'mandatory': True
+            }, {
+                'url': f's3://{S3Config.bucket}/{S3Config.prefix}/my_db.org_table.20190101T010203/00001.avro',
+                'mandatory': True
+            }, {
+                'url': f's3://{S3Config.bucket}/{S3Config.prefix}/my_db.org_table.20190101T010203/00002.avro',
+                'mandatory': True
+            }
+        ]
 
         tt = self.MockTable()
         tt.date_key = "20190101T010203"
@@ -839,7 +840,7 @@ class TestUnloadCopy(unittest.TestCase):
         self.assertListEqual(manifest["entries"], expected_entries)
 
         tt._upload_s3.assert_called_once_with(
-            ANY, S3Config.bucket, "pipeline/my_db.org_table.20190101T010203.manifest"
+            ANY, S3Config.bucket, f"{S3Config.prefix}/my_db.org_table.20190101T010203.manifest"
         )
 
     def test_invalid_manifest_state(self):
@@ -852,7 +853,7 @@ class TestUnloadCopy(unittest.TestCase):
         with self.assertRaises(TableStateError):
             tt.single_s3_data_key()
 
-    @patch("druzhba.table.r")
+    @patch("druzhba.table.redshift")
     def test_redshift_copy_full_refresh_with_index_col(self, r):
         m, c = self.mock_cursor()
         r.cursor = Mock(return_value=m)
@@ -872,8 +873,8 @@ class TestUnloadCopy(unittest.TestCase):
             call('CREATE TABLE "my_db_my_table_staging" (LIKE "my_table");'),
             call(
                 IgnoreWhitespace(
-                    """
-            COPY "my_db_my_table_staging" FROM 's3://test-bucket/pipeline/my_db.org_table.20190101T010203.avro'
+                    f"""
+            COPY "my_db_my_table_staging" FROM 's3://{S3Config.bucket}/{S3Config.prefix}/my_db.org_table.20190101T010203.avro'
             CREDENTIALS 'aws_iam_role=iam_copy_role'
             FORMAT AS AVRO 'auto'
             EXPLICIT_IDS ACCEPTINVCHARS TRUNCATECOLUMNS
@@ -890,7 +891,7 @@ class TestUnloadCopy(unittest.TestCase):
         call_args = c.execute.call_args_list
         self.assertListEqual(call_args, target_call_args)
 
-    @patch("druzhba.table.r")
+    @patch("druzhba.table.redshift")
     def test_redshift_copy_rebuild(self, r):
         m, c = self.mock_cursor()
         r.cursor = Mock(return_value=m)
@@ -916,8 +917,8 @@ class TestUnloadCopy(unittest.TestCase):
             call("GRANT SELECT ON my_db_my_table_staging TO GROUP group_name;"),
             call(
                 IgnoreWhitespace(
-                    """
-            COPY "my_db_my_table_staging" FROM 's3://test-bucket/pipeline/my_db.org_table.20190101T010203.avro'
+                    f"""
+            COPY "my_db_my_table_staging" FROM 's3://{S3Config.bucket}/{S3Config.prefix}/my_db.org_table.20190101T010203.avro'
             CREDENTIALS 'aws_iam_role=iam_copy_role'
             FORMAT AS AVRO 'auto'
             EXPLICIT_IDS ACCEPTINVCHARS TRUNCATECOLUMNS

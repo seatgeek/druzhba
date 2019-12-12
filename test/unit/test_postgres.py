@@ -12,6 +12,8 @@ class PostgresTest(unittest.TestCase):
             "table",
             "schema",
             "source",
+            "index_schema",
+            "index_table",
             index_column="id",
         )
 

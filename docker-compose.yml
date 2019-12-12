@@ -1,0 +1,25 @@
+version: '3.7'
+services:
+  db:
+    image: postgres:10
+    ports:
+      - "5433:5432"
+    networks:
+      - druzhba
+    stop_grace_period: 30s
+    expose:
+      - "5433"
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: "python setup.py test"
+    env_file:
+      - ./.env.test.docker
+    volumes:
+      - .:/app
+    networks:
+      - druzhba
+
+networks:
+  druzhba:

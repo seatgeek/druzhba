@@ -7,6 +7,8 @@ import setuptools
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
+tests_require = ["nose>=1.3.7", "mock>=2.0.0"]
+
 setuptools.setup(
     name="druzhba",
     version="0.1.1",
@@ -33,15 +35,14 @@ setuptools.setup(
         "botocore>=1.13.35",
         "fastavro>=0.21.22,<0.22",
         "Jinja2>=2.10",
-        "psycopg2>=2.7.3.2",  # TODO: This requires libpq-dev python-dev make optional
+        "psycopg2-binary>=2.7.3.2",
         "pyaml>=17.10.0",
         "pymssql<3.0",  # TODO: replace with PyODBC
         "pymysql>=0.7.11",
         "statsd>=3.3.0",
     ],
-    extras_require={"dev": "black"},
+    extras_require={"dev": ["black"], "test": tests_require},
     entry_points={"console_scripts": ["druzhba=druzhba.main:main"]},
     scripts=[],
-    tests_require=["nose>=1.3.7", "mock>=2.0.0"],
-    test_suite="nose.collector",
+    tests_require=tests_require
 )
