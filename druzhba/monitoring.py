@@ -1,10 +1,53 @@
 from contextlib import contextmanager
 from enum import Enum, unique
+import logging
+import logging.config
 import os
-import threading
-
-import statsd
 from time import perf_counter
+
+import sentry_sdk as sentry
+from sentry_sdk.integrations.logging import LoggingIntegration
+import statsd
+
+
+def configure_logging():
+    settings = {
+        "version": 1,
+        "disable_existing_loggers": False,
+        "formatters": {
+            "normal": {
+                "format": "[%(asctime)s.%(msecs)03d] %(name)s [pid:%(process)s] - %(levelname)s - %(message)s",
+                "datefmt": "%Y-%m-%d %H:%M:%S",
+            }
+        },
+        "handlers": {
+            "console": {
+                "level": "INFO",
+                "class": "logging.StreamHandler",
+                "formatter": "normal",
+                "stream": "ext://sys.stdout",
+            }
+        },
+        "loggers": {"druzhba": {"level": "INFO", "handlers": ["console"]},},
+    }
+    logging.config.dictConfig(settings)
+
+
+def init_sentry():
+    dsn = os.getenv('SENTRY_DSN')
+
+    if dsn is not None:
+        sentry_logging = LoggingIntegration(
+            level=logging.INFO,
+            event_level=logging.WARNING
+        )
+
+        sentry.init(
+            dsn=dsn,
+            integrations=[sentry_logging],
+            environment=os.getenv('SENTRY_ENVIRONMENT'),
+            release=os.getenv('SENTRY_RELEASE')
+        )
 
 
 class FakeStatsd(object):
@@ -29,9 +72,6 @@ def get_statsd_client():
         return statsd.StatsClient(host, port)
     else:
         return FakeStatsd()
-
-
-statsd_client = get_statsd_client()
 
 
 @unique
@@ -157,7 +197,9 @@ class DefaultMonitoringProvider(MonitoringProvider):
             if event in ['run-time', 'full-run-time']:
                 statsd_client.timing(full_event_name, elapsed_time)
 
-        # Errors in timers currently go unhandled
-
         if event == "disconnect-error":
             statsd_client.incr(f"druzhba.db.{event}.{db_alias}")
+
+
+statsd_client = get_statsd_client()
+init_sentry()

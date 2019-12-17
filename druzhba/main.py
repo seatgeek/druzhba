@@ -11,9 +11,9 @@ import psycopg2
 import yaml
 from botocore.vendored.requests.exceptions import SSLError
 
-from druzhba.config import CONFIG_DIR, configure_logging
+from druzhba.config import CONFIG_DIR
 from druzhba.db import DatabaseConfig
-from druzhba.monitoring import DefaultMonitoringProvider
+from druzhba.monitoring import DefaultMonitoringProvider, configure_logging
 from druzhba.redshift import create_index_table
 from druzhba.table import (
     ConfigurationError,

@@ -1,4 +1,3 @@
-import logging.config
 import os
 
 
@@ -23,26 +22,3 @@ class RedshiftConfig(object):
 
     iam_copy_role = os.getenv("IAM_COPY_ROLE")
     redshift_cert_path = os.getenv("REDSHIFT_CERT_PATH")
-
-
-def configure_logging():
-    settings = {
-        "version": 1,
-        "disable_existing_loggers": False,
-        "formatters": {
-            "normal": {
-                "format": "[%(asctime)s.%(msecs)03d] %(name)s [pid:%(process)s] - %(levelname)s - %(message)s",
-                "datefmt": "%Y-%m-%d %H:%M:%S",
-            }
-        },
-        "handlers": {
-            "console": {
-                "level": "INFO",
-                "class": "logging.StreamHandler",
-                "formatter": "normal",
-                "stream": "ext://sys.stdout",
-            }
-        },
-        "loggers": {"druzhba": {"level": "INFO", "handlers": ["console"]},},
-    }
-    logging.config.dictConfig(settings)
