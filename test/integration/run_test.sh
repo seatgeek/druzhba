@@ -1,9 +1,6 @@
 #!/usr/bin/env bash
 
-set +x
-
-# This runs from the test container
-# TODO: Intentionally not using pipefail, but want the overall script to fail if at least one command fails
+set -u
 
 # Connection strings used to set up databases
 export PGTEST_ADMIN_DATABASE_URL=postgresql://postgres@druzhba_db_1:5432
@@ -34,4 +31,3 @@ psql ${PGTEST_ADMIN_DATABASE_URL} -c "REVOKE ALL PRIVILEGES ON DATABASE druzhba_
 psql ${PGTEST_ADMIN_DATABASE_URL} -c "DROP DATABASE druzhba_test;"
 psql ${PGTEST_ADMIN_DATABASE_URL} -c "DROP USER druzhba_test_user;"
 
-set -x

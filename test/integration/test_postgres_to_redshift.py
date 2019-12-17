@@ -1,7 +1,7 @@
 import datetime
 import os
 import unittest
-from dataclasses import dataclass
+from dataclasses import dataclass, replace as dataclass_replace
 from typing import Optional, List
 
 import psycopg2
@@ -22,6 +22,12 @@ class FakeArgs:
     validate_only: Optional[bool] = None
     full_refresh: Optional[bool] = None
     rebuild: Optional[bool] = None
+
+
+t0 = datetime.datetime(2019, 1, 1, 0, 0, 0)
+t1 = t0 + datetime.timedelta(seconds=5)
+t2 = t0 + datetime.timedelta(seconds=10)
+t3 = t0 + datetime.timedelta(seconds=15)
 
 
 class BaseTestPostgresToRedshift(unittest.TestCase):
@@ -71,6 +77,11 @@ class TestBasicIncrementalPipeline(BaseTestPostgresToRedshift):
             );
             """)
 
+            cur.executemany(
+                "INSERT INTO test_basic VALUES (%s, %s, %s, %s, %s);",
+                [(1, t0, 'value', 0, 'a'), (2, t1, 'value', 1, 'b')]
+            )
+
     def tearDown(self):
         with self.target_conn.cursor() as cur:
             cur.execute("""
@@ -81,16 +92,8 @@ class TestBasicIncrementalPipeline(BaseTestPostgresToRedshift):
     def test_run_incremental(self):
         """Runs Druzhba, inserts new data, then runs Druzhba again."""
 
-        t0 = datetime.datetime(2019, 1, 1, 0, 0, 0)
-        t1 = t0 + datetime.timedelta(seconds=5)
-        t2 = t0 + datetime.timedelta(seconds=10)
-
-        with self.source_conn.cursor() as cur:
-            cur.executemany(
-                "INSERT INTO test_basic VALUES (%s, %s, %s, %s, %s);",
-                [(1, t0, 'value', 0, 'a'), (2, t1, 'value', 1, 'b')]
-            )
-
+        # First run - should create tracking table, target table, and insert values
+        # TODO: check constraints are picked up correctly
         run_druzhba(self.args)
 
         with self.target_conn.cursor() as cur:
@@ -108,24 +111,16 @@ class TestBasicIncrementalPipeline(BaseTestPostgresToRedshift):
                 (3, t2, 'drop', 3, 'c')
             )
 
+        # Second run - should pick up the new row and the updated row
         run_druzhba(self.args)
 
         with self.target_conn.cursor() as cur:
-            cur.execute("SELECT COUNT(*), MAX(updated_at1), MAX(value1) FROM druzhba_test.test_basic")
-            result = cur.fetchall()
-
-            self.assertTupleEqual(result[0], (3, t2, 3))
-
             cur.execute("SELECT * FROM druzhba_test.test_basic ORDER BY pk1")
             results = cur.fetchall()
 
             self.assertListEqual(
                 results,
-                [
-                    (1, t0, 0, 'a'),
-                    (2, t2, 2, 'b'),
-                    (3, t2, 3, 'c'),
-                ]
+                [(1, t0, 0, 'a'), (2, t2, 2, 'b'), (3, t2, 3, 'c')]
             )
 
             cur.execute("SELECT * FROM druzhba_test.pipeline_table_index ORDER BY created_ts")
@@ -139,16 +134,142 @@ class TestBasicIncrementalPipeline(BaseTestPostgresToRedshift):
                 ]
             )
 
-    # def test_force_refresh(self):
-    #     pass
-    #
-    # def test_force_rebuild(self):
-    #     # Check that it keeps user permissions?
-    #     pass
-    #
-    # def test_ignores_new_source_columns(self):
-    #     pass
-    #
-    # def test_fails_new_target_columns(self):
-    #     pass
+    def test_force_refresh(self):
+        # First run - should create tracking table, target table, and insert values
+        run_druzhba(self.args)
 
+        with self.source_conn.cursor() as cur:
+            cur.execute(
+                "INSERT INTO test_basic VALUES (%s, %s, %s, %s, %s);",
+                (3, t2, 'drop', 3, 'c')
+            )
+            cur.execute(
+                "DELETE FROM test_basic WHERE pk1 = %s",
+                (1,)
+            )
+
+        # Second run - should pick up delete and insert
+        run_druzhba(dataclass_replace(self.args, full_refresh=True))
+
+        with self.target_conn.cursor() as cur:
+            cur.execute("SELECT * FROM druzhba_test.test_basic ORDER BY pk1")
+            results = cur.fetchall()
+
+            self.assertListEqual(
+                results,
+                [(2, t1, 1, 'b'), (3, t2, 3, 'c')]
+            )
+
+            cur.execute("SELECT * FROM druzhba_test.pipeline_table_index ORDER BY created_ts")
+            results = cur.fetchall()
+
+            self.assertListEqual(
+                results,
+                [
+                    ('pgtest', 'druzhba_test', 'test_basic', t1.strftime("%Y-%m-%d %H:%M:%S.%f"), ANY),
+                    ('pgtest', 'druzhba_test', 'test_basic', t2.strftime("%Y-%m-%d %H:%M:%S.%f"), ANY),
+                ]
+            )
+
+        with self.source_conn.cursor() as cur:
+            cur.execute(
+                "INSERT INTO test_basic VALUES (%s, %s, %s, %s, %s);",
+                (1, t0, 'value', 0, 'a')
+            )
+            cur.execute(
+                "UPDATE test_basic SET value1 = 2, updated_at1 = %s WHERE pk1 = 2",
+                (t3,)
+            )
+
+        # Third run: incremental updates should proceed from second run index value,
+        # so re-insert of value 1 at original `updated_at` is not picked up while new update is.
+        run_druzhba(self.args)
+
+        with self.target_conn.cursor() as cur:
+            cur.execute("SELECT * FROM druzhba_test.test_basic ORDER BY pk1")
+            results = cur.fetchall()
+
+            self.assertListEqual(
+                results,
+                [(2, t3, 2, 'b'), (3, t2, 3, 'c')]
+            )
+
+            cur.execute("SELECT * FROM druzhba_test.pipeline_table_index ORDER BY created_ts")
+            results = cur.fetchall()
+
+            self.assertListEqual(
+                results,
+                [
+                    ('pgtest', 'druzhba_test', 'test_basic', t1.strftime("%Y-%m-%d %H:%M:%S.%f"), ANY),
+                    ('pgtest', 'druzhba_test', 'test_basic', t2.strftime("%Y-%m-%d %H:%M:%S.%f"), ANY),
+                    ('pgtest', 'druzhba_test', 'test_basic', t3.strftime("%Y-%m-%d %H:%M:%S.%f"), ANY),
+                ]
+            )
+
+    def test_new_source_column_and_force_rebuild(self):
+        # First run - should create tracking table, target table, and insert values
+        run_druzhba(self.args)
+
+        with self.source_conn.cursor() as cur:
+            cur.execute(
+                "ALTER TABLE test_basic ADD COLUMN new_value VARCHAR(63) DEFAULT 'default'"
+            )
+            cur.execute(
+                "INSERT INTO test_basic VALUES (%s, %s, %s, %s, %s, %s);",
+                (3, t2, 'drop', 3, 'c', 'other')
+            )
+
+        # Second run - should not fail despite the new column. Should pick up new row.
+        run_druzhba(self.args)
+        with self.target_conn.cursor() as cur:
+            cur.execute("SELECT COUNT(*) FROM druzhba_test.test_basic")
+            self.assertEqual(cur.fetchone()[0], 3)
+
+        # Third run -  should recreate target table with the new column and fully refresh
+        # TODO: Check user permissions are maintained
+        run_druzhba(dataclass_replace(self.args, rebuild=True))
+
+        with self.target_conn.cursor() as cur:
+            cur.execute("SELECT * FROM druzhba_test.test_basic ORDER BY pk1")
+            results = cur.fetchall()
+
+            self.assertListEqual(
+                results,
+                [(1, t0, 0, 'a', 'default'), (2, t1, 1, 'b', 'default'), (3, t2, 3, 'c', 'other')]
+            )
+
+            cur.execute("SELECT * FROM druzhba_test.pipeline_table_index ORDER BY created_ts")
+            results = cur.fetchall()
+
+            self.assertListEqual(
+                results,
+                [
+                    ('pgtest', 'druzhba_test', 'test_basic', t1.strftime("%Y-%m-%d %H:%M:%S.%f"), ANY),
+                    ('pgtest', 'druzhba_test', 'test_basic', t2.strftime("%Y-%m-%d %H:%M:%S.%f"), ANY),
+                    ('pgtest', 'druzhba_test', 'test_basic', t2.strftime("%Y-%m-%d %H:%M:%S.%f"), ANY),
+                ]
+            )
+
+    def test_skips_table_on_extra_target_column(self):
+        # First run - should create tracking table, target table, and insert values
+        run_druzhba(self.args)
+
+        with self.source_conn.cursor() as cur:
+            cur.execute(
+                "ALTER TABLE test_basic DROP COLUMN enum_value1;"
+            )
+            cur.execute(
+                "INSERT INTO test_basic VALUES (%s, %s, %s, %s);",
+                (3, t2, 'drop', 3)
+            )
+
+        # Second run - should see a discrepancy between the source/target, skip the table,
+        # and only omit an error log rather than raise an exception.
+        run_druzhba(self.args)
+
+        with self.target_conn.cursor() as cur:
+            cur.execute("SELECT COUNT(*) FROM druzhba_test.test_basic")
+            self.assertEqual(cur.fetchone()[0], 2)
+
+            cur.execute("SELECT COUNT(*) FROM druzhba_test.pipeline_table_index")
+            self.assertEqual(cur.fetchone()[0], 1)

@@ -34,6 +34,7 @@ source .env.test.sample
 source .env.test  # For whatever overrides you need
 
 docker-compose up -d db
+docker-compose build
 docker-compose run test bash test/integration/run_test.sh
 ```
 
