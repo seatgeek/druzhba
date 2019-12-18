@@ -9,25 +9,23 @@ from druzhba.config import RedshiftConfig
 logger = logging.getLogger("druzhba.redshift")
 
 
-class Redshift(RedshiftConfig):
+class Redshift(object):
     """Mixin for Redshift connection configs"""
+
+    def __init__(self, destination_config):
+        self.config = destination_config
+
+    @property
+    def iam_copy_role(self):
+        return self.config.iam_copy_role
 
     @contextmanager
     def connection(self):
-        if self.url:
-            redshift_kwargs = {"dsn": self.url}
-        else:
-            redshift_kwargs = {
-                "host": self.host,
-                "port": self.port,
-                "database": self.database,
-                "user": self.user,
-                "password": self.password,
-            }
+        redshift_kwargs = self.config.connection_params
 
-        if self.redshift_cert_path:
+        if self.config.redshift_cert_path:
             redshift_kwargs.update(
-                {"sslmode": "verify-ca", "sslrootcert": self.redshift_cert_path}
+                {"sslmode": "verify-ca", "sslrootcert": self.config.redshift_cert_path}
             )
 
         connection = psycopg2.connect(**redshift_kwargs)
@@ -48,8 +46,15 @@ class Redshift(RedshiftConfig):
                 cursor.close()
 
 
-redshift = Redshift()
+_redshift = None # TODO: Fix this very ugly hack ;P
 
+def get_redshift():
+    return _redshift
+
+def init_redshift(destination_config):
+    global _redshift
+    _redshift = Redshift(RedshiftConfig(destination_config))
+    return _redshift
 
 def generate_copy_query(table_to_copy, copy_target_url, iam_copy_role, manifest_mode):
     query = """
@@ -103,18 +108,18 @@ def generate_lock_query(table):
 
 def create_index_table(index_schema, index_table):
     logger.info("Checking for existence of index table %s.%s", index_schema, index_table)
-    with redshift.cursor() as cur:
+    with get_redshift().cursor() as cur:
         cur.execute(
-            """
-                SELECT COUNT(*) = 1 
-                FROM pg_catalog.pg_class c
-                JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
-                WHERE n.nspname = %s 
-                    AND c.relname = %s
-                    AND c.relkind = 'r'    -- only tables
+            """SELECT COUNT(*) = 1 
+               FROM pg_catalog.pg_class c
+               JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+               WHERE n.nspname = %s 
+                 AND c.relname = %s
+                 AND c.relkind = 'r'    -- only tables
             """,
             (index_schema, index_table),
         )
+        # TODO: check format of this table that it's correct maybe?
         if not cur.fetchone()[0]:
             logger.warning("Index table %s.%s does not exist, creating", index_schema, index_table)
             cur.execute(f"""

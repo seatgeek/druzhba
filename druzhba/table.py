@@ -239,7 +239,6 @@ class TableConfig(object):
         append_only=False,
         db_template_data=None,
     ):
-
         self.database_alias = database_alias
         self.db_host = db_connection_params.host
         self.db_port = db_connection_params.port
@@ -559,7 +558,7 @@ class TableConfig(object):
         LIMIT 1;
         """
         self.logger.debug("Querying Redshift for last updated index")
-        with redshift.cursor() as cur:
+        with get_redshift().cursor() as cur:
             cur.execute(
                 query, (self.database_alias, self.db_name, self.source_table_name)
             )
@@ -645,7 +644,8 @@ class TableConfig(object):
          WHERE schemaname = %s
            AND tablename = %s;
         """
-        with redshift.cursor() as cur:
+
+        with get_redshift().cursor() as cur:
             self.set_search_path(cur)
             cur.execute(
                 query, (self.destination_schema_name, self.destination_table_name)
@@ -763,7 +763,7 @@ class TableConfig(object):
             raise TypeError(msg)
 
         self.logger.info("Updating index table")
-        with redshift.cursor() as cur:
+        with get_redshift().cursor() as cur:
             args = (
                 self.database_alias,
                 self.db_name,
@@ -869,7 +869,7 @@ class TableConfig(object):
         }
 
         self.logger.info("Inserting record into table_extract_detail")
-        with redshift.cursor() as cur:
+        with get_redshift().cursor() as cur:
             cur.execute(query, args)
 
     def register_load_monitor(self):
@@ -927,7 +927,7 @@ class TableConfig(object):
         }
 
         self.logger.info("Inserting record into table_load_detail")
-        with redshift.cursor() as cur:
+        with get_redshift().cursor() as cur:
             cur.execute(query, args)
 
     def extract(self):
@@ -1178,7 +1178,7 @@ class TableConfig(object):
         is_rebuild = self._destination_table_status == self.DESTINATION_TABLE_REBUILD
         is_dne = self._destination_table_status == self.DESTINATION_TABLE_DNE
 
-        with redshift.cursor() as cur:
+        with get_redshift().cursor() as cur:
             self.set_search_path(cur)
 
             # If table does not exist, create it
@@ -1236,7 +1236,7 @@ class TableConfig(object):
             query = generate_copy_query(
                 staging_table,
                 self.copy_target_url,
-                redshift.iam_copy_role,
+                get_redshift().iam_copy_role,
                 self.manifest_mode,
             )
             self.logger.debug(query)

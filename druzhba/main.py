@@ -4,6 +4,7 @@ import datetime
 import logging
 import time
 import traceback
+import sys
 from multiprocessing import cpu_count
 from multiprocessing.dummy import Pool
 
@@ -11,10 +12,11 @@ import psycopg2
 import yaml
 from botocore.vendored.requests.exceptions import SSLError
 
-from druzhba.config import CONFIG_DIR
+from druzhba.monitoring import configure_logging
+from druzhba.config import CONFIG_DIR, configure_logging, load_destination_config
 from druzhba.db import DatabaseConfig
-from druzhba.monitoring import DefaultMonitoringProvider, configure_logging
-from druzhba.redshift import create_index_table
+from druzhba.monitoring import DefaultMonitoringProvider
+from druzhba.redshift import create_index_table, get_redshift, init_redshift
 from druzhba.table import (
     ConfigurationError,
     TableConfig,
@@ -234,10 +236,19 @@ def run(args):
     global VALIDATE_ONLY
     VALIDATE_ONLY = args.validate_only
 
-    with open("{}/_databases.yaml".format(CONFIG_DIR), "r") as f:
-        yaml_read = yaml.safe_load(f)
-        index_schema = yaml_read["index"]["schema"]
-        index_table = yaml_read["index"]["table"]
+    destination_config, missing_vars = load_destination_config(CONFIG_DIR)
+    if not COMPILE_ONLY and not PRINT_SQL_ONLY and not VALIDATE_ONLY:
+        if missing_vars:
+            logger.error(
+                "Could not find require environment variable(s): {}".format(
+                    ", ".join(missing_vars))
+            )
+            sys.exit(1)
+
+    index_schema = destination_config["index"]["schema"]
+    index_table = destination_config["index"]["table"]
+
+    init_redshift(destination_config)
 
     # Create the index table if it doesn't exist
     create_index_table(index_schema, index_table)
@@ -249,7 +260,7 @@ def run(args):
                 db["alias"], db["type"],
                 args.tables, args.full_refresh, args.rebuild,
             )
-            for db in yaml_read["databases"]
+            for db in destination_config["sources"]
             if db["alias"] == args.database
         ]
         if not dbs:
@@ -262,7 +273,7 @@ def run(args):
                 db["alias"], db["type"],
                 args.tables, None, None,
             )
-            for db in yaml_read["databases"]
+            for db in destination_config["sources"]
             if db.get("enabled", True)
         ]
 

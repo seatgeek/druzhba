@@ -1,0 +1,11 @@
+---
+connection:
+  url: ${REDSHIFT_URL}
+index:
+  schema: druzhba_test
+  table: pipeline_table_index
+iam_copy_role: ${IAM_COPY_ROLE}
+redshift_cert_path: ${REDSHIFT_CERT_PATH}
+sources:
+  - alias: pgtest
+    type: postgres

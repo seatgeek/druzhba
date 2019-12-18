@@ -306,14 +306,14 @@ class TestSetLastUpdateIndex(unittest.TestCase):
         (%s, %s, %s, %s)
         """
 
-    @patch("druzhba.table.redshift")
+    @patch("druzhba.redshift._redshift")
     def test_missing_index(self, r):
         r.cursor = Mock()
         tt = self.MockTable(None)
         tt.set_last_updated_index()
         r.cursor.assert_not_called()
 
-    @patch("druzhba.table.redshift")
+    @patch("druzhba.redshift._redshift")
     def test_int_index(self, r):
         m, c = self.mock_cursor()
         r.cursor = Mock(return_value=m)
@@ -324,7 +324,7 @@ class TestSetLastUpdateIndex(unittest.TestCase):
         expected_args = ("my_db", "my_db", "org_table", "123")
         c.execute.assert_called_once_with(self.query, expected_args)
 
-    @patch("druzhba.table.redshift")
+    @patch("druzhba.redshift._redshift")
     def test_dt_sec_index(self, r):
         m, c = self.mock_cursor()
         r.cursor = Mock(return_value=m)
@@ -335,7 +335,7 @@ class TestSetLastUpdateIndex(unittest.TestCase):
         expected_args = ("my_db", "my_db", "org_table", "2018-10-27 12:06:34.000000")
         c.execute.assert_called_once_with(self.query, expected_args)
 
-    @patch("druzhba.table.redshift")
+    @patch("druzhba.redshift._redshift")
     def test_unknown_index_type(self, r):
         m, c = self.mock_cursor()
         r.cursor = Mock(return_value=m)
@@ -410,7 +410,7 @@ class TestUnloadCopy(unittest.TestCase):
         m.__exit__ = Mock(return_value=False)
         return m, cur
 
-    @patch("druzhba.table.redshift")
+    @patch("druzhba.redshift._redshift")
     def test_create_redshift_table_if_dne(self, r):
         m, c = self.mock_cursor()
         r.cursor = Mock(return_value=m)
@@ -433,7 +433,7 @@ class TestUnloadCopy(unittest.TestCase):
         with self.assertRaises(MigrationError):
             tt2.check_destination_table_status()
 
-    @patch("druzhba.table.redshift")
+    @patch("druzhba.redshift._redshift")
     def test_dont_create_redshift_table_if_exists(self, r):
         m, c = self.mock_cursor()
         r.cursor = Mock(return_value=m)
@@ -456,7 +456,7 @@ class TestUnloadCopy(unittest.TestCase):
             tt2._destination_table_status, TableConfig.DESTINATION_TABLE_REBUILD
         )
 
-    @patch("druzhba.table.redshift")
+    @patch("druzhba.redshift._redshift")
     def test_error_if_destination_table_incorrect(self, r):
         m, c = self.mock_cursor()
         r.cursor = Mock(return_value=m)
@@ -616,7 +616,7 @@ class TestUnloadCopy(unittest.TestCase):
 
     maxDiff = None
 
-    @patch("druzhba.table.redshift")
+    @patch("druzhba.redshift._redshift")
     def test_redshift_copy_create(self, r):
         m, c = self.mock_cursor()
         r.cursor = Mock(return_value=m)
@@ -656,7 +656,7 @@ class TestUnloadCopy(unittest.TestCase):
         call_args = c.execute.call_args_list
         self.assertListEqual(call_args, target_call_args)
 
-    @patch("druzhba.table.redshift")
+    @patch("druzhba.redshift._redshift")
     def test_redshift_copy_incremental_single(self, r):
         m, c = self.mock_cursor()
         r.cursor = Mock(return_value=m)
@@ -699,7 +699,7 @@ class TestUnloadCopy(unittest.TestCase):
         call_args = c.execute.call_args_list
         self.assertListEqual(call_args, target_call_args)
 
-    @patch("druzhba.table.redshift")
+    @patch("druzhba.redshift._redshift")
     def test_redshift_copy_incremental_manifest(self, r):
         m, c = self.mock_cursor()
         r.cursor = Mock(return_value=m)
@@ -748,7 +748,7 @@ class TestUnloadCopy(unittest.TestCase):
         call_args = c.execute.call_args_list
         self.assertListEqual(call_args, target_call_args)
 
-    @patch("druzhba.table.redshift")
+    @patch("druzhba.redshift._redshift")
     def test_redshift_copy_raises_error_without_pks(self, r):
         m, c = self.mock_cursor()
         r.cursor = Mock(return_value=m)
@@ -759,7 +759,7 @@ class TestUnloadCopy(unittest.TestCase):
         with self.assertRaises(InvalidSchemaError):
             tt.load()
 
-    @patch("druzhba.table.redshift")
+    @patch("druzhba.redshift._redshift")
     def test_redshift_copy_full_refresh(self, r):
         m, c = self.mock_cursor()
         r.cursor = Mock(return_value=m)
@@ -853,7 +853,7 @@ class TestUnloadCopy(unittest.TestCase):
         with self.assertRaises(TableStateError):
             tt.single_s3_data_key()
 
-    @patch("druzhba.table.redshift")
+    @patch("druzhba.redshift._redshift")
     def test_redshift_copy_full_refresh_with_index_col(self, r):
         m, c = self.mock_cursor()
         r.cursor = Mock(return_value=m)
@@ -891,7 +891,7 @@ class TestUnloadCopy(unittest.TestCase):
         call_args = c.execute.call_args_list
         self.assertListEqual(call_args, target_call_args)
 
-    @patch("druzhba.table.redshift")
+    @patch("druzhba.redshift._redshift")
     def test_redshift_copy_rebuild(self, r):
         m, c = self.mock_cursor()
         r.cursor = Mock(return_value=m)
