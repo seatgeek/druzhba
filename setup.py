@@ -42,7 +42,10 @@ setuptools.setup(
         "sentry-sdk>=0.11.0,<0.14",
         "statsd>=3.3.0",
     ],
-    extras_require={"dev": ["black"], "test": tests_require},
+    extras_require={
+        "dev": ["autoflake", "black", "isort"],
+        "test": tests_require
+    },
     entry_points={"console_scripts": ["druzhba=druzhba.main:main"]},
     scripts=[],
     tests_require=tests_require

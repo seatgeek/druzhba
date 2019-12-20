@@ -1,8 +1,7 @@
+import time
 import unittest
 
-import time
-
-from druzhba.monitoring import MonitoringProvider, EventState
+from druzhba.monitoring import EventState, MonitoringProvider
 
 
 class TestMonitoringProvider(MonitoringProvider):
@@ -27,15 +26,13 @@ class MonitoringCallbackTest(unittest.TestCase):
 
     def test_log_event(self):
         self.monitoring.on_event("foo", EventState.COMPLETE)
-        self.assertEqual(
-            self.monitoring.calls[0],
-            ("foo", EventState.COMPLETE, {}))
+        self.assertEqual(self.monitoring.calls[0], ("foo", EventState.COMPLETE, {}))
 
     def test_wrap_event(self):
         x = 0
         with self.monitoring.wrap("foo", db_alias="test"):
             # just do anything here
-            time.sleep(.3)
+            time.sleep(0.3)
             x = x + 1
 
         self.assertEqual(x, 1)
@@ -48,8 +45,8 @@ class MonitoringCallbackTest(unittest.TestCase):
         exit = self.monitoring.calls[1]
         self.assertEqual(exit[:-1], ("foo", EventState.COMPLETE))
         self.assertEqual(exit[2]["db_alias"], "test")
-        self.assertGreaterEqual(exit[2]["et"], .250)
-        self.assertLessEqual(exit[2]["et"], .350)
+        self.assertGreaterEqual(exit[2]["et"], 0.250)
+        self.assertLessEqual(exit[2]["et"], 0.350)
 
     def test_wrap_failure(self):
         x = 42
@@ -73,7 +70,7 @@ class MonitoringCallbackTest(unittest.TestCase):
     def test_timer(self):
         @self.monitoring.timer("foo")
         def my_test_func(ms):
-            time.sleep(ms / 1000.)
+            time.sleep(ms / 1000.0)
             return 42
 
         ret = my_test_func(300)
@@ -86,5 +83,5 @@ class MonitoringCallbackTest(unittest.TestCase):
 
         exit = self.monitoring.calls[1]
         self.assertEqual(exit[:-1], ("foo", EventState.COMPLETE))
-        self.assertGreaterEqual(exit[2]["et"], .250)
-        self.assertLessEqual(exit[2]["et"], .350)
+        self.assertGreaterEqual(exit[2]["et"], 0.250)
+        self.assertLessEqual(exit[2]["et"], 0.350)

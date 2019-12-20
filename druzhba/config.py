@@ -3,7 +3,6 @@ import re
 
 import yaml
 
-
 CONFIG_DIR = os.getenv("DRUZHBA_CONFIG_DIR")
 
 
@@ -14,6 +13,7 @@ class S3Config(object):
 
 class RedshiftConfig(object):
     """Either a URL or a host/port/database/user may be used."""
+
     def __init__(self, destination_config):
         self.iam_copy_role = destination_config.get("iam_copy_role")
         self.redshift_cert_path = destination_config.get("redshift_cert_path")
@@ -73,6 +73,7 @@ def load_config_file(filename):
 def _parse_config(config):
     """Expected to be called within load_config_file
     A description of operation can be found there"""
+
     def _parse_element(config_element):
         if type(config_element) == dict:
             return _parse_dict_config(config_element)

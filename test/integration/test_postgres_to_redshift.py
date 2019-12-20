@@ -1,8 +1,9 @@
 import datetime
 import os
 import unittest
-from dataclasses import dataclass, replace as dataclass_replace
-from typing import Optional, List
+from dataclasses import dataclass
+from dataclasses import replace as dataclass_replace
+from typing import List, Optional
 
 import psycopg2
 import psycopg2.extras
@@ -41,12 +42,12 @@ class BaseTestPostgresToRedshift(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.source_conn = psycopg2.connect(dsn=os.getenv('PGTEST_DATABASE_URL'))
-        cls.source_conn.set_client_encoding('UTF8')
+        cls.source_conn = psycopg2.connect(dsn=os.getenv("PGTEST_DATABASE_URL"))
+        cls.source_conn.set_client_encoding("UTF8")
         cls.source_conn.autocommit = True
 
-        cls.target_conn = psycopg2.connect(dsn=os.getenv('REDSHIFT_URL'))
-        cls.target_conn.set_client_encoding('UTF8')
+        cls.target_conn = psycopg2.connect(dsn=os.getenv("REDSHIFT_URL"))
+        cls.target_conn.set_client_encoding("UTF8")
         cls.target_conn.autocommit = True
 
     @classmethod
@@ -56,15 +57,12 @@ class BaseTestPostgresToRedshift(unittest.TestCase):
 
 
 class TestBasicIncrementalPipeline(BaseTestPostgresToRedshift):
-    args = FakeArgs(
-        database='pgtest',
-        tables=['test_basic'],
-        num_processes=1
-    )
+    args = FakeArgs(database="pgtest", tables=["test_basic"], num_processes=1)
 
     def setUp(self):
         with self.source_conn.cursor() as cur:
-            cur.execute("""
+            cur.execute(
+                """
             DROP TABLE IF EXISTS test_basic;
             DROP TYPE IF EXISTS enum1;
             CREATE TYPE enum1 AS ENUM ('a', 'b', 'c');
@@ -75,19 +73,22 @@ class TestBasicIncrementalPipeline(BaseTestPostgresToRedshift):
                 value1 INT,
                 enum_value1 enum1
             );
-            """)
+            """
+            )
 
             cur.executemany(
                 "INSERT INTO test_basic VALUES (%s, %s, %s, %s, %s);",
-                [(1, t0, 'value', 0, 'a'), (2, t1, 'value', 1, 'b')]
+                [(1, t0, "value", 0, "a"), (2, t1, "value", 1, "b")],
             )
 
     def tearDown(self):
         with self.target_conn.cursor() as cur:
-            cur.execute("""
+            cur.execute(
+                """
             DROP TABLE IF EXISTS druzhba_test.test_basic;
             DROP TABLE IF EXISTS druzhba_test.pipeline_table_index;
-            """)
+            """
+            )
 
     def test_run_incremental(self):
         """Runs Druzhba, inserts new data, then runs Druzhba again."""
@@ -97,18 +98,20 @@ class TestBasicIncrementalPipeline(BaseTestPostgresToRedshift):
         run_druzhba(self.args)
 
         with self.target_conn.cursor() as cur:
-            cur.execute("SELECT COUNT(*), MAX(updated_at1), MAX(value1) FROM druzhba_test.test_basic")
+            cur.execute(
+                "SELECT COUNT(*), MAX(updated_at1), MAX(value1) FROM druzhba_test.test_basic"
+            )
             result = cur.fetchall()
             self.assertTupleEqual(result[0], (2, t1, 1))
 
         with self.source_conn.cursor() as cur:
             cur.execute(
                 "UPDATE test_basic SET value1 = 2, updated_at1 = %s WHERE pk1 = 2",
-                (t2,)
+                (t2,),
             )
             cur.execute(
                 "INSERT INTO test_basic VALUES (%s, %s, %s, %s, %s);",
-                (3, t2, 'drop', 3, 'c')
+                (3, t2, "drop", 3, "c"),
             )
 
         # Second run - should pick up the new row and the updated row
@@ -119,19 +122,32 @@ class TestBasicIncrementalPipeline(BaseTestPostgresToRedshift):
             results = cur.fetchall()
 
             self.assertListEqual(
-                results,
-                [(1, t0, 0, 'a'), (2, t2, 2, 'b'), (3, t2, 3, 'c')]
+                results, [(1, t0, 0, "a"), (2, t2, 2, "b"), (3, t2, 3, "c")]
             )
 
-            cur.execute("SELECT * FROM druzhba_test.pipeline_table_index ORDER BY created_ts")
+            cur.execute(
+                "SELECT * FROM druzhba_test.pipeline_table_index ORDER BY created_ts"
+            )
             results = cur.fetchall()
 
             self.assertListEqual(
                 results,
                 [
-                    ('pgtest', 'druzhba_test', 'test_basic', t1.strftime("%Y-%m-%d %H:%M:%S.%f"), ANY),
-                    ('pgtest', 'druzhba_test', 'test_basic', t2.strftime("%Y-%m-%d %H:%M:%S.%f"), ANY),
-                ]
+                    (
+                        "pgtest",
+                        "druzhba_test",
+                        "test_basic",
+                        t1.strftime("%Y-%m-%d %H:%M:%S.%f"),
+                        ANY,
+                    ),
+                    (
+                        "pgtest",
+                        "druzhba_test",
+                        "test_basic",
+                        t2.strftime("%Y-%m-%d %H:%M:%S.%f"),
+                        ANY,
+                    ),
+                ],
             )
 
     def test_force_refresh(self):
@@ -141,12 +157,9 @@ class TestBasicIncrementalPipeline(BaseTestPostgresToRedshift):
         with self.source_conn.cursor() as cur:
             cur.execute(
                 "INSERT INTO test_basic VALUES (%s, %s, %s, %s, %s);",
-                (3, t2, 'drop', 3, 'c')
+                (3, t2, "drop", 3, "c"),
             )
-            cur.execute(
-                "DELETE FROM test_basic WHERE pk1 = %s",
-                (1,)
-            )
+            cur.execute("DELETE FROM test_basic WHERE pk1 = %s", (1,))
 
         # Second run - should pick up delete and insert
         run_druzhba(dataclass_replace(self.args, full_refresh=True))
@@ -155,30 +168,41 @@ class TestBasicIncrementalPipeline(BaseTestPostgresToRedshift):
             cur.execute("SELECT * FROM druzhba_test.test_basic ORDER BY pk1")
             results = cur.fetchall()
 
-            self.assertListEqual(
-                results,
-                [(2, t1, 1, 'b'), (3, t2, 3, 'c')]
-            )
+            self.assertListEqual(results, [(2, t1, 1, "b"), (3, t2, 3, "c")])
 
-            cur.execute("SELECT * FROM druzhba_test.pipeline_table_index ORDER BY created_ts")
+            cur.execute(
+                "SELECT * FROM druzhba_test.pipeline_table_index ORDER BY created_ts"
+            )
             results = cur.fetchall()
 
             self.assertListEqual(
                 results,
                 [
-                    ('pgtest', 'druzhba_test', 'test_basic', t1.strftime("%Y-%m-%d %H:%M:%S.%f"), ANY),
-                    ('pgtest', 'druzhba_test', 'test_basic', t2.strftime("%Y-%m-%d %H:%M:%S.%f"), ANY),
-                ]
+                    (
+                        "pgtest",
+                        "druzhba_test",
+                        "test_basic",
+                        t1.strftime("%Y-%m-%d %H:%M:%S.%f"),
+                        ANY,
+                    ),
+                    (
+                        "pgtest",
+                        "druzhba_test",
+                        "test_basic",
+                        t2.strftime("%Y-%m-%d %H:%M:%S.%f"),
+                        ANY,
+                    ),
+                ],
             )
 
         with self.source_conn.cursor() as cur:
             cur.execute(
                 "INSERT INTO test_basic VALUES (%s, %s, %s, %s, %s);",
-                (1, t0, 'value', 0, 'a')
+                (1, t0, "value", 0, "a"),
             )
             cur.execute(
                 "UPDATE test_basic SET value1 = 2, updated_at1 = %s WHERE pk1 = 2",
-                (t3,)
+                (t3,),
             )
 
         # Third run: incremental updates should proceed from second run index value,
@@ -189,21 +213,38 @@ class TestBasicIncrementalPipeline(BaseTestPostgresToRedshift):
             cur.execute("SELECT * FROM druzhba_test.test_basic ORDER BY pk1")
             results = cur.fetchall()
 
-            self.assertListEqual(
-                results,
-                [(2, t3, 2, 'b'), (3, t2, 3, 'c')]
-            )
+            self.assertListEqual(results, [(2, t3, 2, "b"), (3, t2, 3, "c")])
 
-            cur.execute("SELECT * FROM druzhba_test.pipeline_table_index ORDER BY created_ts")
+            cur.execute(
+                "SELECT * FROM druzhba_test.pipeline_table_index ORDER BY created_ts"
+            )
             results = cur.fetchall()
 
             self.assertListEqual(
                 results,
                 [
-                    ('pgtest', 'druzhba_test', 'test_basic', t1.strftime("%Y-%m-%d %H:%M:%S.%f"), ANY),
-                    ('pgtest', 'druzhba_test', 'test_basic', t2.strftime("%Y-%m-%d %H:%M:%S.%f"), ANY),
-                    ('pgtest', 'druzhba_test', 'test_basic', t3.strftime("%Y-%m-%d %H:%M:%S.%f"), ANY),
-                ]
+                    (
+                        "pgtest",
+                        "druzhba_test",
+                        "test_basic",
+                        t1.strftime("%Y-%m-%d %H:%M:%S.%f"),
+                        ANY,
+                    ),
+                    (
+                        "pgtest",
+                        "druzhba_test",
+                        "test_basic",
+                        t2.strftime("%Y-%m-%d %H:%M:%S.%f"),
+                        ANY,
+                    ),
+                    (
+                        "pgtest",
+                        "druzhba_test",
+                        "test_basic",
+                        t3.strftime("%Y-%m-%d %H:%M:%S.%f"),
+                        ANY,
+                    ),
+                ],
             )
 
     def test_new_source_column_and_force_rebuild(self):
@@ -216,7 +257,7 @@ class TestBasicIncrementalPipeline(BaseTestPostgresToRedshift):
             )
             cur.execute(
                 "INSERT INTO test_basic VALUES (%s, %s, %s, %s, %s, %s);",
-                (3, t2, 'drop', 3, 'c', 'other')
+                (3, t2, "drop", 3, "c", "other"),
             )
 
         # Second run - should not fail despite the new column. Should pick up new row.
@@ -235,19 +276,43 @@ class TestBasicIncrementalPipeline(BaseTestPostgresToRedshift):
 
             self.assertListEqual(
                 results,
-                [(1, t0, 0, 'a', 'default'), (2, t1, 1, 'b', 'default'), (3, t2, 3, 'c', 'other')]
+                [
+                    (1, t0, 0, "a", "default"),
+                    (2, t1, 1, "b", "default"),
+                    (3, t2, 3, "c", "other"),
+                ],
             )
 
-            cur.execute("SELECT * FROM druzhba_test.pipeline_table_index ORDER BY created_ts")
+            cur.execute(
+                "SELECT * FROM druzhba_test.pipeline_table_index ORDER BY created_ts"
+            )
             results = cur.fetchall()
 
             self.assertListEqual(
                 results,
                 [
-                    ('pgtest', 'druzhba_test', 'test_basic', t1.strftime("%Y-%m-%d %H:%M:%S.%f"), ANY),
-                    ('pgtest', 'druzhba_test', 'test_basic', t2.strftime("%Y-%m-%d %H:%M:%S.%f"), ANY),
-                    ('pgtest', 'druzhba_test', 'test_basic', t2.strftime("%Y-%m-%d %H:%M:%S.%f"), ANY),
-                ]
+                    (
+                        "pgtest",
+                        "druzhba_test",
+                        "test_basic",
+                        t1.strftime("%Y-%m-%d %H:%M:%S.%f"),
+                        ANY,
+                    ),
+                    (
+                        "pgtest",
+                        "druzhba_test",
+                        "test_basic",
+                        t2.strftime("%Y-%m-%d %H:%M:%S.%f"),
+                        ANY,
+                    ),
+                    (
+                        "pgtest",
+                        "druzhba_test",
+                        "test_basic",
+                        t2.strftime("%Y-%m-%d %H:%M:%S.%f"),
+                        ANY,
+                    ),
+                ],
             )
 
     def test_skips_table_on_extra_target_column(self):
@@ -255,12 +320,9 @@ class TestBasicIncrementalPipeline(BaseTestPostgresToRedshift):
         run_druzhba(self.args)
 
         with self.source_conn.cursor() as cur:
+            cur.execute("ALTER TABLE test_basic DROP COLUMN enum_value1;")
             cur.execute(
-                "ALTER TABLE test_basic DROP COLUMN enum_value1;"
-            )
-            cur.execute(
-                "INSERT INTO test_basic VALUES (%s, %s, %s, %s);",
-                (3, t2, 'drop', 3)
+                "INSERT INTO test_basic VALUES (%s, %s, %s, %s);", (3, t2, "drop", 3)
             )
 
         # Second run - should see a discrepancy between the source/target, skip the table,

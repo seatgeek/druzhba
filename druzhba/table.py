@@ -8,15 +8,10 @@ from io import BytesIO
 
 from boto3.s3.transfer import TransferConfig
 from boto3.session import Session
-from jinja2 import (
-    Environment,
-    FileSystemLoader,
-    StrictUndefined,
-    select_autoescape,
-)
+from jinja2 import Environment, FileSystemLoader, StrictUndefined, select_autoescape
 
-from druzhba.config import S3Config, CONFIG_DIR
 from druzhba.avro import write_avro_file
+from druzhba.config import CONFIG_DIR, S3Config
 from druzhba.redshift import *
 
 

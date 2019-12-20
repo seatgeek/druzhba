@@ -4,42 +4,49 @@ import datetime
 import logging
 import time
 import traceback
-import sys
 from multiprocessing import cpu_count
+import sys
 from multiprocessing.dummy import Pool
 
 import psycopg2
 import yaml
 from botocore.vendored.requests.exceptions import SSLError
 
-from druzhba.monitoring import configure_logging
 from druzhba.config import CONFIG_DIR, configure_logging, load_destination_config
 from druzhba.db import DatabaseConfig
-from druzhba.monitoring import DefaultMonitoringProvider
+from druzhba.monitoring import DefaultMonitoringProvider, configure_logging
 from druzhba.redshift import create_index_table, get_redshift, init_redshift
 from druzhba.table import (
     ConfigurationError,
-    TableConfig,
-    MigrationError,
     InvalidSchemaError,
+    MigrationError,
+    TableConfig,
 )
-
 
 logger = logging.getLogger("druzhba.main")
 monitor = DefaultMonitoringProvider()
 
 
 def process_database(
-    index_schema, index_table,
-    db_alias, db_type, only_table_names,
-    full_refresh=None, rebuild=None
+    index_schema,
+    index_table,
+    db_alias,
+    db_type,
+    only_table_names,
+    full_refresh=None,
+    rebuild=None,
 ):
     logger.info("Beginning database %s", db_alias)
     try:
         with monitor.wrap("run-time", database=db_alias):
             _process_database(
-                index_schema, index_table,
-                db_alias, db_type, only_table_names, full_refresh, rebuild
+                index_schema,
+                index_table,
+                db_alias,
+                db_type,
+                only_table_names,
+                full_refresh,
+                rebuild,
             )
         logger.info("Done with database %s", db_alias)
     except Exception as e:
@@ -49,9 +56,13 @@ def process_database(
 
 
 def _process_database(
-    index_schema, index_table,
-    db_alias, db_type, only_table_names,
-    full_refresh=None, rebuild=None
+    index_schema,
+    index_table,
+    db_alias,
+    db_type,
+    only_table_names,
+    full_refresh=None,
+    rebuild=None,
 ):
     with open("{}/{}.yaml".format(CONFIG_DIR, db_alias), "r") as f:
         dbconfig = yaml.safe_load(f)
@@ -99,7 +110,9 @@ def _process_database(
             table_params["full_refresh"] = True
         elif full_refresh:
             table_params["full_refresh"] = True
-        table = db.get_table_config(table_params, index_schema=index_schema, index_table=index_table)
+        table = db.get_table_config(
+            table_params, index_schema=index_schema, index_table=index_table
+        )
         table.validate_runtime_configuration()
 
         if COMPILE_ONLY:
@@ -241,7 +254,8 @@ def run(args):
         if missing_vars:
             logger.error(
                 "Could not find require environment variable(s): {}".format(
-                    ", ".join(missing_vars))
+                    ", ".join(missing_vars)
+                )
             )
             sys.exit(1)
 
@@ -256,9 +270,13 @@ def run(args):
     if args.database:
         dbs = [
             (
-                index_schema, index_table,
-                db["alias"], db["type"],
-                args.tables, args.full_refresh, args.rebuild,
+                index_schema,
+                index_table,
+                db["alias"],
+                db["type"],
+                args.tables,
+                args.full_refresh,
+                args.rebuild,
             )
             for db in destination_config["sources"]
             if db["alias"] == args.database
@@ -269,9 +287,13 @@ def run(args):
     else:
         dbs = [
             (
-                index_schema, index_table,
-                db["alias"], db["type"],
-                args.tables, None, None,
+                index_schema,
+                index_table,
+                db["alias"],
+                db["type"],
+                args.tables,
+                None,
+                None,
             )
             for db in destination_config["sources"]
             if db.get("enabled", True)

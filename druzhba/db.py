@@ -1,15 +1,14 @@
-from collections import namedtuple
 import os
+from collections import namedtuple
 from urllib.parse import urlparse
 
 import psycopg2
 import pymssql
 import pymysql
 
-from druzhba.mysql import MySQLTableConfig
 from druzhba.mssql import MSSQLTableConfig
+from druzhba.mysql import MySQLTableConfig
 from druzhba.postgres import PostgreSQLTableConfig
-
 
 ConnectionParams = namedtuple(
     "ConnectionParams", ["name", "host", "port", "user", "password"]

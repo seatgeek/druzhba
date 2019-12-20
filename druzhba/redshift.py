@@ -5,7 +5,6 @@ import psycopg2
 
 from druzhba.config import RedshiftConfig
 
-
 logger = logging.getLogger("druzhba.redshift")
 
 
@@ -46,15 +45,18 @@ class Redshift(object):
                 cursor.close()
 
 
-_redshift = None # TODO: Fix this very ugly hack ;P
+_redshift = None  # TODO: Fix this very ugly hack ;P
+
 
 def get_redshift():
     return _redshift
+
 
 def init_redshift(destination_config):
     global _redshift
     _redshift = Redshift(RedshiftConfig(destination_config))
     return _redshift
+
 
 def generate_copy_query(table_to_copy, copy_target_url, iam_copy_role, manifest_mode):
     query = """
@@ -107,7 +109,9 @@ def generate_lock_query(table):
 
 
 def create_index_table(index_schema, index_table):
-    logger.info("Checking for existence of index table %s.%s", index_schema, index_table)
+    logger.info(
+        "Checking for existence of index table %s.%s", index_schema, index_table
+    )
     with get_redshift().cursor() as cur:
         cur.execute(
             """SELECT COUNT(*) = 1 
@@ -121,8 +125,11 @@ def create_index_table(index_schema, index_table):
         )
         # TODO: check format of this table that it's correct maybe?
         if not cur.fetchone()[0]:
-            logger.warning("Index table %s.%s does not exist, creating", index_schema, index_table)
-            cur.execute(f"""
+            logger.warning(
+                "Index table %s.%s does not exist, creating", index_schema, index_table
+            )
+            cur.execute(
+                f"""
                 CREATE TABLE {index_schema}.{index_table} (
                     datastore_name VARCHAR(127) NOT NULL,
                     database_name  VARCHAR(127) NOT NULL,
@@ -133,5 +140,6 @@ def create_index_table(index_schema, index_table):
                 DISTSTYLE even
                 SORTKEY(created_ts)
                 ;
-            """)
+            """
+            )
             logger.info("Index table %s.%s created", index_schema, index_table)

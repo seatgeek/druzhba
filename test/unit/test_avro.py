@@ -1,6 +1,6 @@
 import itertools
-from io import BytesIO
 import unittest
+from io import BytesIO
 
 from druzhba.avro import write_avro_file
 

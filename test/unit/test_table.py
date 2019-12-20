@@ -6,17 +6,17 @@ from datetime import datetime
 from io import BytesIO
 
 import fastavro
-from mock import patch, MagicMock, PropertyMock, Mock, call, ANY
+from mock import ANY, MagicMock, Mock, PropertyMock, call, patch
 
 from druzhba.config import S3Config
 from druzhba.db import ConnectionParams
 from druzhba.table import (
-    TableConfig,
     ConfigurationError,
     InvalidSchemaError,
-    TableStateError,
     MigrationError,
     Permissions,
+    TableConfig,
+    TableStateError,
 )
 
 
@@ -115,7 +115,14 @@ class TableTest(unittest.TestCase):
     def test_where_clause(self):
         # no index column
         table_config = TableConfig(
-            "alias", mock_conn, "table", "schema", "source", "index_schema", "index_table", full_refresh=True
+            "alias",
+            mock_conn,
+            "table",
+            "schema",
+            "source",
+            "index_schema",
+            "index_table",
+            full_refresh=True,
         )
         self.assertEqual(table_config.where_clause(), "")
 
@@ -125,7 +132,14 @@ class TableTest(unittest.TestCase):
         ) as m:
             m.return_value = None
             table_config = TableConfig(
-                "alias", mock_conn, "table", "schema", "source", "index_schema", "index_table", index_column="id"
+                "alias",
+                mock_conn,
+                "table",
+                "schema",
+                "source",
+                "index_schema",
+                "index_table",
+                index_column="id",
             )
             self.assertEqual(table_config.where_clause(), "")
 
@@ -139,7 +153,14 @@ class TableTest(unittest.TestCase):
             ) as niv:
                 niv.return_value = 42
                 table_config = TableConfig(
-                    "alias", mock_conn, "table", "schema", "source", "index_schema", "index_table", index_column="id"
+                    "alias",
+                    mock_conn,
+                    "table",
+                    "schema",
+                    "source",
+                    "index_schema",
+                    "index_table",
+                    index_column="id",
                 )
                 self.assertEqual(table_config.where_clause(), "\nWHERE id <= '42'")
 
@@ -153,7 +174,14 @@ class TableTest(unittest.TestCase):
             ) as niv:
                 niv.return_value = 42
                 table_config = TableConfig(
-                    "alias", mock_conn, "table", "schema", "source", "index_schema", "index_table", index_column="id"
+                    "alias",
+                    mock_conn,
+                    "table",
+                    "schema",
+                    "source",
+                    "index_schema",
+                    "index_table",
+                    index_column="id",
                 )
                 self.assertEqual(
                     table_config.where_clause(), "\nWHERE id > '13' AND id <= '42'"
@@ -166,7 +194,13 @@ class TestTableIndexLogic(unittest.TestCase):
     class MockTable(TableConfig):
         def __init__(self, oiv, niv, append_only=False, full_refresh=False):
             super(TestTableIndexLogic.MockTable, self).__init__(
-                "my_db", mock_conn, "my_table", "my_schema", "org_table", "index_schema", "index_table"
+                "my_db",
+                mock_conn,
+                "my_table",
+                "my_schema",
+                "org_table",
+                "index_schema",
+                "index_table",
             )
 
             self._oiv = oiv
@@ -273,7 +307,13 @@ class TestSetLastUpdateIndex(unittest.TestCase):
     class MockTable(TableConfig):
         def __init__(self, niv):
             super(TestSetLastUpdateIndex.MockTable, self).__init__(
-                "my_db", mock_conn, "my_table", "my_schema", "org_table", "index_schema", "index_table"
+                "my_db",
+                mock_conn,
+                "my_table",
+                "my_schema",
+                "org_table",
+                "index_schema",
+                "index_table",
             )
 
             self._niv = niv
@@ -349,7 +389,13 @@ class TestUnloadCopy(unittest.TestCase):
     class MockTable(TableConfig):
         def __init__(self):
             super(TestUnloadCopy.MockTable, self).__init__(
-                "my_db", mock_conn, "my_table", "my_schema", "org_table", "index_schema", "index_table"
+                "my_db",
+                mock_conn,
+                "my_table",
+                "my_schema",
+                "org_table",
+                "index_schema",
+                "index_table",
             )
             self._dw_columns = None  # overrides get_destination_table_columns below
             self._columns = None  # overrides columns property
@@ -568,7 +614,9 @@ class TestUnloadCopy(unittest.TestCase):
 
         tt.write_manifest_file.assert_not_called()
         tt._upload_s3.assert_called_once_with(
-            ANY, S3Config.bucket, f"{S3Config.prefix}/my_db.org_table.20190101T010203.avro"
+            ANY,
+            S3Config.bucket,
+            f"{S3Config.prefix}/my_db.org_table.20190101T010203.avro",
         )
 
         self.assertEqual(tt.row_count, 3)
@@ -812,15 +860,17 @@ class TestUnloadCopy(unittest.TestCase):
     def test_write_manifest_file(self, mock_io):
         expected_entries = [
             {
-                'url': f's3://{S3Config.bucket}/{S3Config.prefix}/my_db.org_table.20190101T010203/00000.avro',
-                'mandatory': True
-            }, {
-                'url': f's3://{S3Config.bucket}/{S3Config.prefix}/my_db.org_table.20190101T010203/00001.avro',
-                'mandatory': True
-            }, {
-                'url': f's3://{S3Config.bucket}/{S3Config.prefix}/my_db.org_table.20190101T010203/00002.avro',
-                'mandatory': True
-            }
+                "url": f"s3://{S3Config.bucket}/{S3Config.prefix}/my_db.org_table.20190101T010203/00000.avro",
+                "mandatory": True,
+            },
+            {
+                "url": f"s3://{S3Config.bucket}/{S3Config.prefix}/my_db.org_table.20190101T010203/00001.avro",
+                "mandatory": True,
+            },
+            {
+                "url": f"s3://{S3Config.bucket}/{S3Config.prefix}/my_db.org_table.20190101T010203/00002.avro",
+                "mandatory": True,
+            },
         ]
 
         tt = self.MockTable()
@@ -840,7 +890,9 @@ class TestUnloadCopy(unittest.TestCase):
         self.assertListEqual(manifest["entries"], expected_entries)
 
         tt._upload_s3.assert_called_once_with(
-            ANY, S3Config.bucket, f"{S3Config.prefix}/my_db.org_table.20190101T010203.manifest"
+            ANY,
+            S3Config.bucket,
+            f"{S3Config.prefix}/my_db.org_table.20190101T010203.manifest",
         )
 
     def test_invalid_manifest_state(self):

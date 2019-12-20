@@ -4,8 +4,8 @@ import json
 import unicodedata
 import uuid
 
-from fastavro.write import Writer
 from fastavro._write_py import WRITERS
+from fastavro.write import Writer
 
 
 def _avro_format(inp):

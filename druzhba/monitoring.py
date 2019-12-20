@@ -1,13 +1,13 @@
-from contextlib import contextmanager
-from enum import Enum, unique
 import logging
 import logging.config
 import os
+from contextlib import contextmanager
+from enum import Enum, unique
 from time import perf_counter
 
 import sentry_sdk as sentry
-from sentry_sdk.integrations.logging import LoggingIntegration
 import statsd
+from sentry_sdk.integrations.logging import LoggingIntegration
 
 
 def configure_logging():
@@ -34,19 +34,18 @@ def configure_logging():
 
 
 def init_sentry():
-    dsn = os.getenv('SENTRY_DSN')
+    dsn = os.getenv("SENTRY_DSN")
 
     if dsn is not None:
         sentry_logging = LoggingIntegration(
-            level=logging.INFO,
-            event_level=logging.WARNING
+            level=logging.INFO, event_level=logging.WARNING
         )
 
         sentry.init(
             dsn=dsn,
             integrations=[sentry_logging],
-            environment=os.getenv('SENTRY_ENVIRONMENT'),
-            release=os.getenv('SENTRY_RELEASE')
+            environment=os.getenv("SENTRY_ENVIRONMENT"),
+            release=os.getenv("SENTRY_RELEASE"),
         )
 
 
@@ -124,7 +123,6 @@ class MonitoringProvider(object):
             reraised within the Druzhba application after the on_event method
             is invoked.
         """
-        pass
 
     @contextmanager
     def wrap(self, event, **kwargs):
@@ -194,7 +192,7 @@ class DefaultMonitoringProvider(MonitoringProvider):
         if event_state == EventState.COMPLETE:
             if event in ["extract-table", "create-redshift-table", "load-table"]:
                 statsd_client.incr(full_event_name)
-            if event in ['run-time', 'full-run-time']:
+            if event in ["run-time", "full-run-time"]:
                 statsd_client.timing(full_event_name, elapsed_time)
 
         if event == "disconnect-error":
