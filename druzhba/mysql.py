@@ -185,8 +185,9 @@ class MySQLTableConfig(TableConfig):
                 return "varchar({})".format(prec)
 
         # Date and Time Types
+        # don't need precision or scale
         if type_name in MysqlTypes.date_and_time_types.keys():
-            return MysqlTypes.date_and_time_types[inp]
+            return MysqlTypes.date_and_time_types[type_name]
 
         # String Types
         if type_name in MysqlTypes.string_types:
