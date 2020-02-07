@@ -6,27 +6,20 @@ import yaml
 CONFIG_DIR = os.getenv("DRUZHBA_CONFIG_DIR")
 
 
-class S3Config(object):
-    bucket = os.getenv("S3_BUCKET", "").replace("s3://", "")
-    prefix = os.getenv("S3_PREFIX", "")
-
-
-class RedshiftConfig(object):
-    """Either a URL or a host/port/database/user may be used."""
-
-    def __init__(self, destination_config):
-        self.iam_copy_role = destination_config.get("iam_copy_role")
-        self.redshift_cert_path = destination_config.get("redshift_cert_path")
-
-        self.host = destination_config["connection"].get("host")
-        self.port = destination_config["connection"].get("port", 5439)
-        self.user = destination_config["connection"].get("user")
-        self.password = destination_config["connection"].get("password")
-        self.database = destination_config["connection"].get("database")
-        self.url = destination_config["connection"].get("url")
+class ConnectionConfig(object):
+    # Note: pymysq defaults port to 3306 if 0 supplied
+    #       pyscopg2 defaults port to 5432 if omitted from kwargs
+    #       pymssql defaults to port 1433 if not provided
+    def __init__(self, config):
+        self.host = config.get("host")
+        self.port = config.get("port")
+        self.user = config.get("user")
+        self.password = config.get("password")
+        self.database = config.get("database")
+        self.url = config.get("url")
 
     @property
-    def connection_params(self):
+    def params(self):
         if self.url:
             return {"dsn": self.url}
         elif self.host and self.user:
@@ -41,8 +34,32 @@ class RedshiftConfig(object):
             raise ValueError("Required connection parameters not set")
 
 
+class S3Config(object):
+    def __init__(self, s3_config):
+        self.bucket = s3_config.get("bucket", "").replace("s3://", "")
+        self.prefix = s3_config.get("prefix", "")
+
+
+class RedshiftConfig(object):
+    """Either a URL or a host/port/database/user may be used."""
+
+    def __init__(self, destination_config):
+        self.iam_copy_role = destination_config.get("iam_copy_role")
+        self.redshift_cert_path = destination_config.get("redshift_cert_path")
+        self.s3_config = S3Config(destination_config.get("s3"))
+        self.connection_config = ConnectionConfig(destination_config["connection"])
+
+    @property
+    def connection_params(self):
+        return self.connection_config.params
+
+
 def load_destination_config(config_dir):
     return load_config_file(os.path.join(config_dir, "_pipeline.yaml"))
+
+
+class SourceConfig(object):
+    pass
 
 
 def load_config_file(filename):

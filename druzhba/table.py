@@ -360,7 +360,10 @@ class TableConfig(object):
     @property
     def s3_key_prefix(self):
         return "{}/{}.{}.{}".format(
-            S3Config.prefix, self.database_alias, self.source_table_name, self.date_key,
+            get_redshift().s3_config.prefix,
+            self.database_alias,
+            self.source_table_name,
+            self.date_key,
         )
 
     def single_s3_data_key(self):
@@ -398,7 +401,7 @@ class TableConfig(object):
 
     @property
     def copy_target_url(self):
-        return _s3_url(S3Config.bucket, self.copy_target_key)
+        return _s3_url(get_redshift().s3_config.bucket, self.copy_target_key)
 
     def data_file_keys(self):
         if self.manifest_mode:
@@ -856,7 +859,9 @@ class TableConfig(object):
             "end_dt": endtime.replace(microsecond=0),
             "run_time_sec": (endtime - starttime).total_seconds(),
             "manifest_path": self.copy_target_url,
-            "data_path": "s3://{}/{}".format(S3Config.bucket, self.s3_key_prefix),
+            "data_path": "s3://{}/{}".format(
+                get_redshift().s3_config.bucket, self.s3_key_prefix
+            ),
             "output_exists": self.row_count > 0,
             "row_count": self.row_count,
             "upload_size": self.upload_size,
@@ -979,7 +984,9 @@ class TableConfig(object):
                 self.manifest_mode = True
 
             if row_count > 0:
-                self._upload_s3(f, S3Config.bucket, self.next_s3_data_file_key())
+                self._upload_s3(
+                    f, get_redshift().s3_config.bucket, self.next_s3_data_file_key()
+                )
                 self.num_data_files += 1
 
         return complete
@@ -989,14 +996,16 @@ class TableConfig(object):
             raise TableStateError("Cannot write manifest when not in manifest mode")
 
         entries = [
-            {"url": _s3_url(S3Config.bucket, key), "mandatory": True}
+            {"url": _s3_url(get_redshift().s3_config.bucket, key), "mandatory": True}
             for key in self.data_file_keys()
         ]
         manifest = {"entries": entries}
 
         with BytesIO() as f:
             f.write(json.dumps(manifest).encode())
-            self._upload_s3(f, S3Config.bucket, self.manifest_s3_data_key())
+            self._upload_s3(
+                f, get_redshift().s3_config.bucket, self.manifest_s3_data_key()
+            )
 
     def _upload_s3(self, f, bucket, key):
         """
@@ -1274,9 +1283,9 @@ class TableConfig(object):
 
         # Clean up S3
         for key in self.data_file_keys():
-            self.s3.delete_object(Bucket=S3Config.bucket, Key=key)
+            self.s3.delete_object(Bucket=get_redshift().s3_config.bucket, Key=key)
 
         if self.manifest_mode:
             self.s3.delete_object(
-                Bucket=S3Config.bucket, Key=self.manifest_s3_data_key()
+                Bucket=get_redshift().s3_config.bucket, Key=self.manifest_s3_data_key()
             )

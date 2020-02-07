@@ -2,10 +2,10 @@ import argparse
 import copy
 import datetime
 import logging
+import sys
 import time
 import traceback
 from multiprocessing import cpu_count
-import sys
 from multiprocessing.dummy import Pool
 
 import psycopg2

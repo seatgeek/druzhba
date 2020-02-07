@@ -18,6 +18,10 @@ class Redshift(object):
     def iam_copy_role(self):
         return self.config.iam_copy_role
 
+    @property
+    def s3_config(self):
+        return self.config.s3_config
+
     @contextmanager
     def connection(self):
         redshift_kwargs = self.config.connection_params

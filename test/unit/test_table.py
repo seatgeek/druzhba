@@ -8,8 +8,9 @@ from io import BytesIO
 import fastavro
 from mock import ANY, MagicMock, Mock, PropertyMock, call, patch
 
-from druzhba.config import S3Config
+from druzhba.config import RedshiftConfig
 from druzhba.db import ConnectionParams
+from druzhba.redshift import get_redshift, Redshift
 from druzhba.table import (
     ConfigurationError,
     InvalidSchemaError,
@@ -44,6 +45,26 @@ class MockBytesIO(object):
 
 
 mock_conn = ConnectionParams("name", "host", "port", "user", "password")
+
+
+class EchoDict(object):
+    def __getitem__(self, item):
+        return item
+
+    def __contains__(self, item):
+        return True
+
+
+class MockS3Config(object):
+    bucket = "my-bucket"
+    prefix = "my_prefix"
+
+
+class MockRedshiftConfig(object):
+    s3_config = MockS3Config()
+    iam_copy_role = "iam_copy_role"
+    connection_config = EchoDict()
+    redshift_cert_path = "/my/cert/path"
 
 
 class TableTest(unittest.TestCase):
@@ -552,6 +573,7 @@ class TestUnloadCopy(unittest.TestCase):
 
         self.assertListEqual(fields, target_fields)
 
+    @patch("druzhba.redshift._redshift", new=Redshift(MockRedshiftConfig()))
     @patch("druzhba.table.BytesIO")
     def test_avro_to_s3(self, mock_io):
         tt = self.MockTable()
@@ -581,6 +603,7 @@ class TestUnloadCopy(unittest.TestCase):
         for record, target in zip(fastavro.reader(b), tt._results_iter):
             self.assertEqual(record, target)
 
+    @patch("druzhba.redshift._redshift", new=Redshift(MockRedshiftConfig()))
     @patch("druzhba.table.BytesIO")
     def test_extract_full_single(self, mock_io):
         tt = self.MockTable()
@@ -614,13 +637,12 @@ class TestUnloadCopy(unittest.TestCase):
 
         tt.write_manifest_file.assert_not_called()
         tt._upload_s3.assert_called_once_with(
-            ANY,
-            S3Config.bucket,
-            f"{S3Config.prefix}/my_db.org_table.20190101T010203.avro",
+            ANY, "my-bucket", "my_prefix/my_db.org_table.20190101T010203.avro",
         )
 
         self.assertEqual(tt.row_count, 3)
 
+    @patch("druzhba.redshift._redshift", new=Redshift(MockRedshiftConfig()))
     def test_extract_full_multi(self):
         tt = self.MockTable()
         tt.date_key = "20190101T010203"
@@ -664,11 +686,12 @@ class TestUnloadCopy(unittest.TestCase):
 
     maxDiff = None
 
-    @patch("druzhba.redshift._redshift")
-    def test_redshift_copy_create(self, r):
+    @patch("druzhba.redshift._redshift", new=Redshift(MockRedshiftConfig()))
+    def test_redshift_copy_create(self):
         m, c = self.mock_cursor()
-        r.cursor = Mock(return_value=m)
-        r.iam_copy_role = "iam_copy_role"
+
+        from druzhba.redshift import _redshift
+        _redshift.cursor = Mock(return_value=m)
 
         tt = self.MockTable()
         tt.primary_key = ["pk"]
@@ -687,7 +710,7 @@ class TestUnloadCopy(unittest.TestCase):
             call(
                 IgnoreWhitespace(
                     f"""
-            COPY "my_db_my_table_staging" FROM 's3://{S3Config.bucket}/{S3Config.prefix}/my_db.org_table.20190101T010203.avro'
+            COPY "my_db_my_table_staging" FROM 's3://my-bucket/my_prefix/my_db.org_table.20190101T010203.avro'
             CREDENTIALS 'aws_iam_role=iam_copy_role'
             FORMAT AS AVRO 'auto'
             EXPLICIT_IDS ACCEPTINVCHARS TRUNCATECOLUMNS
@@ -704,11 +727,12 @@ class TestUnloadCopy(unittest.TestCase):
         call_args = c.execute.call_args_list
         self.assertListEqual(call_args, target_call_args)
 
-    @patch("druzhba.redshift._redshift")
-    def test_redshift_copy_incremental_single(self, r):
+    @patch("druzhba.redshift._redshift", new=Redshift(MockRedshiftConfig()))
+    def test_redshift_copy_incremental_single(self):
         m, c = self.mock_cursor()
-        r.cursor = Mock(return_value=m)
-        r.iam_copy_role = "iam_copy_role"
+
+        from druzhba.redshift import _redshift
+        _redshift.cursor = Mock(return_value=m)
 
         tt = self.MockTable()
         tt.date_key = "20190101T010203"
@@ -729,8 +753,8 @@ class TestUnloadCopy(unittest.TestCase):
             call('CREATE TABLE "my_db_my_table_staging" (LIKE "my_table");'),
             call(
                 IgnoreWhitespace(
-                    f"""
-            COPY "my_db_my_table_staging" FROM 's3://{S3Config.bucket}/{S3Config.prefix}/my_db.org_table.20190101T010203.avro'
+                    """
+            COPY "my_db_my_table_staging" FROM 's3://my-bucket/my_prefix/my_db.org_table.20190101T010203.avro'
             CREDENTIALS 'aws_iam_role=iam_copy_role'
             FORMAT AS AVRO 'auto'
             EXPLICIT_IDS ACCEPTINVCHARS TRUNCATECOLUMNS
@@ -778,7 +802,7 @@ class TestUnloadCopy(unittest.TestCase):
             call(
                 IgnoreWhitespace(
                     f"""
-            COPY "my_db_my_table_staging" FROM 's3://{S3Config.bucket}/{S3Config.prefix}/my_db.org_table.20190101T010203.manifest'
+            COPY "my_db_my_table_staging" FROM 's3://{get_redshift().s3_config.bucket}/{get_redshift().s3_config.prefix}/my_db.org_table.20190101T010203.manifest'
             CREDENTIALS 'aws_iam_role=iam_copy_role'
             MANIFEST
             FORMAT AS AVRO 'auto'
@@ -807,11 +831,12 @@ class TestUnloadCopy(unittest.TestCase):
         with self.assertRaises(InvalidSchemaError):
             tt.load()
 
-    @patch("druzhba.redshift._redshift")
-    def test_redshift_copy_full_refresh(self, r):
+    @patch("druzhba.redshift._redshift", new=Redshift(MockRedshiftConfig()))
+    def test_redshift_copy_full_refresh(self):
         m, c = self.mock_cursor()
-        r.cursor = Mock(return_value=m)
-        r.iam_copy_role = "iam_copy_role"
+
+        from druzhba.redshift import _redshift
+        _redshift.cursor = Mock(return_value=m)
 
         tt = self.MockTable()
 
@@ -830,7 +855,7 @@ class TestUnloadCopy(unittest.TestCase):
             call(
                 IgnoreWhitespace(
                     f"""
-            COPY "my_db_my_table_staging" FROM 's3://{S3Config.bucket}/{S3Config.prefix}/my_db.org_table.20190101T010203.avro'
+            COPY "my_db_my_table_staging" FROM 's3://{get_redshift().s3_config.bucket}/{get_redshift().s3_config.prefix}/my_db.org_table.20190101T010203.avro'
             CREDENTIALS 'aws_iam_role=iam_copy_role'
             FORMAT AS AVRO 'auto'
             EXPLICIT_IDS ACCEPTINVCHARS TRUNCATECOLUMNS
@@ -847,6 +872,7 @@ class TestUnloadCopy(unittest.TestCase):
         call_args = c.execute.call_args_list
         self.assertListEqual(call_args, target_call_args)
 
+    @patch("druzhba.redshift._redshift", new=Redshift(MockRedshiftConfig()))
     @patch("druzhba.table.BytesIO")
     def test_write_manifest_file_invalid(self, _):
         tt = self.MockTable()
@@ -856,19 +882,20 @@ class TestUnloadCopy(unittest.TestCase):
         with self.assertRaises(TableStateError):
             tt.write_manifest_file()
 
+    @patch("druzhba.redshift._redshift", new=Redshift(MockRedshiftConfig()))
     @patch("druzhba.table.BytesIO")
     def test_write_manifest_file(self, mock_io):
         expected_entries = [
             {
-                "url": f"s3://{S3Config.bucket}/{S3Config.prefix}/my_db.org_table.20190101T010203/00000.avro",
+                "url": f"s3://my-bucket/my_prefix/my_db.org_table.20190101T010203/00000.avro",
                 "mandatory": True,
             },
             {
-                "url": f"s3://{S3Config.bucket}/{S3Config.prefix}/my_db.org_table.20190101T010203/00001.avro",
+                "url": f"s3://my-bucket/my_prefix/my_db.org_table.20190101T010203/00001.avro",
                 "mandatory": True,
             },
             {
-                "url": f"s3://{S3Config.bucket}/{S3Config.prefix}/my_db.org_table.20190101T010203/00002.avro",
+                "url": f"s3://my-bucket/my_prefix/my_db.org_table.20190101T010203/00002.avro",
                 "mandatory": True,
             },
         ]
@@ -890,9 +917,7 @@ class TestUnloadCopy(unittest.TestCase):
         self.assertListEqual(manifest["entries"], expected_entries)
 
         tt._upload_s3.assert_called_once_with(
-            ANY,
-            S3Config.bucket,
-            f"{S3Config.prefix}/my_db.org_table.20190101T010203.manifest",
+            ANY, "my-bucket", "my_prefix/my_db.org_table.20190101T010203.manifest",
         )
 
     def test_invalid_manifest_state(self):
@@ -905,11 +930,12 @@ class TestUnloadCopy(unittest.TestCase):
         with self.assertRaises(TableStateError):
             tt.single_s3_data_key()
 
-    @patch("druzhba.redshift._redshift")
-    def test_redshift_copy_full_refresh_with_index_col(self, r):
+    @patch("druzhba.redshift._redshift", new=Redshift(MockRedshiftConfig()))
+    def test_redshift_copy_full_refresh_with_index_col(self):
         m, c = self.mock_cursor()
-        r.cursor = Mock(return_value=m)
-        r.iam_copy_role = "iam_copy_role"
+
+        from druzhba.redshift import _redshift
+        _redshift.cursor = Mock(return_value=m)
 
         tt = self.MockTable()
         tt.date_key = "20190101T010203"
@@ -926,7 +952,7 @@ class TestUnloadCopy(unittest.TestCase):
             call(
                 IgnoreWhitespace(
                     f"""
-            COPY "my_db_my_table_staging" FROM 's3://{S3Config.bucket}/{S3Config.prefix}/my_db.org_table.20190101T010203.avro'
+            COPY "my_db_my_table_staging" FROM 's3://{get_redshift().s3_config.bucket}/{get_redshift().s3_config.prefix}/my_db.org_table.20190101T010203.avro'
             CREDENTIALS 'aws_iam_role=iam_copy_role'
             FORMAT AS AVRO 'auto'
             EXPLICIT_IDS ACCEPTINVCHARS TRUNCATECOLUMNS
@@ -943,11 +969,12 @@ class TestUnloadCopy(unittest.TestCase):
         call_args = c.execute.call_args_list
         self.assertListEqual(call_args, target_call_args)
 
-    @patch("druzhba.redshift._redshift")
-    def test_redshift_copy_rebuild(self, r):
+    @patch("druzhba.redshift._redshift", new=Redshift(MockRedshiftConfig()))
+    def test_redshift_copy_rebuild(self):
         m, c = self.mock_cursor()
-        r.cursor = Mock(return_value=m)
-        r.iam_copy_role = "iam_copy_role"
+
+        from druzhba.redshift import _redshift
+        _redshift.cursor = Mock(return_value=m)
 
         c.fetchall = Mock(return_value=[(True, '{"group group_name=r/owner_name"}')])
 
@@ -970,7 +997,7 @@ class TestUnloadCopy(unittest.TestCase):
             call(
                 IgnoreWhitespace(
                     f"""
-            COPY "my_db_my_table_staging" FROM 's3://{S3Config.bucket}/{S3Config.prefix}/my_db.org_table.20190101T010203.avro'
+            COPY "my_db_my_table_staging" FROM 's3://{get_redshift().s3_config.bucket}/{get_redshift().s3_config.prefix}/my_db.org_table.20190101T010203.avro'
             CREDENTIALS 'aws_iam_role=iam_copy_role'
             FORMAT AS AVRO 'auto'
             EXPLICIT_IDS ACCEPTINVCHARS TRUNCATECOLUMNS

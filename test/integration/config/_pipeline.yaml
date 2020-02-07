@@ -4,6 +4,9 @@ connection:
 index:
   schema: druzhba_test
   table: pipeline_table_index
+s3:
+  bucket: ${S3_BUCKET}
+  prefix: ${S3_PREFIX}
 iam_copy_role: ${IAM_COPY_ROLE}
 redshift_cert_path: ${REDSHIFT_CERT_PATH}
 sources:
