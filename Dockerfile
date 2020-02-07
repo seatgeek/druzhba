@@ -8,7 +8,7 @@ ENV APP_PATH=/app \
 RUN apt-get update && \
     apt-get dist-upgrade -y && \
     apt-get install -y --no-install-recommends \
-        build-essential postgresql libpq-dev && \
+        build-essential postgresql libpq-dev mysql-client && \
     apt-get install -y \
         python3-pip python3.7 python3.7-dev python3.7-venv && \
     apt-get clean && \

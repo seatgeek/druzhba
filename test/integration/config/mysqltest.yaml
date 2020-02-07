@@ -1,0 +1,30 @@
+---
+database_name: druzhba_test
+tables:
+  - source_table_name: test_basic
+    destination_table_name: test_basic
+    destination_schema_name: druzhba_test
+    distribution_key: pk
+    sort_keys:
+      - updated_at
+    index_column: updated_at
+    primary_key:
+      - pk
+    columns_to_drop:
+      - drop1
+  - source_table_name: test_not_null_datetime
+    destination_table_name: test_not_null_datetime
+    destination_schema_name: druzhba_test
+    distribution_key: pk
+    sort_keys:
+      - updated_at
+    index_column: updated_at
+    not_null_date: true
+#  - source_table_name: test_null_datetime
+#    destination_table_name: test_null_datetime
+#    destination_schema_name: druzhba_test
+#    distribution_key: pk
+#    sort_keys:
+#     - updated_at
+#    index_column: updated_at
+#    not_null_date: false

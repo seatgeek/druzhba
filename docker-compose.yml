@@ -1,14 +1,26 @@
 version: '3.7'
 services:
-  db:
+  postgres:
     image: postgres:10
     ports:
       - "5433:5432"
     networks:
       - druzhba
     stop_grace_period: 30s
-    expose:
-      - "5433"
+    environment:
+      POSTGRES_DB: druzhba_test
+
+  mysql:
+    image: mysql/mysql-server:5.7
+    ports:
+      - "3307:3306"
+    networks:
+      - druzhba
+    volumes:
+      - ./test/init_mysql:/docker-entrypoint-initdb.d
+    stop_grace_period: 30s"
+    environment:
+      MYSQL_ROOT_PASSWORD: 'mysql_root_password'
   test:
     build:
       context: .

@@ -7,7 +7,10 @@ import setuptools
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-tests_require = ["nose>=1.3.7", "mock>=2.0.0"]
+tests_require = [
+    "nose>=1.3.7",
+    "mock>=2.0.0"
+]
 
 setuptools.setup(
     name="druzhba",

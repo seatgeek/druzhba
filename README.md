@@ -33,9 +33,10 @@ Then,run:
 source .env.test.sample
 source .env.test  # For whatever overrides you need
 
-docker-compose up -d db
-docker-compose build
-docker-compose run test bash test/integration/run_test.sh
+docker-compose up -d postgres mysql
+docker-compose build test
+
+docker-compose run test bash test/integration/run_test.sh mysql postgres
 ```
 
-TODO: Use tox, test multiple versions of Python/Postgres, add Mysql/MSSQL.
+TODO: Use tox, test multiple versions of Python/Postgres, add Mysql8, add MSSQL.

@@ -12,3 +12,5 @@ redshift_cert_path: ${REDSHIFT_CERT_PATH}
 sources:
   - alias: pgtest
     type: postgres
+  - alias: mysqltest
+    type: mysql

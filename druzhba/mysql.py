@@ -110,7 +110,8 @@ class MySQLTableConfig(TableConfig):
         def convert_or_default(f, default):
             def _converter(x):
                 out = f(x)
-                if out is not None:
+                # As of v0.8 pymysql casts "broken" datetimes to strings instead of None
+                if out is not None and not isinstance(out, str):
                     return out
                 else:
                     return default

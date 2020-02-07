@@ -4,15 +4,14 @@ tables:
   - source_table_name: test_basic
     destination_table_name: test_basic
     destination_schema_name: druzhba_test
-    distribution_key: pk1
+    distribution_key: pk
     sort_keys:
-      - updated_at1
-    index_column: updated_at1
+      - updated_at
+    index_column: updated_at
     primary_key:
-      - pk1
+      - pk
     columns_to_drop:
       - drop1
-      - drop2
     type_map:
       enum1: varchar(15)
 
