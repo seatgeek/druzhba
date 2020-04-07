@@ -18,6 +18,9 @@ configuration.
 
 Major versions can require configuration changes by end users.
 
+Before any release, update `setup.py` to match the correct version!
+TODO: use https://github.com/warner/python-versioneer or similar.
+
 ## General Branch Outline
 
 There are three branches that are relevant to the release procedures: the

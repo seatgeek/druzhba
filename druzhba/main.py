@@ -363,7 +363,7 @@ def parse_args():
     parser.add_argument(
         "-f",
         "--full-refresh",
-        help="Force a full refresh of the table."
+        help="Force a full refresh of the table. "
         "Must be run with --database and --table(s). ",
         action="store_true",
     )

@@ -189,7 +189,7 @@ class TableConfig(object):
     new_index_value : str
         Used in the `where` clause, this is the max index value for a given
         table currently in the source database.
-    table_template_data : dict
+    data : dict
         Read from table definition in the yaml file to supply data to the Jinja
         templating
     db_template_data : dict
@@ -230,7 +230,7 @@ class TableConfig(object):
         full_refresh=False,
         rebuild=False,
         schema_file=None,
-        table_template_data=None,
+        data=None,
         append_only=False,
         db_template_data=None,
     ):
@@ -266,7 +266,7 @@ class TableConfig(object):
         self._old_index_value = "notset"
         self._new_index_value = "notset"
         self._destination_table_status = None
-        self.table_template_data = table_template_data
+        self.table_template_data = data
         self.db_template_data = db_template_data
         self.index_schema = index_schema
         self.index_table = index_table

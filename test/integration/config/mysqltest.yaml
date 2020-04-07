@@ -1,5 +1,4 @@
 ---
-database_name: druzhba_test
 tables:
   - source_table_name: test_basic
     destination_table_name: test_basic
