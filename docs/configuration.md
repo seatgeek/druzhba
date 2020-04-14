@@ -52,8 +52,8 @@ The YAML file has several configurable settings for each table.
  - `source_name`: table name in source database. Required even if `query_file` is used.
 
  Columns configuring the creation of the target table for automatic tables.
- - `destination_name`: desired table name in data warehouse
- - `destination_schema`: schema in data warehouse. Note: for most databases this will be `public`. If a table has sensitive information, it should go in its own schema for access control. *This schema must preexist*. Create a separate issue in [data-science](https://github.com/seatgeek/data-science/issues/) for a migration to create a new schema with the users who should have access, if you need.
+ - `destination_name`: desired table name in target database
+ - `destination_schema`: schema in target database. *This schema must already exist*. 
  - `distribution_key`: Optional. A single column to be used as the table `distkey`. It should be unique or mostly unique. Good examples are primary key `id`s and high-resolution timestamps. You can read more about distkeys [here](http://docs.aws.amazon.com/redshift/latest/dg/c_Distribution_examples.html). NOTE: If no `distribution_key` is specified, the first Primary Key will be selected by default.
  - `sort_keys`: Optional. Zero or more columns that define the sortkey. Read more about sortkeys [here](http://docs.aws.amazon.com/redshift/latest/dg/c_best-practices-sort-key.html).
 
