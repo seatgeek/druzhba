@@ -48,9 +48,9 @@ all tables in the Druzhba invocation will have all existing rows deleted, and th
 incremental index. This option is useful if data in the source table has been deleted or updated in a way that will not be
 picked up by an `index_column`.
 
-`--rebuild` behaves as `full-refresh`, but additional (transactionally) deletes and recreates the target table.
+`--rebuild` behaves as `full-refresh`, but additionally will transactionally delete and recreate the target table.
 Druzhba also attempts to copy the permissions on the old table to the new one, but will ignore some kinds of
-permissions like `grant options`. This option is useful after a migration to the source table. `--rebuild` is
+permissions like `with grant option`. This option is useful after a migration to the source table. `--rebuild` is
 not supported for manual tables or those with a `truncate_file`.
 
 
