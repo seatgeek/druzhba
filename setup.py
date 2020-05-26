@@ -17,14 +17,15 @@ setuptools.setup(
     version="0.1.1",
     author="todo",
     author_email="todo",
-    description="A friendly ETL pipeline",
+    description="A friendly extract+load pipeline",
+    license="MIT License",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/seatgeek/druzhba",
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
-        # "License :: OSI Approved :: MIT License",  # TODO
+        "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
         "Private :: Do Not Upload",  # TODO
     ],

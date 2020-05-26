@@ -138,3 +138,16 @@ operational risk or security implication is discovered.
 The process to release a new major version is identical to that for a minor
 version except that the "next" branch would be `dev-1.0` (instead of `dev-0.2`
 in our example above) and after release `master` becomes `dev-1.1`.
+
+
+## Releasing to Pypi
+
+
+In an appropriate Python3 environment, run:
+
+```
+pip install -e .[dev]  # For Twine
+python setup.py sdist bdist_wheel
+# Needs envars, or enter a valid user/password or __token__/$TOKEN
+twine upload --verbose --repository testpypi dist/*
+```
