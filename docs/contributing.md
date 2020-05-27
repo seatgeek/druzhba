@@ -1,4 +1,64 @@
-## Versioning system
+_This document contains information related to developing the Druzhba application,
+specifically how to run unit and integration tests and the release procedure for
+publishing a new version of Druzha. It will be of minimal use to the average
+end user._
+
+## Pull Requests
+Unsolicited pull requests may be submitted against the `master` branch.
+Please run Isort and Black (See: `.pre-commit.sh`) prior to opening your
+pull request and ensure that unit tests pass. Maintainers will run the
+integration test suite if appropriate.
+
+## Needed Features
+
+This is a list of most requested Druzhba features:
+- Complete SQL Server support (currently partial support)
+- Support for multiple output database types
+
+## Testing
+
+#### Unit Tests
+
+To run unit tests locally:
+
+```
+python setup.py test
+```
+
+To use Docker for testing, create a `.env.test` file based on `env.test.sample` with
+any environment variable overrides you wish to assign (can be empty).
+
+To run unit tests in Docker:
+```
+docker-compose run test
+```
+
+#### Integration Tests
+
+To run integration tests of full pipelines in Docker, you'll need
+to add Redshift credentials to your environment or your `.env.test` file. This makes use
+of a test schema in an existing Redshift database, and for safety will
+fail if the schema name already exists.
+
+Then,run:
+```
+source .env.test.sample
+source .env.test  # For whatever overrides you need
+
+docker-compose up -d postgres mysql
+docker-compose build test
+
+docker-compose run test bash test/integration/run_test.sh mysql postgres
+```
+
+
+## Release Proceure
+
+_The remainder of this guide is meant to document the Druzhba release process 
+for Druzhba maintainers. It will be of minimal use to the end user or even 
+most contributers._
+
+### Versioning system
 
 We use a versioning scheme closely related, but simpler than SEMVER. Versions
 are numbered `1.2.3` or `1.2.3-rc4` where 1 is the Major version, 2 is the
@@ -21,7 +81,7 @@ Major versions can require configuration changes by end users.
 Before any release, update `setup.py` to match the correct version!
 TODO: use https://github.com/warner/python-versioneer or similar.
 
-## General Branch Outline
+### General Branch Outline
 
 There are three branches that are relevant to the release procedures: the
 `master` branch, the branch for the current minor version (currently `dev-0.1`),
@@ -40,13 +100,13 @@ Generally, the branch for the next minor version should be kept up to date with
 an additional next-next dev branch (`dev-0.3`) that can track master, although
 it's fine to leave `master` as that branch until `0.2.0` is released.
 
-## Between minor release dev process
+### Between minor release dev process
 
 Most development work should be targeting the next minor release `0.2.0` and
 will be PRed against `master`. After merging to `master` the branch maintainer
 of `dev-0.2` should fast-forward merge `master` into `dev-0.2`
 
-### Patch release
+#### Patch release
 
 Urgent bug fixes, security patches, etc. and other very minor changes can be
 incorporated into a `0.1.x` release. To do so, generally, after the PR is merged
@@ -78,20 +138,20 @@ the `master` branch in which case the cherry-pick will not work and the
 equivalent change will need to be made to the `dev-0.1` branch manually. In that
 case it is advisable not to merge `dev-0.1` back into `master`.
 
-## Minor release process
+### Minor release process
 
 When we're ready to create a new minor release the `dev-0.2` maintainer should
 announce internally on slack. From this point on `master` can begin working on
 version 0.3 features and `dev-0.2` should not get fast-forward merged to master.
 
-### Publishing a release candidate
+#### Publishing a release candidate
 
 The branch maintainer will tag the current head of `dev-0.2` with `v0.2.0-rc1`
 and push that tag. Installations evaluating release candidates should now
 update their dependencies to `druzhba==0.2.0-rc1` and allow our job to run for a
 few days to ensure no unexpected problems.
 
-### Fixing issues in the release candidate
+#### Fixing issues in the release candidate
 If there are no problems then this section can be skipped.
 
 Corrections to any bugs discovered in the release candidate should get PRed
@@ -110,7 +170,7 @@ git checkout master
 git merge --no-ff dev-0.2
 ```
 
-### Final minor version release
+#### Final minor version release
 
 Now that we have a release candidate we're happy with (let's assume `0.2.0-rc2`)
 we need to release that as a release and not a candidate.
@@ -133,14 +193,14 @@ New patch version cherry picks can now be added to the `dev-0.2` branch.
 Patch releases for the 0.1.x series should only be made if a bug with major
 operational risk or security implication is discovered.
 
-## Major version release process
+### Major version release process
 
 The process to release a new major version is identical to that for a minor
 version except that the "next" branch would be `dev-1.0` (instead of `dev-0.2`
 in our example above) and after release `master` becomes `dev-1.1`.
 
 
-## Releasing to Pypi
+### Releasing to Pypi
 
 
 In an appropriate Python3 environment, run:
