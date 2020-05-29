@@ -67,6 +67,7 @@ target/
 venv/
 ENV/
 
-# Intellij
+# Editors
 .idea/
 *.iml
+.vscode/
