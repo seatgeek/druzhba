@@ -1,4 +1,14 @@
-# Druzhba Documentation
+# Druzhba: A Friendly Tool for Piping Data Around
+
+A Druzhba pipeline connects one or more source databases to a target database. It _pulls_ data incrementally
+from each configured source table and writes to a target table (which is automatically created in most cases),
+tracking incremental state and history in the target database. Druzhba may also be configured to pull from a SQL
+query, which supports Jinja templating of some pipeline metadata.
+
+In a typical deployment Druzhba serves the extract and load steps of an ELT pipeline, although it is capable of limited
+in-flight transformations through custom SQL run against the source database to support ETL patterns.
+
+Druzhba is tested against Postgres, Mysql 5.X, and (partially) MSQL Server as sources, and Amazon Redshift as a target.
 
 ## Getting Started
 

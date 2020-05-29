@@ -49,6 +49,9 @@ coverage.xml
 *.cover
 .hypothesis/
 
+# Docs
+docs/_build
+
 # PyBuilder
 target/
 

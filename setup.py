@@ -47,7 +47,7 @@ setuptools.setup(
         "statsd>=3.3.0",
     ],
     extras_require={
-        "dev": ["autoflake", "black", "isort"],
+        "dev": ["autoflake", "black", "isort", "sphinx", "recommonmark"],
         "test": tests_require
     },
     entry_points={"console_scripts": ["druzhba=druzhba.main:main"]},
