@@ -71,7 +71,7 @@ tables:
 The `testsource.yaml` file defines the connection to the testsource database 
 (note: see documentation for more secure ways of supplying connection credentials) 
 and a single table to copy over. The contents of your_table in the source database
-will be copied to your_table in the druzhba_raw schema of the target database.
+will be copied to your_table in the `druzhba_raw` schema of the target database.
 New rows will be identified by the value of their `id` column and existing rows
 will be replaced if their `updated_at` column is greater than on the previous
 iteration. 
