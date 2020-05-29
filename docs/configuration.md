@@ -1,6 +1,6 @@
 # Configuration
 
-Druzhba pipelines are defined in YAML files, located in the directory given by `DRUZHBA_CONFIG_DIR`, laid out like:
+Druzhba pipelines are defined in YAML files, located in the directory given by the `DRUZHBA_CONFIG_DIR`, laid out like:
 ```
 /<DRUZHBA_CONFIG_DIR>
   - _pipeline.yaml  # defines tables in this pipeline
@@ -15,7 +15,8 @@ An example can be found in the tests at `/test/integration/config/`.
 
 The top level `_pipeline.yaml` defines details about the pipeline as a whole as well as connection
 info for the target database. We use a modified parser for YAML extended with support for
-interpolation like `${REDSHIFT_URL}`.
+interpolation like `${REDSHIFT_URL}` which will inject the value of the `REDSHIFT_URL` environment
+variable.
 
 Besides the target configuration fields, `_pipeline.yaml` also includes a list of source tables
 ```
@@ -36,8 +37,8 @@ For an entry in `sources`:
 requested explicitly by passing its alias to `--database`.
 
 Supported fields for the connection to the target database (currently only Redshift):
-- `connection`: options of the target database connection.
-  - `url`: if provided, will be parsed into a user/password/host/port/database
+- `connection` -- options of the target database connection.
+  - `url` -- if provided, will be parsed into a user/password/host/port/database instead of the seperate items below
   - `user`
   - `password`
   - `host`
@@ -50,7 +51,7 @@ Supported fields for the connection to the target database (currently only Redsh
   - `bucket`
   - `prefix`
 - `iam_copy_role`: IAM role used in the copy operation. Only IAM authorization is supported.
-- `redshift_cert_path`: path to an SSL cert file. Optional.
+- `redshift_cert_path`: path to an SSL cert file (optional)
 
 ### Database Configuration
 
