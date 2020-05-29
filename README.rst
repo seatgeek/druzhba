@@ -1,23 +1,37 @@
 Druzhba
 =======
 
-Druzhba is a friendly tool for moving data around.
+Druzhba is a friendly tool for moving data around. It efficiently copies data from your 
+production/transactional databases to your data warehouse.
 
-A Druzhba pipeline connects one or more source databases to a target database. It _pulls_ data incrementally
-from each configured source table and writes to a target table (which is automatically created in most cases),
-tracking incremental state and history in the target database. Druzhba may also be configured to pull from a SQL
-query, which supports Jinja templating of some pipeline metadata.
+A Druzhba pipeline connects one or more source databases to a target database. It
+_pulls_ data incrementally from each configured source table and writes to a target
+table (which is automatically created in most cases), tracking incremental state
+and history in the target database. Druzhba may also be configured to pull from a
+SQL query, which supports Jinja templating of some pipeline metadata.
 
-In a typical deployment Druzhba serves the extract and load steps of an ELT pipeline, although it is capable of limited in-flight transformations through custom extract SQL.
+In a typical deployment, Druzhba serves the extract and load steps of an ELT pipeline,
+although it is capable of limited in-flight transformations through custom extract SQL.
 
-Druzhba is tested against Postgres, Mysql 5.X, and (partially) MSQL Server as sources, and Amazon Redshift as a target.
+Druzhba currently fully supports PostgreSQL and Mysql 5.5-5.7, and provides partial support for 
+Microsoft SQL Server as source databases. Druzhba supports AWS Redshift as a target.
+
+Getting Druzhba
+---------------
+
+Run
+
+.. code-block:: bash
+
+  pip install druzhba
+
 
 Minimal Example
 ---------------
 
 We'll set up a pipeline to extract a single table from an example
-Postgres instance that we'll call "testsource" and write to an existing Redshift database
-that we'll call "testdest".
+Postgres instance that we'll call "testsource" and write to an existing Redshift
+database that we'll call "testdest".
 
 See [docs/README.md](docs/README.md) for a more complete example.
 
@@ -54,12 +68,12 @@ that configures the pipeline:
     - alias: testsource
       type: postgres
 
-The `_pipeline.yaml` file defines the connection to the destination database
+The ``_pipeline.yaml`` file defines the connection to the destination database
 (via environment variables), the location of Druzhba's internal tracking table,
 working S3 location for temporary files, the IAM copy role, and a single
 source database called "testsource".
 
-Create a file `pipeline/testsource.yaml` representing the source database:
+Create a file ``pipeline/testsource.yaml`` representing the source database:
 
 .. code-block:: yaml
 
@@ -73,7 +87,7 @@ Create a file `pipeline/testsource.yaml` representing the source database:
       primary_key:
         - id
 
-The `testsource.yaml` file defines the connection to the testsource database 
+The ``testsource.yaml`` file defines the connection to the testsource database 
 (note: see documentation for more secure ways of supplying connection credentials) 
 and a single table to copy over. The contents of your_table in the source database
 will be copied to your_table in the `druzhba_raw` schema of the target database.
@@ -99,8 +113,10 @@ to wrap pipeline execution with your own error handling.
 Documentation
 -------------
 
-Please see [docs/](docs/) for more complete configuration examples and descriptions of the various
+Please see documentation_ for more complete configuration examples and descriptions of the various
 options to configure your data pipeline.
+
+.. _documentation: https://github.com/seatgeek/druzhba/blob/master/docs/configuration.rst
 
 Contributing
 ------------
@@ -109,9 +125,12 @@ Druzhba is an ongoing project. Feel free to open feature request issues or PRs.
 
 PRs should be unit-tested, and will require an integration test passes to merge.
 
+.. TODO: fix the link below once we have hosting correct 
+
 See the [docs/README.md](docs) for instructions on setting up a Docker-Compose-based test environment.
 
 License
 -------
 
-This project is licensed under the terms of the MIT license.
+This project is licensed under the terms of the 
+`MIT license <https://github.com/seatgeek/druzhba/blob/master/LICENSE>`_.
