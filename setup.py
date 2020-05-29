@@ -4,7 +4,7 @@
 # Copyright (c) 2019 SeatGeek
 import setuptools
 
-with open("README.md", "r") as fh:
+with open("README.rst", "r") as fh:
     long_description = fh.read()
 
 tests_require = [
