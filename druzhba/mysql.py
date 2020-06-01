@@ -153,6 +153,8 @@ class MySQLTableConfig(TableConfig):
         #  - Spatial Data Types
         #  - JSON data type
         inp = input_type.lower()
+
+        # Note: for enums, the type name is the same as the column name
         if inp in self.type_map:
             return self.type_map[inp]
 

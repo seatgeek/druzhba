@@ -102,6 +102,13 @@ class PostgreSQLTableConfig(TableConfig):
             for row in self.query(is_nullable_query)
         }
 
+    def _load_new_index_value(self):
+        # Overrides backtick-quoting from base class
+        query = 'SELECT MAX("{}") AS index_value FROM "{}";'.format(
+            self.index_column, self.source_table_name
+        )
+        return self.query_fetchone(query)["index_value"]
+
     def get_sql_description(self, sql):
         if self.query_file is None:
             column_is_nullable = self._get_column_is_nullable()
