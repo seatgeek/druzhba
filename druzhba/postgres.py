@@ -227,7 +227,7 @@ class PostgreSQLTableConfig(TableConfig):
             ]
 
         columns = [
-            c["column_name"]
+            '"{}"'.format(c["column_name"])
             for c in self.query(
                 """
             SELECT column_name

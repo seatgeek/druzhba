@@ -9,6 +9,7 @@ services:
     stop_grace_period: 30s
     environment:
       POSTGRES_DB: druzhba_test
+      POSTGRES_PASSWORD: 'postgres_root_password'
 
   mysql:
     image: mysql/mysql-server:5.7
