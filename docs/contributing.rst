@@ -9,8 +9,8 @@ end user.*
 Pull Requests
 -------------
 
-Unsolicited pull requests may be submitted against the `master` branch.
-Please run Isort and Black (See: `.pre-commit.sh`) prior to opening your
+Unsolicited pull requests may be submitted against the ``master`` branch.
+Please run Isort and Black (See: ``.pre-commit.sh``) prior to opening your
 pull request and ensure that unit tests pass. Maintainers will run the
 integration test suite if appropriate.
 
@@ -18,6 +18,7 @@ Needed Features
 ---------------
 
 This is a list of most requested Druzhba features:
+
 - Complete SQL Server support (currently partial support)
 - Support for multiple output database types
 
@@ -25,7 +26,7 @@ Testing
 -------
 
 Unit Tests
-^^^^^^^^^
+^^^^^^^^^^
 
 To run unit tests locally:
 
@@ -51,7 +52,7 @@ to add Redshift credentials to your environment or your `.env.test` file. This m
 of a test schema in an existing Redshift database, and for safety will
 fail if the schema name already exists.
 
-Then,run:
+Then run:
 
 .. code-block:: bash
 

@@ -1,6 +1,9 @@
 Druzhba: A Friendly Tool for Piping Data Around
 ===============================================
 
+.. include:: ../README.rst
+  :end-before: end-of-lede
+
 .. toctree::
   :maxdepth: 2
 
@@ -8,6 +11,4 @@ Druzhba: A Friendly Tool for Piping Data Around
   configuration
   cli
   contributing
-
-.. include:: ../README.rst
 

@@ -5,10 +5,10 @@ Druzhba is a friendly tool for moving data around. It efficiently copies data fr
 production/transactional databases to your data warehouse.
 
 A Druzhba pipeline connects one or more source databases to a target database. It
-_pulls_ data incrementally from each configured source table and writes to a target
+*pulls* data incrementally from each configured source table and writes to a target
 table (which is automatically created in most cases), tracking incremental state
-and history in the target database. Druzhba may also be configured to pull from a
-SQL query, which supports Jinja templating of some pipeline metadata.
+and history in the target database. Druzhba may also be configured to pull
+using custom SQL, which supports Jinja templating of pipeline metadata.
 
 In a typical deployment, Druzhba serves the extract and load steps of an ELT pipeline,
 although it is capable of limited in-flight transformations through custom extract SQL.
@@ -16,15 +16,7 @@ although it is capable of limited in-flight transformations through custom extra
 Druzhba currently fully supports PostgreSQL and Mysql 5.5-5.7, and provides partial support for 
 Microsoft SQL Server as source databases. Druzhba supports AWS Redshift as a target.
 
-Getting Druzhba
----------------
-
-Run
-
-.. code-block:: bash
-
-  pip install druzhba
-
+.. end-of-lede
 
 Minimal Example
 ---------------

@@ -15,6 +15,8 @@
 # sys.path.insert(0, os.path.abspath('.'))
 
 
+
+
 # -- Project information -----------------------------------------------------
 
 project = 'Druzhba'
@@ -23,7 +25,7 @@ author = 'The Druzhba Authors'
 
 # The full version, including alpha/beta/rc tags
 release = '0.1.1'
-
+version = 'master' # TODO: FIXME
 
 # -- General configuration ---------------------------------------------------
 
@@ -38,7 +40,7 @@ templates_path = ['_templates']
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', 'release.rst']
 
 
 # -- Options for HTML output -------------------------------------------------
@@ -52,3 +54,10 @@ html_theme = 'alabaster'
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
+
+
+rst_prolog = """
+.. |example-link| raw:: html
+
+    <a href="https://github.com/seatgeek/druzhba/tree/{version}/test/integration/config">examples</a>
+""".format(version=version)
