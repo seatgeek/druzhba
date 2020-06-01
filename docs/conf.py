@@ -10,12 +10,19 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
+import os
+import sys
+sys.path.insert(0, os.path.abspath('..'))
+from druzhba.main import _get_parser
 
 
-
+cli_help = _get_parser().format_help()
+cli_help = cli_help.replace("sphinx-build", "druzhba")  # argparse grabs current process name
+cli_help = '\n'.join(['  ' + line for line in cli_help.split('\n')])
+with open('usage.rst', 'w') as f:
+    f.write('.. code-block:: text\n\n')
+    f.write(cli_help)
+    f.write('\n')
 
 # -- Project information -----------------------------------------------------
 
@@ -61,3 +68,4 @@ rst_prolog = """
 
     <a href="https://github.com/seatgeek/druzhba/tree/{version}/test/integration/config">examples</a>
 """.format(version=version)
+

@@ -313,7 +313,7 @@ def run(args):
         logger.info("Validation complete")
 
 
-def parse_args():
+def _get_parser():
 
     parser = argparse.ArgumentParser(description="Friendly DB-to-DB pipeline")
     parser.add_argument(
@@ -375,14 +375,14 @@ def parse_args():
         "supported for tables Druzhba can build.",
         action="store_true",
     )
-    return parser.parse_args()
+    return parser
 
 
 def main():
     configure_logging()
 
     logger.info("Running druzhba")
-    args = parse_args()
+    args = _get_parser().parse_args()
 
     run(args)
 
