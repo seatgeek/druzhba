@@ -26,6 +26,12 @@ class MSSQLTableConfig(TableConfig):
         "decimal": {pymssql.DECIMAL.value},
     }
 
+    def _load_new_index_value(self):
+        query = 'SELECT MAX({}) AS index_value FROM {};'.format(
+            self.index_column, self.source_table_name
+        )
+        return self.query_fetchone(query)["index_value"]
+
     @property
     def connection_vars(self):
         return {

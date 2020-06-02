@@ -200,6 +200,12 @@ class MySQLTableConfig(TableConfig):
         # Sensible Defaults
         return "varchar({})".format(MysqlTypes.cmax)
 
+    def _load_new_index_value(self):
+        query = 'SELECT MAX(`{}`) AS index_value FROM `{}`;'.format(
+            self.index_column, self.source_table_name
+        )
+        return self.query_fetchone(query)["index_value"]
+
     def query_to_redshift_create_table(self, sql, table_name):
         if self.schema_file:
             query = load_query(self.schema_file, CONFIG_DIR)

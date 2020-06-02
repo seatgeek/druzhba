@@ -579,11 +579,8 @@ class TableConfig(object):
         return self._old_index_value
 
     def _load_new_index_value(self):
-        # Default implementation
-        query = 'SELECT MAX(`{}`) AS index_value FROM `{}`;'.format(
-            self.index_column, self.source_table_name
-        )
-        return self.query_fetchone(query)["index_value"]
+        # Abstract to support DB-specific quoting
+        raise NotImplementedError
 
     @property
     def new_index_value(self):

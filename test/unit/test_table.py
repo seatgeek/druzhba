@@ -224,7 +224,7 @@ class TestTableIndexLogic(unittest.TestCase):
                 "index_table",
             )
 
-            self._oiv = oiv
+            self._old_index_value = oiv
             self._new_index_value = niv
             self.append_only = append_only
             self.full_refresh = full_refresh
@@ -232,9 +232,6 @@ class TestTableIndexLogic(unittest.TestCase):
             # mocking placeholders
             self.db_name = "my_db"
             self.logger = logging.getLogger("test_logger")
-
-        def _load_old_index_value(self):
-            return self._oiv
 
         def connection_vars(self):
             return {}
