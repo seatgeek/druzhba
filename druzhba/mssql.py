@@ -27,10 +27,7 @@ class MSSQLTableConfig(TableConfig):
     }
 
     def _load_new_index_value(self):
-        query = 'SELECT MAX({}) AS index_value FROM {};'.format(
-            self.index_column, self.source_table_name
-        )
-        return self.query_fetchone(query)["index_value"]
+        raise NotImplementedError("auto generated index queries not yet supported for MSSQL")
 
     @property
     def connection_vars(self):
