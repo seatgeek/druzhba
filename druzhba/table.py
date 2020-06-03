@@ -592,7 +592,9 @@ class TableConfig(object):
                 )
                 template = env.from_string(self.index_sql)
                 query = template.render(
-                    db=self.db_template_data, table=self.table_template_data
+                    db=self.db_template_data,
+                    table=self.table_template_data,
+                    run=self.run_template_data
                 )
                 self._new_index_value = self.query_fetchone(query)["index_value"]
 
