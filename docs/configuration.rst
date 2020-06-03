@@ -3,6 +3,12 @@
 Configuration
 =============
 
+.. TODO: this is my least favorite of these doc pages and could be fleshed out
+   considerably more than is represented here. We should probably rewrite as
+   more of a "usage guide" of which configuration is one section. We also could
+   benefit from a theory section outlining how Druzbha works at a high level
+   and why it works the way it does.
+
 Druzhba pipelines are defined in YAML files, located in the directory given by the `DRUZHBA_CONFIG_DIR`, laid out like:
 
 .. code-block::
@@ -103,7 +109,7 @@ Options configuring the creation of the target table for automatic tables.
 Options pertaining to the table's incremental update behavior:
 
  - ``index_column``: Optional. The column to use for determining which rows are dumped from the source DB. Ideally this is a timestamp (`updated_at` if rows can be edited, `created_at` if the table is append-only) or a sequential numeric ID. In any case, this will go into a where clause like `WHERE col > n AND col <= m`. Please note that if there is no index on this column in the source database, this could affect performance. `n` is pulled from `"public"."pipeline_table_index"`, and `m` is pulled from the source database (`SELECT MAX(index_column) FROM source_table;`) before data export. NOTE: If no `index_column` is specified, the entire table will be dumped (refreshed) on each run of the pipeline.
- - ``index_sql``: Optional (alternative to `index_column`). A SQL expression defining the index column, which should return a single row with column called `index_value`. Jinja is supported.
+ - ``index_sql``: Optional (alternative to `index_column`). A SQL query that should return a single row with column called `index_value`. Jinja templating is supported.
  - ``primary_key``: Optional. Column name or list of column names to specify as primary keys, if they cannot be inferred from the source table. When loading data, the `primary_key` will be used to replace existing rows instead of inserting new ones. Required for incremental updates based on a `query_file`.
  - ``full_refresh``: Optional. Deletes the entire table prior to loading extracted data. Not compatible with `index_column`, `index_sql`, or `append_only`.
  - ``append_only``: Optional. Simplifies load side by skipping deletes entirely. Requires `index_column` or `index_sql`. Incompatible with `full_refresh`.
@@ -136,7 +142,7 @@ Other configuration options:
 Templating
 ----------
 
-Custom SQL files can use jinja2 templating. Three variables are defined:
+Custom SQL files can use Jinja2 templating. Three variables are defined:
 
  - ``db`` gets data from the ``data`` block of the database yaml file
  - ``table`` gets data from the ``data`` block of the table configuration
@@ -150,6 +156,49 @@ Custom SQL files can use jinja2 templating. Three variables are defined:
    - ``new_index_value``
 
 In particular ``run.old_index_value`` and ``run.new_index_value`` are useful for building custom incremental update logic.
+
+
+Monitoring
+----------
+
+Monitoring can be provided through several options. Logging verbosity is
+controlled through either the ``--log-level` command line option or the
+``LOG_LEVEL`` environment variable. Additionally Sentry (Raven) and StatsD
+are supported out of the box and configured through environment variables.
+Other monitoring options are available by writing a Python wrapper to invoke
+the Druzhba engine rather than running the application.
+
+Sentry
+^^^^^^
+
+Sentry monitoring may be enabled by setting the ``SENTRY_DSN`` environment
+variable. If the ``SENTRY_DSN`` environment variable is set, warnings and
+errors will be posted to the requested DSN.
+
+The ``SENTRY_ENVIRONMENT`` and ``SENTRY_RELEASE`` environment variables
+will be passed to Sentry as well and have the effect described in the `Sentry
+documentation <https://docs.sentry.io/>`_.
+
+StatsD
+^^^^^^
+
+Druzhba can send several telemetry data points to StatsD if configured. These
+include total pipeline duration, individual source database durations and
+numbers of rows updated per table. To enable the StatsD integration set
+``STATSD_HOST`` and ``STATSD_PORT`` environment variables to set where you
+would like Druzhba to send its telemetry. Druzhba also supports an optional
+``STATSD_PREFIX`` that will be prepended to the event names Druzhba sends
+by default.
+
+Extensible custom monitoring
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If you would like to use another monitoring provider you may do so by running
+your own Python process, extending the ``MonitoringProvider`` class through the
+as-of-yet undocumented (sorry) monitoring API, assigning it over
+``main.monitor`` and calling `run` manually.
+
+We recognize that this is clunky and plan to clean it up in a future release.
 
 
 Usage Considerations
@@ -172,7 +221,7 @@ pulls faster, which will slow down writes a little bit.
 State
 ^^^^^
 
-Druzhba currently tracks pipeline state by the _source_ database, database_alias, and table. Consequently, it supports
+Druzhba currently tracks pipeline state by the *source* database, database_alias, and table. Consequently, it supports
 many-to-one pipelines from e.g. multiple copies of the same source database to a single shared target table.
 But it does not support one-to-many pipelines, because it could not distinguish the state of the different pipelines.
 SQL-based pipelines currently need to define a `source_table_name` which is used to track their state.

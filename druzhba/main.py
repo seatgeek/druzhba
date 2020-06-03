@@ -378,7 +378,7 @@ def _get_parser():
 def main():
     args = _get_parser().parse_args()
 
-    configure_logging()
+    configure_logging(args)
     logger.info("Running druzhba")
 
     run(args)
