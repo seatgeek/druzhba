@@ -103,7 +103,6 @@ class PostgreSQLTableConfig(TableConfig):
         }
 
     def _load_new_index_value(self):
-        # Overrides backtick-quoting from base class
         query = 'SELECT MAX("{}") AS index_value FROM "{}";'.format(
             self.index_column, self.source_table_name
         )
