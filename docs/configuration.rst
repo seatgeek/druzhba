@@ -150,3 +150,44 @@ Custom SQL files can use jinja2 templating. Three variables are defined:
    - ``new_index_value``
 
 In particular ``run.old_index_value`` and ``run.new_index_value`` are useful for building custom incremental update logic.
+
+
+Usage Considerations
+--------------------
+
+Index_column filters should be fast
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Druzhba pulls incrementally according to the value of the `index_column` given in a table's 
+configuration, and then inserts-or-replaces new or updated rows according to an optional
+`primary_key`. On the first run (or if `--rebuild` is given) Druzhba will create the target table.
+After that, it will use a SQL filter on `index_column` to only pull newly updated rows.
+
+Consequently, queries against ``index_column`` need to be fast! Usually, unless a table is
+``append_only``, an ``updated_at`` timestamp column is used to for `index_column` - it is usually
+necessary to create a *database index*  (unfortunate name collision!) on this column to make these
+pulls faster, which will slow down writes a little bit.
+
+
+State
+^^^^^
+
+Druzhba currently tracks pipeline state by the _source_ database, database_alias, and table. Consequently, it supports
+many-to-one pipelines from e.g. multiple copies of the same source database to a single shared target table.
+But it does not support one-to-many pipelines, because it could not distinguish the state of the different pipelines.
+SQL-based pipelines currently need to define a `source_table_name` which is used to track their state.
+
+
+Manual vs Managed
+^^^^^^^^^^^^^^^^^
+
+A specific target table may be:
+
+- "managed", meaning Druzhba handles the creation of the target table
+  (inferred from datatypes on the source table) and the generation of
+  the source-side query.
+- "manual" - SQL queries are provided to read from the source (not
+  necessarily from one table) and to create the target table (rather
+  than inferring its schema from the source table).
+
+Manual table creation is not supported for SQL Server.
