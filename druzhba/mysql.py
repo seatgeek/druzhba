@@ -152,6 +152,8 @@ class MySQLTableConfig(TableConfig):
         #  - Spatial Data Types
         #  - JSON data type
         inp = input_type.lower()
+
+        # Note: for enums, the type name is the same as the column name
         if inp in self.type_map:
             return self.type_map[inp]
 
@@ -196,6 +198,12 @@ class MySQLTableConfig(TableConfig):
 
         # Sensible Defaults
         return "varchar({})".format(MysqlTypes.cmax)
+
+    def _load_new_index_value(self):
+        query = 'SELECT MAX(`{}`) AS index_value FROM `{}`;'.format(
+            self.index_column, self.source_table_name
+        )
+        return self.query_fetchone(query)["index_value"]
 
     def query_to_redshift_create_table(self, sql, table_name):
         if self.schema_file:

@@ -9,7 +9,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="druzhba",
-    version="0.1.4",
+    version="0.1.5",
     author="todo",
     author_email="todo",
     description="A friendly ETL pipeline",

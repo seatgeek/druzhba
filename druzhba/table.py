@@ -580,28 +580,27 @@ class TableConfig(object):
         return self._old_index_value
 
     def _load_new_index_value(self):
-        if self.index_sql:
-            env = Environment(
-                autoescape=select_autoescape(["sql"]), undefined=StrictUndefined
-            )
-            template = env.from_string(self.index_sql)
-            query = template.render(
-                db=self.db_template_data, table=self.table_template_data
-            )
-            return self.query_fetchone(query)["index_value"]
-        elif self.index_column:
-            query = "SELECT MAX({}) AS index_value FROM {};".format(
-                self.index_column, self.source_table_name
-            )
-            return self.query_fetchone(query)["index_value"]
-        else:
-            return None
+        # Abstract to support DB-specific quoting
+        raise NotImplementedError
 
     @property
     def new_index_value(self):
         # we use 'notset' rather than None because None is a valid output
         if self._new_index_value is "notset":
-            self._new_index_value = self._load_new_index_value()
+            if self.index_sql:
+                env = Environment(
+                    autoescape=select_autoescape(["sql"]), undefined=StrictUndefined
+                )
+                template = env.from_string(self.index_sql)
+                query = template.render(
+                    db=self.db_template_data, table=self.table_template_data
+                )
+                self._new_index_value = self.query_fetchone(query)["index_value"]
+
+            elif self.index_column:
+                self._new_index_value = self._load_new_index_value()
+            else:
+                self._new_index_value = None
         if self.query_file and self.index_sql and self._new_index_value is None:
             # Handles a special case where the index_sql query returns no rows
             # but the custom sql file is expecting both old and new index values
