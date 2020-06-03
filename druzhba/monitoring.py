@@ -10,7 +10,12 @@ import statsd
 from sentry_sdk.integrations.logging import LoggingIntegration
 
 
-def configure_logging():
+def configure_logging(args):
+    if args.log_level:
+        log_level = args.log_level
+    else:
+        log_level = os.getenv('LOG_LEVEL', 'INFO')
+
     settings = {
         "version": 1,
         "disable_existing_loggers": False,
@@ -22,13 +27,13 @@ def configure_logging():
         },
         "handlers": {
             "console": {
-                "level": "INFO",
+                "level": log_level,
                 "class": "logging.StreamHandler",
                 "formatter": "normal",
                 "stream": "ext://sys.stdout",
             }
         },
-        "loggers": {"druzhba": {"level": "INFO", "handlers": ["console"]},},
+        "loggers": {"druzhba": {"level": log_level, "handlers": ["console"]},},
     }
     logging.config.dictConfig(settings)
 

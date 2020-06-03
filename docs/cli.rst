@@ -10,15 +10,19 @@ Specific options follow.
 Database Options
 ----------------
 
-By default, Druzhba runs all databases defined in `_pipeline.yaml` (see 
-[configuration.md](configuration.md)) unless they are explicitly disabled with 
-`enabled: false`. These disabled source databases may still be run by calling Druzhba
-with the `--database` argument.
+By default, Druzhba runs all databases defined in ``_pipeline.yaml`` (see
+:ref:`configuration`) unless they are explicitly disabled with ``enabled:
+false``. These disabled source databases may still be run by calling Druzhba
+with the ``--database`` argument.
 
 Databases are referred to by their "alias", which does not necessarily need to match
 the "database name" actually provided
 in the source connection string.
 
+Additionally, Druzhba supports a ``--table`` option (alternately ``-t`` or
+``--tables``). Using this option will cause druzhba to update only a single
+table or whitespace delimited list of tables. The ``--table`` option will
+override ``enabled: false`` from the relevant configuration file.
 
 Testing Options
 ---------------
@@ -56,3 +60,19 @@ permissions on the old table to the new one, but will ignore some kinds of
 permissions like ``with grant option``. This option is useful after a migration
 to the source table. ``--rebuild`` is not supported for manual tables or those
 with a ``truncate_file``.
+
+
+Production Options
+------------------
+
+Default logging level can be overridden with the ``--log-level`` option.
+Its use supersedes the ``LOG_LEVEL`` environment variable. If neither is set
+then Druzhba defaults to ``INFO``. Available levels include ``DEBUG``, ``INFO``,
+``WARN``, and ``ERROR``.
+
+While druzhba processes tables from a given source database sequentially it
+will attempt to process multiple source databases concurrently, one table from
+each at a time. By default, Druzhba's parallelism limit will be equal to the
+number of CPU cores detected. Use ``-np`` or ``--num-processes`` to override
+that default. Note that the number of concurrent processes will never exceed
+the number of source databases.

@@ -223,9 +223,6 @@ def _process_database(
 
 @monitor.timer("full-run-time")
 def run(args):
-    if args.log_level:
-        logger.setLevel(args.log_level)
-
     if args.tables and not args.database:
         msg = "--tables argument is not valid without --database argument"
         raise ValueError(msg)
@@ -379,10 +376,10 @@ def _get_parser():
 
 
 def main():
-    configure_logging()
-
-    logger.info("Running druzhba")
     args = _get_parser().parse_args()
+
+    configure_logging()
+    logger.info("Running druzhba")
 
     run(args)
 
