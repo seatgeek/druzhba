@@ -11,3 +11,4 @@ Druzhba: A Friendly Tool for Piping Data Around
   configuration
   cli
   contributing
+  changelog

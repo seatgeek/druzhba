@@ -6,7 +6,7 @@ Configuration
 .. TODO: this is my least favorite of these doc pages and could be fleshed out
    considerably more than is represented here. We should probably rewrite as
    more of a "usage guide" of which configuration is one section. We also could
-   benefit from a theory section outlining how Druzbha works at a high level
+   benefit from a theory section outlining how Druzhba works at a high level
    and why it works the way it does.
 
 Druzhba pipelines are defined in YAML files, located in the directory given by the `DRUZHBA_CONFIG_DIR`, laid out like:
