@@ -224,20 +224,14 @@ class TestTableIndexLogic(unittest.TestCase):
                 "index_table",
             )
 
-            self._oiv = oiv
-            self._niv = niv
+            self._old_index_value = oiv
+            self._new_index_value = niv
             self.append_only = append_only
             self.full_refresh = full_refresh
 
             # mocking placeholders
             self.db_name = "my_db"
             self.logger = logging.getLogger("test_logger")
-
-        def _load_old_index_value(self):
-            return self._oiv
-
-        def _load_new_index_value(self):
-            return self._niv
 
         def connection_vars(self):
             return {}
@@ -337,14 +331,11 @@ class TestSetLastUpdateIndex(unittest.TestCase):
                 "index_table",
             )
 
-            self._niv = niv
+            self._new_index_value = niv
 
             # mocking placeholders
             self.db_name = "my_db"
             self.logger = logging.getLogger("test_logger")
-
-        def _load_new_index_value(self):
-            return self._niv
 
         def connection_vars(self):
             return {}
