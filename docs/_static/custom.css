@@ -1,0 +1,40 @@
+body {
+    font-family: Roboto, sans-serif;
+}
+
+h1 h2 h3 h4 h5 h6 {
+    font-family: Roboto, sans-serif;
+}
+
+
+div.body h1, div.body h2, div.body h3, div.body h4, div.body h5, div.body h6 {
+    font-family: Roboto, sans-serif;
+}
+
+pre {
+    font-family: Roboto Mono, monospace;
+}
+
+a {
+    color: #390680;
+}
+
+a.reference {
+    border-bottom: 1px dotted #390680
+}
+
+a:hover {
+    color: #800610
+}
+
+a.reference:hover {
+    border-bottom: 1px solid #800610
+}
+
+div.sphinxsidebar a:hover {
+    color: #338000
+}
+
+div.sphinxsidebar h3, div.sphinxsidebar h4 {
+    font-family: Roboto, sans-serif;
+}

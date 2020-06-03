@@ -1,5 +1,7 @@
-Druzhba
-=======
+.. image:: docs/resources/SG_Druzhba_Logo-Large.jpg
+  :width: 600
+  :alt: Druzhba
+  :align: center
 
 Druzhba is a friendly tool for moving data around. It efficiently copies data from your 
 production/transactional databases to your data warehouse.
