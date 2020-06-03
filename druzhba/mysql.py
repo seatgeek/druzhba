@@ -201,7 +201,7 @@ class MySQLTableConfig(TableConfig):
         return "varchar({})".format(MysqlTypes.cmax)
 
     def _load_new_index_value(self):
-        query = 'SELECT MAX(`{}`) AS index_value FROM `{}`;'.format(
+        query = 'SELECT MAX({}) AS index_value FROM `{}`;'.format(
             self.index_column, self.source_table_name
         )
         return self.query_fetchone(query)["index_value"]
