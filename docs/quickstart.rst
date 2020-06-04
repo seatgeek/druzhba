@@ -41,7 +41,8 @@ steps to set up a local PostgreSQL instance running in a Docker container below,
 but if you already have a database running feel, free to skip the Docker
 instructions and change connection strings below appropriately.
 
-If you do not already have Docker installed, see: https://docs.docker.com/get-docker/
+If you do not already have Docker installed follow the setup instructions
+on the `Docker website <https://docs.docker.com/get-docker/>`_
 
 .. code-block:: bash
 

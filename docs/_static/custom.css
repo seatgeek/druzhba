@@ -16,19 +16,19 @@ pre {
 }
 
 a {
-    color: #390680;
+    color: #444;
 }
 
 a.reference {
-    border-bottom: 1px dotted #390680
+    border-bottom: 1px dotted #444
 }
 
 a:hover {
-    color: #800610
+    color: #338000
 }
 
 a.reference:hover {
-    border-bottom: 1px solid #800610
+    border-bottom: 1px solid #338000
 }
 
 div.sphinxsidebar a:hover {
