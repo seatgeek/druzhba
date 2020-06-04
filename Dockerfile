@@ -20,8 +20,9 @@ RUN python3.7 -m pip install virtualenv && \
 
 WORKDIR /app
 
-COPY setup.py setup.cfg README.md ./
+COPY setup.py setup.cfg README.rst ./
 COPY druzhba/ druzhba/
+COPY docs/ docs/
 
 ENV PATH=/home/venv/druzhba/bin:$PATH
 

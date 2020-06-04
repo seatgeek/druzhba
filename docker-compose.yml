@@ -22,6 +22,7 @@ services:
     stop_grace_period: 30s"
     environment:
       MYSQL_ROOT_PASSWORD: 'mysql_root_password'
+
   test:
     build:
       context: .
@@ -33,6 +34,14 @@ services:
       - .:/app
     networks:
       - druzhba
+
+  docs:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "7777:8000"
+    command: bash -c "pip install -e .[dev] && cd ./docs && make html && cd ./_build/html && python -m http.server 8000"
 
 networks:
   druzhba:
