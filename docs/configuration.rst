@@ -9,7 +9,8 @@ Configuration
    benefit from a theory section outlining how Druzhba works at a high level
    and why it works the way it does.
 
-Druzhba pipelines are defined in YAML files, located in the directory given by the `DRUZHBA_CONFIG_DIR`, laid out like:
+Druzhba pipelines are defined in YAML files, located in the directory given by
+the `DRUZHBA_CONFIG_DIR`, laid out like:
 
 .. code-block::
 
@@ -24,12 +25,13 @@ Pipeline Configuration
 
 An example can be found in the tests at ``/test/integration/config/``.
 
-The top level ``_pipeline.yaml`` defines details about the pipeline as a whole as well as connection
-info for the target database. We use a modified parser for YAML extended with support for
-interpolation like ``${REDSHIFT_URL}`` which will inject the value of the ``REDSHIFT_URL`` environment
-variable.
+The top level ``_pipeline.yaml`` defines details about the pipeline as a whole
+as well as connection info for the target database. We use a modified parser for
+YAML extended with support for interpolation like ``${REDSHIFT_URL}`` which will
+inject the value of the ``REDSHIFT_URL`` environment variable.
 
-Besides the target configuration fields, ``_pipeline.yaml`` also includes a list of source tables
+Besides the target configuration fields, ``_pipeline.yaml`` also includes a list
+of source tables
 
 .. code-block:: yaml
 
@@ -46,16 +48,19 @@ These aliases point to other files in the same directory, e.g. ``pgtest.yaml``.
 For an entry in ``sources``:
 
 - ``alias``: the "name" of a single source databsae
-- ``type``: indicates which database driver Druzhba should use. ``postgres``, ``mysql``, or ``mssql``.
-- ``enabled``: if false, indicates that a Druzhba run without a ``--database`` argument 
-  should not include this database. It may still be requested explicitly by passing its alias 
-  to ``--database``.
+- ``type``: indicates which database driver Druzhba should use. ``postgres``, 
+  ``mysql``, or ``mssql``.
+- ``enabled``: if false, indicates that a Druzhba run without a ``--database`
+  argument should not include this database. It may still be requested
+  explicitly by passing its alias to ``--database``.
 
-Supported fields for the connection to the target database (currently only Redshift):
+Supported fields for the connection to the target database (currently only
+Redshift):
 
 - ``connection`` -- options of the target database connection.
 
-  - ``url`` -- if provided, will be parsed into a user/password/host/port/database instead of the seperate items below
+  - ``url`` -- if provided, will be parsed into a user/password/host/port/database
+    instead of the seperate items below
   - ``user``
   - ``password``
   - ``host``
@@ -72,7 +77,8 @@ Supported fields for the connection to the target database (currently only Redsh
   - ``bucket``
   - ``prefix``
 
-- ``iam_copy_role``: IAM role used in the copy operation. Only IAM authorization is supported.
+- ``iam_copy_role``: IAM role used in the copy operation. Only IAM authorization
+  is supported.
 - ``redshift_cert_path``: path to an SSL cert file (optional)
 
 Database Configuration
@@ -82,22 +88,29 @@ Database Configuration
 
 Other top-level keys in this file are:
 
-- ``tables``: a list of tables to pull. Usually the majority of this file. See below.
-- ``data``: an arbitrary dictionary of keys and value which will be formatted into SQL queries under the key `db`, for manual pipelines.
+- ``tables``: a list of tables to pull. Usually the majority of this file. See
+  below.
+- ``data``: an arbitrary dictionary of keys and value which will be formatted
+  into SQL queries under the key `db`, for manual pipelines.
 
-  - (SQL Server only) Within this object, the key `object_schema_name` is also used in the database connection.
+  - (SQL Server only) Within this object, the key `object_schema_name` is also
+    used in the database connection.
 
-- ``connection_string``: an explicit connection URI like `protocol://user:pass@host:post/database_name` in most cases.
-- ``connection_string_env``: an alternate environment variable for this database's `connection_string`.
+- ``connection_string``: an explicit connection URI like
+  `protocol://user:pass@host:post/database_name` in most cases.
+- ``connection_string_env``: an alternate environment variable for this
+  database's `connection_string`.
 
-If neither `connection_string` or `connection_string_env` is provided, the environment variable `<DB_ALIAS>_DATABASE_URL` is assumed.
+If neither `connection_string` or `connection_string_env` is provided, the
+environment variable `<DB_ALIAS>_DATABASE_URL` is assumed.
 
 Table Configuration
 -------------------
 
 The YAML file has several configurable settings for each table.
 
- - ``source_name``: table name in source database. Required even if `query_file` is used.
+ - ``source_name``: table name in source database. Required even if `query_file`
+   is used.
 
 Options configuring the creation of the target table for automatic tables.
 
@@ -155,7 +168,8 @@ Custom SQL files can use Jinja2 templating. Three variables are defined:
    - ``old_index_value``
    - ``new_index_value``
 
-In particular ``run.old_index_value`` and ``run.new_index_value`` are useful for building custom incremental update logic.
+In particular ``run.old_index_value`` and ``run.new_index_value`` are useful for
+building custom incremental update logic.
 
 
 Monitoring
@@ -207,24 +221,28 @@ Usage Considerations
 Index_column filters should be fast
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Druzhba pulls incrementally according to the value of the `index_column` given in a table's 
-configuration, and then inserts-or-replaces new or updated rows according to an optional
-`primary_key`. On the first run (or if `--rebuild` is given) Druzhba will create the target table.
-After that, it will use a SQL filter on `index_column` to only pull newly updated rows.
+Druzhba pulls incrementally according to the value of the ``index_column`` given
+in a table's configuration, and then inserts-or-replaces new or updated rows
+according to an optional ``primary_key``. On the first run (or if ``--rebuild``
+is given) Druzhba will create the target table. After that, it will use a SQL
+filter on ``index_column`` to only pull newly updated rows.
 
-Consequently, queries against ``index_column`` need to be fast! Usually, unless a table is
-``append_only``, an ``updated_at`` timestamp column is used to for `index_column` - it is usually
-necessary to create a *database index*  (unfortunate name collision!) on this column to make these
-pulls faster, which will slow down writes a little bit.
+Consequently, queries against ``index_column`` need to be fast! Usually, unless
+a table is ``append_only``, an ``updated_at`` timestamp column is used to for
+``index_column`` - it is usually necessary to create a *database index*
+(unfortunate name collision!) on this column to make these pulls faster, which
+will slow down writes a little bit.
 
 
 State
 ^^^^^
 
-Druzhba currently tracks pipeline state by the *source* database, database_alias, and table. Consequently, it supports
-many-to-one pipelines from e.g. multiple copies of the same source database to a single shared target table.
-But it does not support one-to-many pipelines, because it could not distinguish the state of the different pipelines.
-SQL-based pipelines currently need to define a `source_table_name` which is used to track their state.
+Druzhba currently tracks pipeline state by the *source* database,
+database_alias, and table. Consequently, it supports many-to-one pipelines from
+e.g. multiple copies of the same source database to a single shared target
+table. But it does not support one-to-many pipelines, because it could not
+distinguish the state of the different pipelines. SQL-based pipelines currently
+need to define a `source_table_name` which is used to track their state.
 
 
 Manual vs Managed

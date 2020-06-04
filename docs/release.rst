@@ -1,9 +1,9 @@
 Release Proceure
 ================
 
-*The remainder of this guide is meant to document the Druzhba release process 
-for Druzhba maintainers. It will be of minimal use to the end user or even 
-most contributers.*
+*The remainder of this guide is meant to document the Druzhba release process
+for Druzhba maintainers. It will be of minimal use to the end user or even most
+contributers.*
 
 Versioning system
 -----------------
@@ -18,11 +18,10 @@ Patch versions should be transparent to the user except when correcting obvious
 bugs that don't require major code changes. They are intended for performance
 tweaks, bug fixes, documentation updates, and security updates.
 
-Minor versions include backwards compatible interface changes such as
-adding support for a new source database, adding configuration options, or
-creating new ways of expressing existing configuration options provided. An
-end user should be able to upgrade between minor versions without changing
-configuration.
+Minor versions include backwards compatible interface changes such as adding
+support for a new source database, adding configuration options, or creating new
+ways of expressing existing configuration options provided. An end user should
+be able to upgrade between minor versions without changing configuration.
 
 Major versions are "breaking" in that they can require configuration changes by
 end users.
@@ -40,10 +39,10 @@ use those names to describe the current and next minor branches. These
 instructions will not describe procedures for major releases.
 
 Actual releases are indicated by git tags so looking at the ``dev-0.1`` branch
-you should see commits labeled with tags ``v0.1.0``, ``v0.1.1``, ``v0.1.2``, etc.
-**In these examples we assume ``v0.1.2`` is the current release of Druzhba.** In
-this case there could be a no-longer maintained branch with `v0.0.0`, `v0.0.1`,
-etc. tags on various commits.
+you should see commits labeled with tags ``v0.1.0``, ``v0.1.1``, ``v0.1.2``,
+etc. **In these examples we assume ``v0.1.2`` is the current release of
+Druzhba.** In this case there could be a no-longer maintained branch with
+`v0.0.0`, `v0.0.1`, etc. tags on various commits.
 
 Generally, the branch for the next minor version should be kept up to date with
 ``master`` until a minor release is imminent at which point there may briefly be
@@ -55,15 +54,17 @@ Between minor release dev process
 
 Most development work should be targeting the next minor release (in our example
 ``0.2.0``) and will be PRed against ``master``. After merging to ``master`` the
-branch maintainer of ``dev-0.2`` should fast-forward merge ``master`` into ``dev-0.2``
+branch maintainer of ``dev-0.2`` should fast-forward merge ``master`` into
+``dev-0.2``
 
 Patch release
 -------------
 
 Urgent bug fixes, security patches, etc. and other very minor changes can be
-incorporated into a ``0.1.x`` release. To do so, generally, after the PR is merged
-to ``master``, you will be able to cherry-pick the PR commit (we're configured to
-squash PRs) onto the ``dev-0.1`` branch and then make a new ``0.1.x`` release.
+incorporated into a ``0.1.x`` release. To do so, generally, after the PR is
+merged to ``master``, you will be able to cherry-pick the PR commit (we're
+configured to squash PRs) onto the ``dev-0.1`` branch and then make a new
+``0.1.x`` release.
 
 Assuming there are no breaking merge conflicts (discussed below), after the
 patch release is released the `dev-0.1` maintainer should (non-ff) merge
@@ -85,25 +86,26 @@ extra safeguard to ensure no changes get dropped between branches.
   git checkout master
   git merge --no-ff dev-0.1 # if this is possible (see below)
 
-Unfortunately we recognize that sometimes incompatible refactors are made to
-the `master` branch in which case the cherry-pick will not work and the
-equivalent change will need to be made to the `dev-0.1` branch manually. In that
-case it is advisable not to merge `dev-0.1` back into `master`.
+Unfortunately we recognize that sometimes incompatible refactors are made to the
+`master` branch in which case the cherry-pick will not work and the equivalent
+change will need to be made to the `dev-0.1` branch manually. In that case it is
+advisable not to merge `dev-0.1` back into `master`.
 
 Minor release process
 ---------------------
 
 When we're ready to create a new minor release the ``dev-0.2`` maintainer should
 announce internally on slack. From this point on ``master`` can begin working on
-version 0.3 features and ``dev-0.2`` should not get fast-forward merged to master.
+version 0.3 features and ``dev-0.2`` should not get fast-forward merged to
+master.
 
 Publishing a release candidate
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The branch maintainer will tag the current head of `dev-0.2` with `v0.2.0-rc1`
-and push that tag. Installations evaluating release candidates should now
-update their dependencies to `druzhba==0.2.0-rc1` and allow our job to run for a
-few days to ensure no unexpected problems.
+and push that tag. Installations evaluating release candidates should now update
+their dependencies to `druzhba==0.2.0-rc1` and allow our job to run for a few
+days to ensure no unexpected problems.
 
 Fixing issues in the release candidate
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -111,11 +113,11 @@ Fixing issues in the release candidate
 If there are no problems then this section can be skipped.
 
 Corrections to any bugs discovered in the release candidate should get PRed
-against `dev-0.2` directly. When all known issues have been addressed the
-branch maintainer can publish another release candidate and merge those changes
-back into `master`. This, of course assumes `master` has not diverged so much
-that the changes are incompatible, but if they have you're in for some manual
-fixes regardless (GL;HF).
+against `dev-0.2` directly. When all known issues have been addressed the branch
+maintainer can publish another release candidate and merge those changes back
+into `master`. This, of course assumes `master` has not diverged so much that
+the changes are incompatible, but if they have you're in for some manual fixes
+regardless (GL;HF).
 
 .. code-block:: bash
 
@@ -147,8 +149,8 @@ also now officially begin work on 0.3.
   git checkout -b dev-0.3
 
 
-New patch version cherry picks can now be added to the `dev-0.2` branch.
-Patch releases for the 0.1.x series should only be made if a bug with major
+New patch version cherry picks can now be added to the `dev-0.2` branch. Patch
+releases for the 0.1.x series should only be made if a bug with major
 operational risk or security implication is discovered.
 
 Major version release process

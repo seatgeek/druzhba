@@ -36,10 +36,10 @@ these instructions to make sure you don't miss anything.
 Configuring a Source Database
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-For this tutorial, we'll need a PostgreSQL instance. We'll walk through the steps
-to set up a local PostgreSQL instance running in a Docker container below, but
-if you already have a database running feel, free to skip the Docker instructions
-and change connection strings below appropriately.
+For this tutorial, we'll need a PostgreSQL instance. We'll walk through the
+steps to set up a local PostgreSQL instance running in a Docker container below,
+but if you already have a database running feel, free to skip the Docker
+instructions and change connection strings below appropriately.
 
 If you do not already have Docker installed, see: https://docs.docker.com/get-docker/
 
@@ -80,9 +80,9 @@ Configuring a Destination Database
 
 Next we need a destination database to copy data into. Either create a new
 Redshift database or use an existing one. If using an existing instance, you'll
-need superuser permissions. AWS has
-`extensive documentation <https://docs.aws.amazon.com/redshift/latest/gsg/getting-started.html>`_
-on how to create a Redshift instance so we will not be repeating those instructions
+need superuser permissions. AWS has `extensive documentation
+<https://docs.aws.amazon.com/redshift/latest/gsg/getting-started.html>`_ on how
+to create a Redshift instance so we will not be repeating those instructions
 here.
 
 Once your destination database is running connect to it with your favorite SQL
@@ -97,12 +97,11 @@ client and run the following:
 This will create a dedicated schema to receive the tables Druzhba is going to
 create and create a system user and password for the Druzhba process to use.
 
-To efficiently load to Redshift, Druzhba writes temporary files to an S3_ bucket.
-If you do not already have one, create a bucket and define a prefix. The
-Druzhba process will need read/write access. You must also create an
-`IAM copy role`_ with access to that bucket/prefix and grant it to your
-Redshift instance. Again, the AWS documentation is available if you need
-instruction.
+To efficiently load to Redshift, Druzhba writes temporary files to an S3_
+bucket. If you do not already have one, create a bucket and define a prefix. The
+Druzhba process will need read/write access. You must also create an `IAM copy
+role`_ with access to that bucket/prefix and grant it to your Redshift instance.
+Again, the AWS documentation is available if you need instruction.
 
 With a complete testing environment in place we are ready to begin the
 comparatively simple task of actually setting up Druzhba
@@ -115,14 +114,14 @@ comparatively simple task of actually setting up Druzhba
 Define Your Pipeline
 --------------------
 
-A Druzhba pipeline is defined by a directory of YAML_ configuration files.
-At run time, Druzhba will read these files and a special tracking table in
-the destination database to determine what data to extract from source databases
+A Druzhba pipeline is defined by a directory of YAML_ configuration files. At
+run time, Druzhba will read these files and a special tracking table in the
+destination database to determine what data to extract from source databases
 
 .. _YAML: https://yaml.org/
 
-As minimal example we're going to configure Druzhba to transfer the contents
-of a single table in a PostgreSQL database to our data warehouse. We'll start by
+As minimal example we're going to configure Druzhba to transfer the contents of
+a single table in a PostgreSQL database to our data warehouse. We'll start by
 creating a directory to hold our pipeline configuration.
 
 Using your favorite text editor, create a file ``pipeline/_pipeline.yaml``:
@@ -152,13 +151,13 @@ This file defines a *pipeline*. A pipeline definition consists of a destination
 database connection (currently only `Amazon Redshift`_ is supported), an
 optional index table definition, a mandatory S3_ location that the Druzhba
 process will have read/write access to (temporary files will be written here
-before calling ``COPY`` on the Redshift instance), an `IAM copy role`_, and
-a list of source databases to pull. Each source has a unique ``alias`` and 
-a ``type``, which must be one of ``postgres``, ``mysql``, or ``mssql``.
+before calling ``COPY`` on the Redshift instance), an `IAM copy role`_, and a
+list of source databases to pull. Each source has a unique ``alias`` and a
+``type``, which must be one of ``postgres``, ``mysql``, or ``mssql``.
 
 Druzhba supports limited templating of YAML configuration files and to allow
-injection of environment variables into the configuration. For example,
-the ``user`` field will be populated by the value of the ``REDSHIFT_USER``
+injection of environment variables into the configuration. For example, the
+``user`` field will be populated by the value of the ``REDSHIFT_USER``
 environment variable.
 
 Replace ``host``, ``database``, and ``iam_copy_role`` with appropriate values
@@ -192,8 +191,8 @@ update-in-place tables. The primary key is one or more columns used to uniquely
 identify a row. Updated rows where the primary key already exists in the
 destination table will result in updates rather than inserts.
 
-See :ref:`configuration` for more on the configuration files,
-and |example-link| for more examples.
+See :ref:`configuration` for more on the configuration files, and |example-link|
+for more examples.
 
 Set up your environment
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -223,12 +222,13 @@ Once configuration is set up for your database, run Druzhba with:
 
   druzhba -d demodb -t starter_table
 
-Your data is now in Redshift! Subsequent invocations will incrementally pull updated rows
-from the source table. Of course, this is just the beginning of your pipeline.
+Your data is now in Redshift! Subsequent invocations will incrementally pull
+updated rows from the source table. Of course, this is just the beginning of
+your pipeline.
 
 Note that you could also just run the command ``druzhba`` with no arguments to
-run the entire pipeline. 
-See :ref:`CLI Help <cli-help>` for more on the command line interface.
+run the entire pipeline. See :ref:`CLI Help <cli-help>` for more on the command
+line interface.
 
 Next Steps
 ----------
