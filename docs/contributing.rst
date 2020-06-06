@@ -10,9 +10,10 @@ Pull Requests
 -------------
 
 Unsolicited pull requests may be submitted against the ``master`` branch. Please
-run Isort and Black (See: ``.pre-commit.sh``) prior to opening your pull request
-and ensure that unit tests pass. Maintainers will run the integration test suite
-if appropriate.
+run Isort and Black (See: ``.pre-commit.sh`` for commands or better yet copy the
+file to ``.git/hooks/pre-commit.sh`` to run them automatically) prior to opening
+your pull request and ensure that unit tests pass. Maintainers will run the
+integration test suite if appropriate.
 
 Needed Features
 ---------------
@@ -20,7 +21,24 @@ Needed Features
 This is a list of most requested Druzhba features:
 
 - Complete SQL Server support (currently partial support)
+
 - Support for multiple output database types
+
+- Unrecognized table names in supplied via the ``--tables`` argument should be
+  surfaced as a warning or error
+
+- Add basic transformation support from YAML config like renaming columns or
+  concatenating multiple columns etc. without requiring a full custom SQL table.
+
+- The table extract functionality is tied unnecessarily to the name of the
+  table in the source database, with a fake source table name supplied for
+  manual queries. This prevents one source table from being copied to multiple
+  destination tables with, for example, different subsets of columns.
+
+- On the first run of a new source table, Druzhba should create the destination
+  table even if the query against the source table returned no rows. The current
+  behavior should be considered a bug.
+
 
 Testing
 -------

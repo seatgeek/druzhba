@@ -30,7 +30,9 @@ We'll set up a pipeline to extract a single table from an example PostgreSQL
 instance that we'll call "testsource" and write to an existing Redshift database
 that we'll call "testdest".
 
-See [docs/README.md](docs/README.md) for a more complete example.
+.. TODO: change the link below to point to hosted docs once they're hosted
+
+See `quick start <docs/quickstart.rst>`_ for a more complete example.
 
 Install locally in a Python3 environment:
 
@@ -101,8 +103,9 @@ Once your configuration and environment are ready, load into Redshift:
 
   druzhba --database testsource --table your_table
 
-Typically Druzhba's CLI would be run on a Cron schedule, while its
-configuration files would be updated via Github pull requests.
+Typically Druzhba's CLI would be run on a Cron schedule. Many deployments place
+the configuration files in source control and use some form of CI for
+deployment.
 
 Druzhba may also be imported and used as a Python library, for example
 to wrap pipeline execution with your own error handling.
