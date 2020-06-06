@@ -87,6 +87,9 @@ def _process_database(
     retries_remaining = 5
 
     for table_yaml in tables_yaml:
+        if not only_table_names and not tables_yaml.get('enabled', True):
+            continue
+
         source_table_name = table_yaml["source_table_name"]
         if only_table_names and source_table_name not in only_table_names:
             continue
