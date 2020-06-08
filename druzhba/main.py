@@ -12,10 +12,10 @@ import psycopg2
 import yaml
 from botocore.vendored.requests.exceptions import SSLError
 
-from druzhba.config import CONFIG_DIR, configure_logging, load_destination_config
+from druzhba.config import CONFIG_DIR, load_destination_config
 from druzhba.db import DatabaseConfig
 from druzhba.monitoring import DefaultMonitoringProvider, configure_logging
-from druzhba.redshift import create_index_table, get_redshift, init_redshift
+from druzhba.redshift import create_index_table, init_redshift
 from druzhba.table import (
     ConfigurationError,
     InvalidSchemaError,

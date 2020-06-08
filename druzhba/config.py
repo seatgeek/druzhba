@@ -137,26 +137,3 @@ def _parse_config(config):
         return subbed_config, missing
 
     return _parse_element(config)
-
-
-def configure_logging():
-    settings = {
-        "version": 1,
-        "disable_existing_loggers": False,
-        "formatters": {
-            "normal": {
-                "format": "[%(asctime)s.%(msecs)03d] %(name)s [pid:%(process)s] - %(levelname)s - %(message)s",
-                "datefmt": "%Y-%m-%d %H:%M:%S",
-            }
-        },
-        "handlers": {
-            "console": {
-                "level": "INFO",
-                "class": "logging.StreamHandler",
-                "formatter": "normal",
-                "stream": "ext://sys.stdout",
-            }
-        },
-        "loggers": {"druzhba": {"level": "INFO", "handlers": ["console"]},},
-    }
-    logging.config.dictConfig(settings)

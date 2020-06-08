@@ -1,6 +1,5 @@
 import os
 import unittest
-from dataclasses import replace as dataclass_replace
 from urllib.parse import urlparse
 
 import psycopg2
