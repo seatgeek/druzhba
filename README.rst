@@ -3,6 +3,8 @@
   :alt: Druzhba
   :align: center
 
+.. begin-lede
+
 Druzhba is a friendly tool for moving data around. It efficiently copies data
 from your production/transactional databases to your data warehouse.
 

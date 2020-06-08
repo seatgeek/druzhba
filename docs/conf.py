@@ -62,7 +62,6 @@ html_theme_options = {
 }
 
 html_sidebars = {
-    "index": ["sidebarheader.html", "navigation.html", "searchbox.html"],
     "**": ['about.html', 'navigation.html', 'searchbox.html'],
 }
 

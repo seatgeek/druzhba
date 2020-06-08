@@ -1,7 +1,8 @@
-Druzhba: A Friendly Tool for Piping Data Around
-===============================================
+Druzhba
+=======
 
 .. include:: ../README.rst
+  :start-after: begin-lede
   :end-before: end-of-lede
 
 .. toctree::
