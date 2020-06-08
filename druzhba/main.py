@@ -163,6 +163,7 @@ def _process_database(
                 db.db_errors.InternalError,
                 db.db_errors.IntegrityError,
                 db.db_errors.ProgrammingError,
+                psycopg2.DatabaseError,
                 psycopg2.extensions.TransactionRollbackError,
             ) as e:
                 logger.warning(
