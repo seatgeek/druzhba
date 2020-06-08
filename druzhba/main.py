@@ -34,9 +34,8 @@ def process_database(
             )
         logger.info("Done with database %s", db_alias)
     except Exception as e:
-        # Catch everything except BaseExceptions like SystemExit,
-        # KeyboardInterrupt so we don't kill other DBs
         logger.exception("Fatal error in database %s, aborting", db_alias)
+        raise e
 
 
 def _process_database(
@@ -246,8 +245,13 @@ def run(args):
         # Preload _strptime to avoid a threading bug in cpython
         # See: https://mail.python.org/pipermail/python-list/2015-October/697689.html
         _ = datetime.datetime.strptime("2018-01-01 01:02:03", "%Y-%m-%d %H:%M:%S")
-        pool = Pool(args.num_processes)
-        pool.map(lambda db: process_database(*db), dbs)
+        with Pool(args.num_processes) as pool:
+            results = pool.map_async(lambda db: process_database(*db), dbs)
+
+            results.wait()
+            if not results.successful():
+                # Don't need to relog on failure, the process already logged
+                sys.exit(2)
 
     if args.validate_only:
         logger.info("Validation complete")
