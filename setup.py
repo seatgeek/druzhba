@@ -30,8 +30,7 @@ setuptools.setup(
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
-        "Operating System :: OS Independent",
-        "Private :: Do Not Upload",  # TODO
+        "Operating System :: OS Independent"
     ],
     python_requires=">=3.6",
     setup_requires=[
