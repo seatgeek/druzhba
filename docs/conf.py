@@ -27,8 +27,8 @@ with open('usage.rst', 'w') as f:
 # -- Project information -----------------------------------------------------
 
 project = 'Druzhba'
-copyright = '2020, The Druzhba Maintainers'
-author = 'The Druzhba Maintainers'
+copyright = '2020, Seatgeek and Contributors'
+author = 'Seatgeek and Contributors'
 
 # The full version, including alpha/beta/rc tags
 release = '0.1.1'

@@ -15,7 +15,7 @@ tests_require = [
 setuptools.setup(
     name="druzhba",
     version="0.1.1",
-    author="The Druzhba Maintainers",
+    author="Seatgeek and Contributors",
     author_email="druzhba-maintainers@seatgeek.com",
     description="A friendly data pipeline framework",
     license="MIT License",
