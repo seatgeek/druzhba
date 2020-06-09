@@ -49,6 +49,10 @@ coverage.xml
 *.cover
 .hypothesis/
 
+# Docs
+docs/_build
+docs/usage.rst
+
 # PyBuilder
 target/
 
@@ -64,6 +68,7 @@ target/
 venv/
 ENV/
 
-# Intellij
+# Editors
 .idea/
 *.iml
+.vscode/

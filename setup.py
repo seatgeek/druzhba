@@ -4,7 +4,7 @@
 # Copyright (c) 2019 SeatGeek
 import setuptools
 
-with open("README.md", "r") as fh:
+with open("README.rst", "r") as fh:
     long_description = fh.read()
 
 tests_require = [
@@ -20,7 +20,7 @@ setuptools.setup(
     description="A friendly extract+load pipeline",
     license="MIT License",
     long_description=long_description,
-    long_description_content_type="text/markdown",
+    long_description_content_type="text/x-rst",
     url="https://github.com/seatgeek/druzhba",
     packages=setuptools.find_packages(),
     classifiers=[
@@ -47,7 +47,7 @@ setuptools.setup(
         "statsd>=3.3.0",
     ],
     extras_require={
-        "dev": ["autoflake", "black", "isort"],
+        "dev": ["autoflake", "black", "isort", "sphinx", "recommonmark"],
         "test": tests_require
     },
     entry_points={"console_scripts": ["druzhba=druzhba.main:main"]},

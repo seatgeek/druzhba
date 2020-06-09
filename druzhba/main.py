@@ -86,6 +86,9 @@ def _process_database(
     retries_remaining = 5
 
     for table_yaml in tables_yaml:
+        if not only_table_names and not table_yaml.get('enabled', True):
+            continue
+
         source_table_name = table_yaml["source_table_name"]
         if only_table_names and source_table_name not in only_table_names:
             continue
@@ -226,9 +229,6 @@ def _process_database(
 
 @monitor.timer("full-run-time")
 def run(args):
-    if args.log_level:
-        logger.setLevel(args.log_level)
-
     if args.tables and not args.database:
         msg = "--tables argument is not valid without --database argument"
         raise ValueError(msg)
@@ -321,7 +321,7 @@ def run(args):
         logger.info("Validation complete")
 
 
-def parse_args():
+def _get_parser():
 
     parser = argparse.ArgumentParser(description="Friendly DB-to-DB pipeline")
     parser.add_argument(
@@ -383,14 +383,14 @@ def parse_args():
         "supported for tables Druzhba can build.",
         action="store_true",
     )
-    return parser.parse_args()
+    return parser
 
 
 def main():
-    configure_logging()
+    args = _get_parser().parse_args()
 
+    configure_logging(args)
     logger.info("Running druzhba")
-    args = parse_args()
 
     run(args)
 
