@@ -20,7 +20,7 @@ setuptools.setup(
     description="A friendly extract+load pipeline",
     license="MIT License",
     long_description=long_description,
-    long_description_content_type="text/markdown",
+    long_description_content_type="text/x-rst",
     url="https://github.com/seatgeek/druzhba",
     packages=setuptools.find_packages(),
     classifiers=[

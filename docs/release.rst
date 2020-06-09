@@ -82,7 +82,6 @@ extra safeguard to ensure no changes get dropped between branches.
   # It is assumed that those tests are currently passing.
   git tag -a "v0.1.3" -m "Release 0.1.3"
   git push origin "v0.1.3"
-  # The SG druzhba install may now have it's dependency bumped to druzhba==0.1.3
   git checkout master
   git merge --no-ff dev-0.1 # if this is possible (see below)
 

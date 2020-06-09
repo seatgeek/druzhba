@@ -26,8 +26,8 @@ Preparation
 -----------
 
 For this tutorial we'll begin by setting up a testing environment. We will
-require a destination `Amazon Redshift`_ database and a source local PostgreSQL_
-database. If you already have these available and want to wing it, you can
+require a `Amazon Redshift`_ database as the destination and a local PostgreSQL_
+database as the source. If you already have these available and want to wing it, you can
 probably skip ahead to `Define Your Pipeline`_ but you may want to read through
 these instructions to make sure you don't miss anything.
 
@@ -38,11 +38,11 @@ Configuring a Source Database
 
 For this tutorial, we'll need a PostgreSQL instance. We'll walk through the
 steps to set up a local PostgreSQL instance running in a Docker container below,
-but if you already have a database running feel, free to skip the Docker
+but if you already have a database running feel free to skip the Docker
 instructions and change connection strings below appropriately.
 
 If you do not already have Docker installed follow the setup instructions
-on the `Docker website <https://docs.docker.com/get-docker/>`_
+on the `Docker website <https://docs.docker.com/get-docker/>`_.
 
 .. code-block:: bash
 
@@ -87,7 +87,7 @@ to create a Redshift instance so we will not be repeating those instructions
 here.
 
 Once your destination database is running connect to it with your favorite SQL
-client and run the following:
+client and run the following (you may want to create your own password):
 
 .. code-block:: postgresql
 
@@ -105,7 +105,7 @@ role`_ with access to that bucket/prefix and grant it to your Redshift instance.
 Again, the AWS documentation is available if you need instruction.
 
 With a complete testing environment in place we are ready to begin the
-comparatively simple task of actually setting up Druzhba
+comparatively simple task of actually setting up Druzhba,
 
 .. _`Amazon Redshift`: https://aws.amazon.com/redshift/
 .. _S3: https://aws.amazon.com/s3/
@@ -183,7 +183,7 @@ Create a file ``pipeline/demodb.yaml``:
       primary_key:
         - id
 
-For each table we define a the table in the source database to use, the schema
+For each table we define the table in the source database to use, the schema
 and table to create in the target database, and two special columns that we
 usually want on every table in the pipeline. The index column is a column on the
 source table that is only increasing -- generally an auto-incrementing
