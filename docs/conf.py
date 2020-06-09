@@ -14,6 +14,7 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath('..'))
 from druzhba.main import _get_parser
+from druzhba import __version__
 
 
 cli_help = _get_parser().format_help()
@@ -24,6 +25,15 @@ with open('usage.rst', 'w') as f:
     f.write(cli_help)
     f.write('\n')
 
+
+def pretty_version(release_str: str):
+    """
+    >>> pretty_version('0.2.0-rc1')
+    0.2
+    """
+    return '.'.join(release_str.split('.')[:2])
+
+
 # -- Project information -----------------------------------------------------
 
 project = 'Druzhba'
@@ -31,8 +41,8 @@ copyright = '2020, Seatgeek and Contributors'
 author = 'Seatgeek and Contributors'
 
 # The full version, including alpha/beta/rc tags
-release = '0.1.1'
-version = 'master' # TODO: FIXME
+release = __version__
+version = pretty_version(release)
 
 # -- General configuration ---------------------------------------------------
 

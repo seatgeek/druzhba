@@ -19,7 +19,7 @@ services:
       - druzhba
     volumes:
       - ./test/init_mysql:/docker-entrypoint-initdb.d
-    stop_grace_period: 30s"
+    stop_grace_period: 30s
     environment:
       MYSQL_ROOT_PASSWORD: 'mysql_root_password'
   test:

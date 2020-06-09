@@ -7,6 +7,10 @@ import setuptools
 with open("README.rst", "r") as fh:
     long_description = fh.read()
 
+package_vars = {}
+with open("druzhba/_version.py", "r") as f:
+    exec(f.read(), package_vars)
+
 tests_require = [
     "nose>=1.3.7",
     "mock>=2.0.0"
@@ -14,7 +18,7 @@ tests_require = [
 
 setuptools.setup(
     name="druzhba",
-    version="0.1.1",
+    version=package_vars['__version__'],
     author="Seatgeek and Contributors",
     author_email="druzhba-maintainers@seatgeek.com",
     description="A friendly data pipeline framework",
@@ -22,7 +26,7 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/x-rst",
     url="https://github.com/seatgeek/druzhba",
-    packages=setuptools.find_packages(),
+    packages=setuptools.find_packages(exclude=['test']),
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
@@ -47,7 +51,7 @@ setuptools.setup(
         "statsd>=3.3.0",
     ],
     extras_require={
-        "dev": ["autoflake", "black", "isort", "sphinx", "recommonmark"],
+        "dev": ["autoflake", "black", "isort", "sphinx", "recommonmark", "twine"],
         "test": tests_require
     },
     entry_points={"console_scripts": ["druzhba=druzhba.main:main"]},
