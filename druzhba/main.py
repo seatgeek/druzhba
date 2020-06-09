@@ -6,6 +6,7 @@ import time
 import traceback
 from multiprocessing import cpu_count
 from multiprocessing.dummy import Pool
+import sys
 
 import psycopg2
 import yaml
