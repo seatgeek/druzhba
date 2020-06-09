@@ -4,10 +4,12 @@ from dataclasses import replace as dataclass_replace
 
 import psycopg2
 import psycopg2.extras
-from mock import ANY
 
 from druzhba.main import run as run_druzhba
-from .utils import FakeArgs, TimeFixtures as t
+from mock import ANY
+
+from .utils import FakeArgs
+from .utils import TimeFixtures as t
 
 
 class BaseTestPostgresToRedshift(unittest.TestCase):
@@ -41,7 +43,8 @@ class TestBasicIncrementalPipeline(BaseTestPostgresToRedshift):
 
     def setUp(self):
         with self.source_conn.cursor() as cur:
-            cur.execute("""
+            cur.execute(
+                """
             DROP TABLE IF EXISTS test_basic;
             DROP TYPE IF EXISTS enum1;
             CREATE TYPE enum1 AS ENUM ('a', 'b', 'c');
@@ -52,7 +55,8 @@ class TestBasicIncrementalPipeline(BaseTestPostgresToRedshift):
                 value1 INT,
                 enum_value enum1
             );
-            """)
+            """
+            )
 
             cur.executemany(
                 "INSERT INTO test_basic VALUES (%s, %s, %s, %s, %s);",

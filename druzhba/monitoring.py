@@ -14,7 +14,7 @@ def configure_logging(args):
     if args.log_level:
         log_level = args.log_level
     else:
-        log_level = os.getenv('LOG_LEVEL', 'INFO')
+        log_level = os.getenv("LOG_LEVEL", "INFO")
 
     settings = {
         "version": 1,
