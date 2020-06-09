@@ -139,6 +139,7 @@ def _process_database(
                 psycopg2.IntegrityError,
                 psycopg2.ProgrammingError,
                 psycopg2.extensions.TransactionRollbackError,
+                psycopg2.errors.FeatureNotSupported
             ) as e:
                 logger.warning(
                     "Unexpected error processing %s table %s: ```%s\n\n%s```",
