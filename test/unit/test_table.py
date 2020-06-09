@@ -6,11 +6,10 @@ from datetime import datetime
 from io import BytesIO
 
 import fastavro
-from mock import ANY, MagicMock, Mock, PropertyMock, call, patch
 
 from druzhba.config import RedshiftConfig
 from druzhba.db import ConnectionParams
-from druzhba.redshift import get_redshift, Redshift
+from druzhba.redshift import Redshift, get_redshift
 from druzhba.table import (
     ConfigurationError,
     InvalidSchemaError,
@@ -19,6 +18,7 @@ from druzhba.table import (
     TableConfig,
     TableStateError,
 )
+from mock import ANY, MagicMock, Mock, PropertyMock, call, patch
 
 
 class IgnoreWhitespace(str):
@@ -682,6 +682,7 @@ class TestUnloadCopy(unittest.TestCase):
         m, c = self.mock_cursor()
 
         from druzhba.redshift import _redshift
+
         _redshift.cursor = Mock(return_value=m)
 
         tt = self.MockTable()
@@ -723,6 +724,7 @@ class TestUnloadCopy(unittest.TestCase):
         m, c = self.mock_cursor()
 
         from druzhba.redshift import _redshift
+
         _redshift.cursor = Mock(return_value=m)
 
         tt = self.MockTable()
@@ -827,6 +829,7 @@ class TestUnloadCopy(unittest.TestCase):
         m, c = self.mock_cursor()
 
         from druzhba.redshift import _redshift
+
         _redshift.cursor = Mock(return_value=m)
 
         tt = self.MockTable()
@@ -926,6 +929,7 @@ class TestUnloadCopy(unittest.TestCase):
         m, c = self.mock_cursor()
 
         from druzhba.redshift import _redshift
+
         _redshift.cursor = Mock(return_value=m)
 
         tt = self.MockTable()
@@ -965,6 +969,7 @@ class TestUnloadCopy(unittest.TestCase):
         m, c = self.mock_cursor()
 
         from druzhba.redshift import _redshift
+
         _redshift.cursor = Mock(return_value=m)
 
         c.fetchall = Mock(return_value=[(True, '{"group group_name=r/owner_name"}')])

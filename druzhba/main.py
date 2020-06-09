@@ -86,7 +86,7 @@ def _process_database(
     retries_remaining = 5
 
     for table_yaml in tables_yaml:
-        if not only_table_names and not table_yaml.get('enabled', True):
+        if not only_table_names and not table_yaml.get("enabled", True):
             continue
 
         source_table_name = table_yaml["source_table_name"]
@@ -170,7 +170,7 @@ def _process_database(
                 psycopg2.IntegrityError,
                 psycopg2.ProgrammingError,
                 psycopg2.extensions.TransactionRollbackError,
-                psycopg2.errors.FeatureNotSupported
+                psycopg2.errors.FeatureNotSupported,
             ) as e:
                 logger.warning(
                     "Unexpected error processing %s table %s: ```%s\n\n%s```",

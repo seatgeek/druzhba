@@ -27,7 +27,9 @@ class MSSQLTableConfig(TableConfig):
     }
 
     def _load_new_index_value(self):
-        raise NotImplementedError("auto generated index queries not yet supported for MSSQL")
+        raise NotImplementedError(
+            "auto generated index queries not yet supported for MSSQL"
+        )
 
     @property
     def connection_vars(self):

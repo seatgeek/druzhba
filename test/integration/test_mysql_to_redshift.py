@@ -4,10 +4,12 @@ from urllib.parse import urlparse
 
 import psycopg2
 import pymysql
-from mock import ANY
 
 from druzhba.main import run as run_druzhba
-from .utils import FakeArgs, TimeFixtures as t
+from mock import ANY
+
+from .utils import FakeArgs
+from .utils import TimeFixtures as t
 
 
 class BaseTestMysqlToRedshift(unittest.TestCase):
@@ -31,8 +33,8 @@ class BaseTestMysqlToRedshift(unittest.TestCase):
             port=parsed.port,
             user=parsed.username,
             password=parsed.password,
-            charset='utf8',
-            autocommit=True
+            charset="utf8",
+            autocommit=True,
         )
 
         cls.target_conn = psycopg2.connect(dsn=os.getenv("REDSHIFT_URL"))
@@ -51,7 +53,8 @@ class TestBasicIncrementalPipeline(BaseTestMysqlToRedshift):
     def setUp(self):
         with self.source_conn.cursor() as cur:
             cur.execute("DROP TABLE IF EXISTS test_basic;")
-            cur.execute("""
+            cur.execute(
+                """
                 CREATE TABLE `druzhba_test`.`test_basic` (
                   `pk` INT(11) unsigned NOT NULL AUTO_INCREMENT,
                   `updated_at` DATETIME NOT NULL,
@@ -59,7 +62,8 @@ class TestBasicIncrementalPipeline(BaseTestMysqlToRedshift):
                   `value1` INT(11),
                   PRIMARY KEY (`pk`)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-            """)
+            """
+            )
 
             cur.executemany(
                 "INSERT INTO test_basic VALUES (%s, %s, %s, %s);",
@@ -68,10 +72,12 @@ class TestBasicIncrementalPipeline(BaseTestMysqlToRedshift):
 
     def tearDown(self):
         with self.target_conn.cursor() as cur:
-            cur.execute("""
+            cur.execute(
+                """
                 DROP TABLE IF EXISTS druzhba_test.test_basic;
                 DROP TABLE IF EXISTS druzhba_test.pipeline_table_index;
-            """)
+            """
+            )
 
     def test_run_incremental(self):
         """Runs Druzhba, inserts new data, then runs Druzhba again."""
@@ -93,8 +99,7 @@ class TestBasicIncrementalPipeline(BaseTestMysqlToRedshift):
                 (t.t2,),
             )
             cur.execute(
-                "INSERT INTO test_basic VALUES (%s, %s, %s, %s);",
-                (3, t.t2, "drop", 3),
+                "INSERT INTO test_basic VALUES (%s, %s, %s, %s);", (3, t.t2, "drop", 3),
             )
 
         # Second run - should pick up the new row and the updated row
@@ -104,9 +109,7 @@ class TestBasicIncrementalPipeline(BaseTestMysqlToRedshift):
             cur.execute("SELECT * FROM druzhba_test.test_basic ORDER BY pk")
             results = cur.fetchall()
 
-            self.assertListEqual(
-                results, [(1, t.t0, 0), (2, t.t2, 2), (3, t.t2, 3)]
-            )
+            self.assertListEqual(results, [(1, t.t0, 0), (2, t.t2, 2), (3, t.t2, 3)])
 
             cur.execute(
                 "SELECT * FROM druzhba_test.pipeline_table_index ORDER BY created_ts"
@@ -136,16 +139,15 @@ class TestBasicIncrementalPipeline(BaseTestMysqlToRedshift):
 
 class TestNullDatetime(BaseTestMysqlToRedshift):
     args = FakeArgs(
-        database="mysqltest",
-        tables=["test_not_null_datetime"],
-        num_processes=1
+        database="mysqltest", tables=["test_not_null_datetime"], num_processes=1
     )
 
     def setUp(self):
         with self.source_conn.cursor() as cur:
             cur.execute("DROP TABLE IF EXISTS test_not_null_datetime;")
             cur.execute("SET sql_mode = '';")
-            cur.execute("""
+            cur.execute(
+                """
                 CREATE TABLE `druzhba_test`.`test_not_null_datetime` (
                   `pk` INT(11) unsigned NOT NULL AUTO_INCREMENT,
                   `updated_at` DATETIME NOT NULL,
@@ -154,14 +156,17 @@ class TestNullDatetime(BaseTestMysqlToRedshift):
                   `null_dt` TIMESTAMP,
                   PRIMARY KEY (`pk`)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-            """)
+            """
+            )
 
     def tearDown(self):
         with self.target_conn.cursor() as cur:
-            cur.execute("""
+            cur.execute(
+                """
                 DROP TABLE IF EXISTS druzhba_test.test_not_null_datetime;
                 DROP TABLE IF EXISTS druzhba_test.pipeline_table_index;
-            """)
+            """
+            )
 
     def test_nullish_datetime(self):
         """
@@ -171,10 +176,8 @@ class TestNullDatetime(BaseTestMysqlToRedshift):
         with self.source_conn.cursor() as cur:
 
             cur.executemany(
-                "INSERT INTO druzhba_test.test_not_null_datetime VALUES (%s, %s, %s, %s, %s);", [
-                    (1, t.t0, t.t1, t.t1, t.t1),
-                    (2, t.t0, '', '', ''),
-                ],
+                "INSERT INTO druzhba_test.test_not_null_datetime VALUES (%s, %s, %s, %s, %s);",
+                [(1, t.t0, t.t1, t.t1, t.t1), (2, t.t0, "", "", ""),],
             )
 
         run_druzhba(self.args)
@@ -184,8 +187,6 @@ class TestNullDatetime(BaseTestMysqlToRedshift):
             results = cur.fetchall()
 
             self.assertListEqual(
-                results, [
-                    (1, t.t0, t.t1, t.t1, t.t1),
-                    (2, t.t0, t.tmin, t.tmin, t.tmin),
-                ]
+                results,
+                [(1, t.t0, t.t1, t.t1, t.t1), (2, t.t0, t.tmin, t.tmin, t.tmin),],
             )
