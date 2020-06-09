@@ -58,7 +58,7 @@ html_theme = 'alabaster'
 html_theme_options = {
     'show_powered_by': False,
     'logo': 'Druzhba_Logo_Tight.jpg',
-    'description': 'A friendly tool for piping data around',
+    'description': 'A friendly data pipeline framework',
 }
 
 html_sidebars = {

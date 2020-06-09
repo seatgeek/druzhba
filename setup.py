@@ -15,9 +15,9 @@ tests_require = [
 setuptools.setup(
     name="druzhba",
     version="0.1.1",
-    author="todo",
-    author_email="todo",
-    description="A friendly extract+load pipeline",
+    author="The Druzhba Authors",
+    author_email="druzhba-authors@seatgeek.com",
+    description="A friendly data pipeline framework",
     license="MIT License",
     long_description=long_description,
     long_description_content_type="text/x-rst",
