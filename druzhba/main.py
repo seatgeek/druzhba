@@ -323,7 +323,7 @@ def run(args):
 
 def _get_parser():
 
-    parser = argparse.ArgumentParser(description="Friendly DB-to-DB pipeline")
+    parser = argparse.ArgumentParser(description="Friendly data pipeline framework")
     parser.add_argument(
         "-ll", "--log-level", help="Name of a python log level eg DEBUG"
     )

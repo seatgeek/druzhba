@@ -5,8 +5,8 @@
 
 .. begin-lede
 
-Druzhba is a friendly tool for moving data around. It efficiently copies data
-from your production/transactional databases to your data warehouse.
+Druzhba is a friendly framework for building data pipelines. It efficiently
+copies data from your production/transactional databases to your data warehouse.
 
 A Druzhba pipeline connects one or more source databases to a target database.
 It *pulls* data incrementally from each configured source table and writes to a
