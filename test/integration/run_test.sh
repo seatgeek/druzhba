@@ -15,8 +15,8 @@ done
 echo "Setting up target database"
 
 REDSHIFT_ADMIN_URL=postgresql://${REDSHIFT_USER}:${REDSHIFT_PASSWORD}@${REDSHIFT_HOST}:${REDSHIFT_PORT:-5439}/${REDSHIFT_DATABASE}
-export REDSHIFT_TEST_URL=postgresql://druzhba_test_user:Test12345!@${REDSHIFT_HOST}:${REDSHIFT_PORT:-5439}/${REDSHIFT_DATABASE}
-psql ${REDSHIFT_ADMIN_URL} -c "CREATE USER druzhba_test_user PASSWORD 'Test12345!';"
+export REDSHIFT_TEST_URL=postgresql://druzhba_test_user:Test12345@${REDSHIFT_HOST}:${REDSHIFT_PORT:-5439}/${REDSHIFT_DATABASE}
+psql ${REDSHIFT_ADMIN_URL} -c "CREATE USER druzhba_test_user PASSWORD 'Test12345';"
 psql ${REDSHIFT_ADMIN_URL} -c "CREATE SCHEMA druzhba_test AUTHORIZATION druzhba_test_user;"
 
 # Set up source and target databases

@@ -37,7 +37,7 @@ class BaseTestMysqlToRedshift(unittest.TestCase):
             autocommit=True,
         )
 
-        cls.target_conn = psycopg2.connect(dsn=os.getenv("REDSHIFT_URL"))
+        cls.target_conn = psycopg2.connect(dsn=os.getenv("REDSHIFT_TEST_URL"))
         cls.target_conn.set_client_encoding("UTF8")
         cls.target_conn.autocommit = True
 
