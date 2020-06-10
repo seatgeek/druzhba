@@ -3,7 +3,7 @@
 Command Line Help
 =================
 
-.. include:: usage.rst
+.. include:: _gen/usage.rst
 
 Specific options follow.
 
