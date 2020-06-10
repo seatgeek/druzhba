@@ -1,4 +1,4 @@
-.. image:: docs/resources/SG_Druzhba_Logo-Large.jpg
+.. image:: https://raw.githubusercontent.com/seatgeek/druzhba/master/docs/resources/SG_Druzhba_Logo-Large.jpg
   :width: 600
   :alt: Druzhba
   :align: center
@@ -6,7 +6,7 @@
 .. begin-lede
 
 Druzhba is a friendly framework for building data pipelines. It efficiently
-copies data from your production/transactional databases to your data warehouse.
+copies data from your production / transactional databases to your data warehouse.
 
 A Druzhba pipeline connects one or more source databases to a target database.
 It *pulls* data incrementally from each configured source table and writes to a
@@ -24,6 +24,9 @@ partial support for Microsoft SQL Server as source databases. Druzhba supports
 AWS Redshift as a target.
 
 .. end-of-lede
+
+Please see the full documentation at
+`druzhba.readthedocs.io <https://druzhba.readthedocs.io/en/latest/>`_.
 
 Minimal Example
 ---------------
