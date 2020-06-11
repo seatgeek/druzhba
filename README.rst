@@ -142,3 +142,16 @@ License
 
 This project is licensed under the terms of the 
 `MIT license <https://github.com/seatgeek/druzhba/blob/master/LICENSE>`_.
+
+
+Acknowledgements
+----------------
+
+Many on the SeatGeek team had a hand in building Druzhba but we would especially
+like to acknowledge
+
+- `Andy Enkeboll <https://github.com/enkeboll>`_ for initial conception and
+  software architecture
+- `Sam Kritchevsky <https://github.com/skritch>`_ for hardening the application
+  into something we can share
+- `Susan Lee <https://github.com/susanhlee>`_ for branding and design
