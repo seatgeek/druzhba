@@ -9,7 +9,8 @@ Druzhba pipeline.
 To run this example you will need a source database to move data from and a,
 target Redshift_ database to move data to, and an S3_ location to use as a
 staging area for temporary files. If you do not already have those set up, or if
-you run into any permissions errors, see: `Demo Environment Setup <demosetup>`_.
+you run into any permissions errors, see:
+:ref:`Demo Environment Setup <demosetup>`.
 
 .. _Redshift: https://aws.amazon.com/redshift/
 .. _S3: https://aws.amazon.com/s3/
@@ -29,6 +30,8 @@ Or clone the source code and install from there
 
   git clone git@github.com:seatgeek/druzhba.git
   pip install -e .
+
+.. _define-pipeline:
 
 Define Your Pipeline
 --------------------
