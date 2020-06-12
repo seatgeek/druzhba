@@ -135,7 +135,7 @@ PRs should be unit-tested, and will require an integration test passes to merge.
 See the docs_ for instructions on setting up a
 Docker-Compose-based test environment.
 
-.. _docs: https://github.com/seatgeek/druzhba/blob/sphinx-reorg/docs/contributing.rst
+.. _docs: https://druzhba.readthedocs.io/en/latest/contributing.html
 
 License
 -------
