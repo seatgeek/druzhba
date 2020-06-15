@@ -1,9 +1,21 @@
-.. image:: https://raw.githubusercontent.com/seatgeek/druzhba/master/docs/resources/SG_Druzhba_Logo-Large.jpg
+.. figure:: https://raw.githubusercontent.com/seatgeek/druzhba/master/docs/resources/SG_Druzhba_Logo-Large.jpg
   :width: 600
   :alt: Druzhba
   :align: center
 
 .. begin-lede
+
+.. image:: https://travis-ci.com/seatgeek/druzhba.svg?branch=master
+  :target: https://travis-ci.com/seatgeek/druzhba
+
+.. image:: https://img.shields.io/pypi/v/druzhba.svg?style=flat
+  :target: https://pypi.python.org/pypi/druzhba
+
+.. image:: https://img.shields.io/pypi/l/druzhba.svg?style=flat
+  :target: https://github.com/seatgeek/druzhba/blob/master/LICENSE
+
+.. image:: https://bestpractices.coreinfrastructure.org/projects/4012/badge
+  :target: https://bestpractices.coreinfrastructure.org/projects/4012
 
 Druzhba is a friendly framework for building data pipelines. It efficiently
 copies data from your production / transactional databases to your data warehouse.
