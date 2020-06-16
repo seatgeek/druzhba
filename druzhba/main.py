@@ -16,8 +16,12 @@ from druzhba.config import CONFIG_DIR, load_destination_config
 from druzhba.db import DatabaseConfig
 from druzhba.monitoring import DefaultMonitoringProvider, configure_logging
 from druzhba.redshift import create_index_table, init_redshift
-from druzhba.table import (ConfigurationError, InvalidSchemaError,
-                           MigrationError, TableConfig)
+from druzhba.table import (
+    ConfigurationError,
+    InvalidSchemaError,
+    MigrationError,
+    TableConfig,
+)
 
 logger = logging.getLogger("druzhba.main")
 monitor = DefaultMonitoringProvider()
@@ -96,9 +100,7 @@ def _process_database(
 
         try:
             TableConfig.validate_yaml_configuration(table_yaml)
-            logger.info(
-                "Validated: %s / %s", db.database_alias, source_table_name
-            )
+            logger.info("Validated: %s / %s", db.database_alias, source_table_name)
         except ConfigurationError as e:
             logger.error(str(e))
             invalids.append(source_table_name)
@@ -259,7 +261,7 @@ def run(args):
         if missing_vars:
             logger.error(
                 "Could not find required environment variable(s): %s",
-                ", ".join(missing_vars)
+                ", ".join(missing_vars),
             )
             sys.exit(1)
 

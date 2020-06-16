@@ -11,9 +11,14 @@ from mock import ANY, MagicMock, Mock, PropertyMock, call, patch
 from druzhba.config import RedshiftConfig
 from druzhba.db import ConnectionParams
 from druzhba.redshift import Redshift, get_redshift
-from druzhba.table import (ConfigurationError, InvalidSchemaError,
-                           MigrationError, Permissions, TableConfig,
-                           TableStateError)
+from druzhba.table import (
+    ConfigurationError,
+    InvalidSchemaError,
+    MigrationError,
+    Permissions,
+    TableConfig,
+    TableStateError,
+)
 
 
 class IgnoreWhitespace(str):

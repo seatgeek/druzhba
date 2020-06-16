@@ -8,16 +8,21 @@ from io import BytesIO
 
 from boto3.s3.transfer import TransferConfig
 from boto3.session import Session
-from jinja2 import (Environment, FileSystemLoader, StrictUndefined,
-                    select_autoescape)
+from jinja2 import Environment, FileSystemLoader, StrictUndefined, select_autoescape
 
 from druzhba.avro import write_avro_file
 from druzhba.config import CONFIG_DIR
-from druzhba.redshift import (generate_copy_query, generate_count_query,
-                              generate_create_table_like_query,
-                              generate_drop_exists_query, generate_drop_query,
-                              generate_insert_all_query, generate_lock_query,
-                              generate_rename_query, get_redshift)
+from druzhba.redshift import (
+    generate_copy_query,
+    generate_count_query,
+    generate_create_table_like_query,
+    generate_drop_exists_query,
+    generate_drop_query,
+    generate_insert_all_query,
+    generate_lock_query,
+    generate_rename_query,
+    get_redshift,
+)
 
 
 def load_query(query, query_dir):
@@ -484,9 +489,7 @@ class TableConfig(object):
 
         # There's an old index but can't load a new value.
         if self.new_index_value is None and self.old_index_value is not None:
-            msg = (
-                "Index expected but not found. Last value was %s. Dumping full table"
-            )
+            msg = "Index expected but not found. Last value was %s. Dumping full table"
             self.logger.warning(msg, self.old_index_value)
             return False
 

@@ -119,10 +119,10 @@ def create_index_table(index_schema, index_table):
     )
     with get_redshift().cursor() as cur:
         cur.execute(
-            """SELECT COUNT(*) = 1 
+            """SELECT COUNT(*) = 1
                FROM pg_catalog.pg_class c
                JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
-               WHERE n.nspname = %s 
+               WHERE n.nspname = %s
                  AND c.relname = %s
                  AND c.relkind = 'r'    -- only tables
             """,

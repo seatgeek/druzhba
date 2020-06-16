@@ -20,7 +20,11 @@ class MSSQLTableConfig(TableConfig):
     avro_type_map = {
         # Lint escapes here are because pylint cant introspect what appears to be
         # Java code in pymssql module
-        "string": {pymssql.STRING.value, pymssql.DATETIME.value, pymssql.BINARY.value,},  # pylint: disable=no-member
+        "string": {
+            pymssql.STRING.value,  # pylint: disable=no-member
+            pymssql.DATETIME.value,  # pylint: disable=no-member
+            pymssql.BINARY.value,  # pylint: disable=no-member
+        },
         "int": {},  # prefer long to int
         "long": {pymssql.NUMBER.value},  # pylint: disable=no-member
         "double": {},
