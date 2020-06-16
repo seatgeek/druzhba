@@ -57,7 +57,7 @@ def get_redshift():
 
 
 def init_redshift(destination_config):
-    global _redshift
+    global _redshift  # 
     _redshift = Redshift(RedshiftConfig(destination_config))
     return _redshift
 

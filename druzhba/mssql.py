@@ -18,12 +18,14 @@ class MSSQLTableConfig(TableConfig):
 
     database_type = "mssql"
     avro_type_map = {
-        "string": {pymssql.STRING.value, pymssql.DATETIME.value, pymssql.BINARY.value,},
+        # Lint escapes here are because pylint cant introspect what appears to be
+        # Java code in pymssql module
+        "string": {pymssql.STRING.value, pymssql.DATETIME.value, pymssql.BINARY.value,},  # pylint: disable=no-member
         "int": {},  # prefer long to int
-        "long": {pymssql.NUMBER.value},
+        "long": {pymssql.NUMBER.value},  # pylint: disable=no-member
         "double": {},
         "boolean": {},
-        "decimal": {pymssql.DECIMAL.value},
+        "decimal": {pymssql.DECIMAL.value},  # pylint: disable=no-member
     }
 
     def _load_new_index_value(self):
