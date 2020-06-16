@@ -16,15 +16,16 @@ from druzhba.config import CONFIG_DIR, load_destination_config
 from druzhba.db import DatabaseConfig
 from druzhba.monitoring import DefaultMonitoringProvider, configure_logging
 from druzhba.redshift import create_index_table, init_redshift
-from druzhba.table import (
-    ConfigurationError,
-    InvalidSchemaError,
-    MigrationError,
-    TableConfig,
-)
+from druzhba.table import (ConfigurationError, InvalidSchemaError,
+                           MigrationError, TableConfig)
 
 logger = logging.getLogger("druzhba.main")
 monitor = DefaultMonitoringProvider()
+
+
+COMPILE_ONLY = None
+PRINT_SQL_ONLY = None
+VALIDATE_ONLY = None
 
 
 def process_database(
@@ -229,6 +230,7 @@ def _process_database(
 
 @monitor.timer("full-run-time")
 def run(args):
+    # pylint: disable=global-statement
     if args.tables and not args.database:
         msg = "--tables argument is not valid without --database argument"
         raise ValueError(msg)

@@ -76,7 +76,7 @@ class MSSQLTableConfig(TableConfig):
             Returns the full database result. If a query returns no
             results, this returns an empty list.
         """
-        self.logger.debug("Running query: {}".format(sql))
+        self.logger.debug("Running query: %s", sql)
         with closing(pymssql.connect(**self.connection_vars)) as conn:
             with closing(conn.cursor(as_dict=True)) as cursor:
                 cursor.execute(sql)

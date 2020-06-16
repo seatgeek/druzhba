@@ -49,7 +49,7 @@ class Redshift(object):
                 cursor.close()
 
 
-_redshift = None  # TODO: Fix this very ugly hack ;P
+_redshift = None
 
 
 def get_redshift():
@@ -57,7 +57,8 @@ def get_redshift():
 
 
 def init_redshift(destination_config):
-    global _redshift  # 
+    # TODO: Replace with singleton pattern
+    global _redshift  # pylint: disable=global-statement
     _redshift = Redshift(RedshiftConfig(destination_config))
     return _redshift
 
