@@ -288,7 +288,7 @@ class TableConfig(object):
         self.row_count = None
         self.upload_size = 0
 
-        self.startime = None
+        self.starttime = None
         self.endtime = None
         self.rows_inserted = None
         self.rows_deleted = None
@@ -923,9 +923,9 @@ class TableConfig(object):
             "task_date_params": None,
             "task_other_params": None,
             "target_table": target_table,
-            "start_dt": self.startime.replace(microsecond=0),
+            "start_dt": self.starttime.replace(microsecond=0),
             "end_dt": self.endtime.replace(microsecond=0),
-            "run_time_sec": (self.endtime - self.startime).total_seconds(),
+            "run_time_sec": (self.endtime - self.starttime).total_seconds(),
             "extract_task_update_id": task_id,
             "data_path": self.copy_target_url,
             "manifest_cleaned": False,
@@ -1182,7 +1182,7 @@ class TableConfig(object):
         destination table, and then deletes the staging table.
         """
 
-        self.startime = datetime.datetime.utcnow()
+        self.starttime = datetime.datetime.utcnow()
 
         # Initializing Data
         delete_clause = self.get_delete_sql()
