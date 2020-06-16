@@ -142,7 +142,7 @@ class PostgreSQLTableConfig(TableConfig):
             return create_table
         else:
             if self.query_file is not None:
-                self.logger.warn(
+                self.logger.warning(
                     (
                         "Cannot obtain `null_ok` attribute for columns in postgres "
                         'source necessary to create target table "%s", assuming '
@@ -198,7 +198,7 @@ class PostgreSQLTableConfig(TableConfig):
             results, this returns an empty list.
         """
 
-        self.logger.debug("Running query: {}".format(sql))
+        self.logger.debug("Running query: %s", sql)
 
         cursor_name = "{}_{}".format(self.source_table_name, self.date_key)
         with closing(psycopg2.connect(**self.connection_vars)) as conn:

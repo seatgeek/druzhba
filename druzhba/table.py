@@ -11,8 +11,18 @@ from boto3.session import Session
 from jinja2 import Environment, FileSystemLoader, StrictUndefined, select_autoescape
 
 from druzhba.avro import write_avro_file
-from druzhba.config import CONFIG_DIR, S3Config
-from druzhba.redshift import *
+from druzhba.config import CONFIG_DIR
+from druzhba.redshift import (
+    get_redshift,
+    generate_drop_exists_query,
+    generate_drop_query,
+    generate_rename_query,
+    generate_count_query,
+    generate_insert_all_query,
+    generate_create_table_like_query,
+    generate_lock_query,
+    generate_copy_query,
+)
 
 
 def load_query(query, query_dir):
@@ -278,8 +288,8 @@ class TableConfig(object):
         self.row_count = None
         self.upload_size = 0
 
-        self.starttime = None
-        self.endttime = None
+        self.startime = None
+        self.endtime = None
         self.rows_inserted = None
         self.rows_deleted = None
 
@@ -480,7 +490,7 @@ class TableConfig(object):
         # There's an old index but can't load a new value.
         if self.new_index_value is None and self.old_index_value is not None:
             msg = (
-                "Index expected but not found. Last value was %s. Dumping " "full table"
+                "Index expected but not found. Last value was %s. Dumping full table"
             )
             self.logger.warning(msg, self.old_index_value)
             return False
@@ -568,7 +578,7 @@ class TableConfig(object):
             )
             return index_value
         else:
-            self.logger.info("Index found: {}".format(index_value[0]))
+            self.logger.info("Index found: %s", index_value[0])
             return index_value[0]
 
     @property
@@ -728,7 +738,7 @@ class TableConfig(object):
                 # fastavro now supports decimal types, but Redshift does not
                 schema["type"] = ["null", "string"]
             else:
-                self.logger.warn(
+                self.logger.warning(
                     "unmatched data type for column %s in %s table %s",
                     col_desc[0],
                     self.db_name,
@@ -915,9 +925,9 @@ class TableConfig(object):
             "task_date_params": None,
             "task_other_params": None,
             "target_table": target_table,
-            "start_dt": self.starttime.replace(microsecond=0),
+            "start_dt": self.startime.replace(microsecond=0),
             "end_dt": self.endtime.replace(microsecond=0),
-            "run_time_sec": (self.endtime - self.starttime).total_seconds(),
+            "run_time_sec": (self.endtime - self.startime).total_seconds(),
             "extract_task_update_id": task_id,
             "data_path": self.copy_target_url,
             "manifest_cleaned": False,
@@ -937,7 +947,8 @@ class TableConfig(object):
         The data will be uploaded either as a single file or as a set of files
         with a manifest
         """
-        starttime = datetime.datetime.utcnow()
+        # TODO: Do we not currently execute the extract monitor?
+        # starttime = datetime.datetime.utcnow()
 
         results_schema = self.query_description_to_avro(self.get_query_sql())
         results_iter = self.row_generator()
@@ -956,7 +967,7 @@ class TableConfig(object):
         if self.manifest_mode:
             self.write_manifest_file()
 
-        endtime = datetime.datetime.utcnow()
+        # endtime = datetime.datetime.utcnow()
         # self.register_extract_monitor(starttime, endtime)
 
     def avro_to_s3(self, results_iter, results_schema):
@@ -1173,7 +1184,7 @@ class TableConfig(object):
         destination table, and then deletes the staging table.
         """
 
-        self.starttime = datetime.datetime.utcnow()
+        self.startime = datetime.datetime.utcnow()
 
         # Initializing Data
         delete_clause = self.get_delete_sql()
@@ -1230,7 +1241,7 @@ class TableConfig(object):
                     cur.execute(permissions_sql)
             else:
                 # If not rebuilding, create staging with LIKE
-                self.logger.info("Creating staging table {}".format(staging_table))
+                self.logger.info("Creating staging table %s", staging_table)
                 query = generate_create_table_like_query(
                     staging_table, destination_table
                 )
@@ -1279,7 +1290,7 @@ class TableConfig(object):
         self.set_last_updated_index()
 
         # Register in monitor table
-        self.endtime = datetime.datetime.utcnow()
+        # self.endtime = datetime.datetime.utcnow()
         # self.register_load_monitor()
 
         # Clean up S3

@@ -4,3 +4,4 @@ python:
   - "3.7"
 script:
 - python setup.py test
+- pylint -d C,R,W0511 druzhba

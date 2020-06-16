@@ -13,7 +13,8 @@ with open("druzhba/_version.py", "r") as f:
 
 tests_require = [
     "nose>=1.3.7",
-    "mock>=2.0.0"
+    "mock>=2.0.0",
+    "pylint==2.5.3",
 ]
 
 setuptools.setup(

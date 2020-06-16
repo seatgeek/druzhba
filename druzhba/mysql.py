@@ -218,7 +218,7 @@ class MySQLTableConfig(TableConfig):
                 self.destination_schema_name, table_name
             )
             field_strs = []
-            for (name, type_code, _, internal_size, precision, scale, null_ok,) in desc:
+            for (name, type_code, _, _, precision, scale, null_ok,) in desc:
                 # Note: mysql overreports this number by up to 4 places, which
                 # should't cause problems
                 size_str = "({}".format(precision) if precision else ""
@@ -258,7 +258,7 @@ class MySQLTableConfig(TableConfig):
             results, this returns an empty list.
         """
 
-        self.logger.debug("Running query: {}".format(sql))
+        self.logger.debug("Running query: %s", sql)
 
         converters = pymysql.converters.conversions
         if self.not_null_date:

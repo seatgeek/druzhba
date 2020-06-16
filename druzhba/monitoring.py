@@ -57,6 +57,7 @@ def init_sentry():
 class FakeStatsd(object):
     @contextmanager
     def timer(self, *args, **kwargs):
+        # pylint: disable=unused-argument
         try:
             yield None
         finally:

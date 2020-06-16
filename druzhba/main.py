@@ -96,7 +96,7 @@ def _process_database(
         try:
             TableConfig.validate_yaml_configuration(table_yaml)
             logger.info(
-                "Validated: {} / {}".format(db.database_alias, source_table_name)
+                "Validated: %s / %s", db.database_alias, source_table_name
             )
         except ConfigurationError as e:
             logger.error(str(e))
@@ -170,7 +170,7 @@ def _process_database(
                 psycopg2.IntegrityError,
                 psycopg2.ProgrammingError,
                 psycopg2.extensions.TransactionRollbackError,
-                psycopg2.errors.FeatureNotSupported,
+                psycopg2.errors.FeatureNotSupported,  # pylint: disable=no-member
             ) as e:
                 logger.warning(
                     "Unexpected error processing %s table %s: ```%s\n\n%s```",
