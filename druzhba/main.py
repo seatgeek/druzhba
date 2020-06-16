@@ -256,9 +256,8 @@ def run(args):
     if not COMPILE_ONLY and not PRINT_SQL_ONLY and not VALIDATE_ONLY:
         if missing_vars:
             logger.error(
-                "Could not find require environment variable(s): {}".format(
-                    ", ".join(missing_vars)
-                )
+                "Could not find required environment variable(s): %s",
+                ", ".join(missing_vars)
             )
             sys.exit(1)
 
