@@ -46,6 +46,8 @@ Testing
 Unit Tests
 ^^^^^^^^^^
 
+All major new functionality is expected to have adequate test coverage.
+
 To run unit tests locally:
 
 .. code-block:: bash

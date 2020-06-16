@@ -35,6 +35,15 @@ Druzhba currently fully supports PostgreSQL and Mysql 5.5-5.7, and provides
 partial support for Microsoft SQL Server as source databases. Druzhba supports
 AWS Redshift as a target.
 
+Feature requests, bug reports, and general feedback should be submitted to the
+`issue tracker`_. Potential security vulnerabilities should be posted to the
+issue tracker as well. If a security issue report must contain sensitive
+information please `email the maintainers`_ and, if possible, open a public
+issue indicating that you have done so.
+
+.. _`issue tracker`: https://github.com/seatgeek/druzhba/issues
+.. _`email the maintainers`: druzhba-maintainers@seatgeek.com
+
 .. end-of-lede
 
 Please see the full documentation at
