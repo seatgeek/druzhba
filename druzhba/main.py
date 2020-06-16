@@ -268,7 +268,8 @@ def run(args):
     init_redshift(destination_config)
 
     # Create the index table if it doesn't exist
-    create_index_table(index_schema, index_table)
+    if not COMPILE_ONLY and not PRINT_SQL_ONLY and not VALIDATE_ONLY:
+        create_index_table(index_schema, index_table)
 
     if args.database:
         dbs = [
