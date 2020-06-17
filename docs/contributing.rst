@@ -27,8 +27,8 @@ This is a list of most requested Druzhba features:
 - Unrecognized table names in supplied via the ``--tables`` argument should be
   surfaced as a warning or error
 
-- Add basic transformation support from YAML config like renaming columns or
-  concatenating multiple columns etc. without requiring a full custom SQL table.
+- Add support to allow basic transformations from YAML configs (i.e. renaming or
+  concatenating columns) without requiring a custom SQL table.
 
 - The table extract functionality is tied unnecessarily to the name of the
   table in the source database, with a fake source table name supplied for
@@ -45,6 +45,8 @@ Testing
 
 Unit Tests
 ^^^^^^^^^^
+
+All major new functionality is expected to have adequate test coverage.
 
 To run unit tests locally:
 

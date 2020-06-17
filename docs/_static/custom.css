@@ -38,3 +38,7 @@ div.sphinxsidebar a:hover {
 div.sphinxsidebar h3, div.sphinxsidebar h4 {
     font-family: Roboto, sans-serif;
 }
+
+a.image-reference {
+    border-bottom: none !important
+}

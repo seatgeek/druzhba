@@ -3,7 +3,7 @@
 Command Line Help
 =================
 
-.. include:: usage.rst
+.. include:: _gen/usage.rst
 
 Specific options follow.
 
@@ -48,7 +48,7 @@ Table Maintenance and Manual Overrides
 --------------------------------------
 
 Using ``--full-refresh`` as a CLI parameter overrides (defaulted to ``false`` if
-ommited) ``full-refresh`` table configuration field is described in
+omitted) ``full-refresh`` table configuration field as described in
 ``configuration.md``. If given, all tables in the Druzhba invocation will have
 all existing rows deleted, and the source side query will ignore the existing
 incremental index. This option is typically used with ``-t`` / ``--table`` and
@@ -71,7 +71,7 @@ supersedes the ``LOG_LEVEL`` environment variable. If neither is set then
 Druzhba defaults to ``INFO``. Available levels include ``DEBUG``, ``INFO``,
 ``WARN``, and ``ERROR``.
 
-While druzhba processes tables from a given source database sequentially it will
+While druzhba processes tables from a given source database sequentially, it will
 attempt to process multiple source databases concurrently, one table from each
 at a time. By default, Druzhba's parallelism limit will be equal to the number
 of CPU cores detected. Use ``-np`` or ``--num-processes`` to override that

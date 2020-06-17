@@ -17,10 +17,17 @@ from druzhba.main import _get_parser
 from druzhba import __version__
 
 
+gen_dir = os.path.join(
+    os.path.dirname(os.path.realpath(__file__)),
+    "_gen",
+)
+if not os.path.exists(gen_dir):
+    os.makedirs(gen_dir)
+
 cli_help = _get_parser().format_help()
 cli_help = cli_help.replace("sphinx-build", "druzhba")  # argparse grabs current process name
 cli_help = '\n'.join(['  ' + line for line in cli_help.split('\n')])
-with open('usage.rst', 'w') as f:
+with open(os.path.join(gen_dir, 'usage.rst'), 'w') as f:
     f.write('.. code-block:: text\n\n')
     f.write(cli_help)
     f.write('\n')

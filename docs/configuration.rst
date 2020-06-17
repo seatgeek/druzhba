@@ -267,8 +267,7 @@ your own Python process, extending the ``MonitoringProvider`` class through the
 as-of-yet undocumented (sorry) monitoring API, assigning it over
 ``main.monitor`` and calling ``run`` manually.
 
-We recognize that this is clunky and plan to clean it up in a future release.
-
+This interface will be cleaned up in a future release.
 
 Usage Considerations
 --------------------
