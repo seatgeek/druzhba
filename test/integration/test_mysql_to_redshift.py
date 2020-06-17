@@ -4,9 +4,9 @@ from urllib.parse import urlparse
 
 import psycopg2
 import pymysql
+from mock import ANY
 
 from druzhba.main import run as run_druzhba
-from mock import ANY
 
 from .utils import FakeArgs
 from .utils import TimeFixtures as t

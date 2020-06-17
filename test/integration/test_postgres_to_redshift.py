@@ -4,9 +4,9 @@ from dataclasses import replace as dataclass_replace
 
 import psycopg2
 import psycopg2.extras
+from mock import ANY
 
 from druzhba.main import run as run_druzhba
-from mock import ANY
 
 from .utils import FakeArgs
 from .utils import TimeFixtures as t

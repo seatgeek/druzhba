@@ -6,6 +6,7 @@ from datetime import datetime
 from io import BytesIO
 
 import fastavro
+from mock import ANY, MagicMock, Mock, PropertyMock, call, patch
 
 from druzhba.config import RedshiftConfig
 from druzhba.db import ConnectionParams
@@ -18,7 +19,6 @@ from druzhba.table import (
     TableConfig,
     TableStateError,
 )
-from mock import ANY, MagicMock, Mock, PropertyMock, call, patch
 
 
 class IgnoreWhitespace(str):
