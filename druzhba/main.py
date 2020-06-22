@@ -158,9 +158,10 @@ def _process_database(
 
                 advance_to_next_table = True
 
-            except (InvalidSchemaError, MigrationError) as e:
-                logger.error(
-                    str(e), table.destination_schema_name, table.destination_table_name,
+            except (InvalidSchemaError, MigrationError):
+                logger.exception(
+                    "Error preparing target table %s.%s",
+                    table.destination_schema_name, table.destination_table_name
                 )
                 advance_to_next_table = True
 

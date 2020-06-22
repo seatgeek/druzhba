@@ -828,10 +828,11 @@ class TableConfig(object):
                     self.get_query_sql(), self.destination_table_name
                 )
             except NotImplementedError:
-                raise MigrationError("Could not create %s.%s, manual migration needed.")
+                raise MigrationError("Automatic table creation was not implemented for "
+                                     "this database, manual migration needed.")
         elif self._destination_table_status == self.DESTINATION_TABLE_INCORRECT:
             raise InvalidSchemaError(
-                "Extra columns exist in redshift table %s.%s. Migration needed"
+                "Extra columns exist in redshift table. Migration needed"
             )
 
     def register_extract_monitor(self, starttime, endtime):
@@ -1136,14 +1137,15 @@ class TableConfig(object):
         permissions_result = cursor.fetchall()
 
         if len(permissions_result) == 0:
-            self.logger.info("No existing permissions found for %s.%s")
+            self.logger.info("No existing permissions found for %s.%s",
+                             self.destination_schema_name, self.destination_table_name)
             return None
         elif len(permissions_result) > 1:
-            raise MigrationError("Got multiple permissions rows for %s.%s")
+            raise MigrationError("Got multiple permissions rows for table")
 
         is_owner, permissions_str = permissions_result[0]
         if not is_owner:
-            raise MigrationError("Can't rebuild %s.%s because it has another owner")
+            raise MigrationError("Can't rebuild target table because it has another owner")
 
         self.logger.info(
             "Got existing permissions for table to add to %s: %s",
@@ -1153,7 +1155,7 @@ class TableConfig(object):
         permissions = Permissions.parse(permissions_str)
         if permissions is None:
             raise MigrationError(
-                "Couldn't parse permissions {} to rebuild %s.%s".format(permissions_str)
+                "Couldn't parse permissions {} to rebuild target table".format(permissions_str)
             )
 
         grant_template = "GRANT {grant} ON {table} TO {group}{name};"
