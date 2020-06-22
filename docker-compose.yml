@@ -26,6 +26,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    ports:
+      - "7777:7777"
     command: "python setup.py test"
     env_file:
       - ./.env.test.docker

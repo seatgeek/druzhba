@@ -38,6 +38,7 @@ class PostgreSQLTableConfig(TableConfig):
             "date",
             "time",
             "timestampz",
+            "citext"
         },
         "int": {},  # prefer long to int
         "long": {"int2", "int4", "oid", "int8", "serial8"},
