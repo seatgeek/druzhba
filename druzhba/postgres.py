@@ -52,6 +52,7 @@ class PostgreSQLTableConfig(TableConfig):
         super(PostgreSQLTableConfig, self).__init__(*args, **kwargs)
         type_map_defaults = {
             "text": "varchar(max)",
+            "citext": "varchar(max)",
             "jsonb": "varchar(max)",
             "json": "varchar(max)",
             "array": "varchar(max)",

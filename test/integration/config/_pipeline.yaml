@@ -7,7 +7,7 @@ index:
 s3:
   bucket: ${S3_BUCKET}
   prefix: ${S3_PREFIX}
-iam_copy_role: ${IAM_COPY_ROLE}
+iam_copy_role: ${REDSHIFT_IAM_COPY_ROLE}
 sources:
   - alias: pgtest
     type: postgres
