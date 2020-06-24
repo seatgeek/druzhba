@@ -27,8 +27,11 @@ Major versions are "breaking" in that they can require configuration changes by
 end users.
 
 Before any release, update ``setup.py`` to match the correct version!
-TODO: use https://github.com/warner/python-versioneer or similar.
-
+TODO: use https://github.com/warner/python-versioneer or similar. Also, please
+ensure the integration test suite passes and run `bandit
+<https://bandit.readthedocs.io/en/latest/>`_ being sure to manually inspect any
+SQL injection warnings that we are not passing unsafe data into those queries.
+ 
 General Branch Outline
 ----------------------
 
