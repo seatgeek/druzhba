@@ -38,6 +38,7 @@ class PostgreSQLTableConfig(TableConfig):
             "date",
             "time",
             "timestampz",
+            "citext"
         },
         "int": {},  # prefer long to int
         "long": {"int2", "int4", "oid", "int8", "serial8"},
@@ -51,6 +52,7 @@ class PostgreSQLTableConfig(TableConfig):
         super(PostgreSQLTableConfig, self).__init__(*args, **kwargs)
         type_map_defaults = {
             "text": "varchar(max)",
+            "citext": "varchar(max)",
             "jsonb": "varchar(max)",
             "json": "varchar(max)",
             "array": "varchar(max)",

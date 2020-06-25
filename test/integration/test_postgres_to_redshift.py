@@ -317,3 +317,36 @@ class TestBasicIncrementalPipeline(BaseTestPostgresToRedshift):
 
             cur.execute("SELECT COUNT(*) FROM druzhba_test.pipeline_table_index")
             self.assertEqual(cur.fetchone()[0], 1)
+
+
+class TestDataTypes(BaseTestPostgresToRedshift):
+    args = FakeArgs(database="pgtest", tables=["test_basic"], num_processes=1)
+
+    def test_citext(self):
+        with self.source_conn.cursor() as cur:
+            cur.execute(
+                """
+            DROP TABLE IF EXISTS test_basic;
+            CREATE TABLE test_basic (
+                pk INT PRIMARY KEY,
+                updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+                citext_col CITEXT
+            );
+            """
+            )
+
+            cur.executemany(
+                "INSERT INTO test_basic VALUES (%s, %s, %s);",
+                [(1, t.t0, "citext1"),
+                 (2, t.t1, "Citext2")],
+            )
+
+        run_druzhba(self.args)
+
+        with self.target_conn.cursor() as cur:
+            cur.execute(
+                "SELECT * FROM druzhba_test.test_basic ORDER BY pk"
+            )
+            result = cur.fetchall()
+            self.assertTupleEqual(result[0], (1, t.t0, 'citext1'))
+            self.assertTupleEqual(result[1], (2, t.t1, 'Citext2'))

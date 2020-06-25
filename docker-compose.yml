@@ -6,6 +6,8 @@ services:
       - "5433:5432"
     networks:
       - druzhba
+    volumes:
+      - ./test/init_psql:/docker-entrypoint-initdb.d
     stop_grace_period: 30s
     environment:
       POSTGRES_DB: druzhba_test
