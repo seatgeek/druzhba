@@ -19,11 +19,10 @@ tables:
       - updated_at
     index_column: updated_at
     not_null_date: true
-#  - source_table_name: test_null_datetime
-#    destination_table_name: test_null_datetime
-#    destination_schema_name: druzhba_test
-#    distribution_key: pk
-#    sort_keys:
-#     - updated_at
-#    index_column: updated_at
-#    not_null_date: false
+  - source_table_name: test_index_sql_append_only
+    destination_table_name: test_index_sql_append_only
+    destination_schema_name: druzhba_test
+    append_only: true
+    index_sql: >-
+      SELECT GREATEST(created_at, deleted_at) AS index_value
+      FROM test_index_sql_append_only
