@@ -169,10 +169,6 @@ class TestNullDatetime(BaseTestMysqlToRedshift):
             )
 
     def test_nullish_datetime(self):
-        """
-        Runs Druzhba, inserts data with a 0000-.. datetime, then runs Druzhba again.
-        """
-
         with self.source_conn.cursor() as cur:
 
             cur.executemany(
@@ -189,4 +185,72 @@ class TestNullDatetime(BaseTestMysqlToRedshift):
             self.assertListEqual(
                 results,
                 [(1, t.t0, t.t1, t.t1, t.t1), (2, t.t0, t.tmin, t.tmin, t.tmin),],
+            )
+
+
+class TestIndexSqlAppendOnly(BaseTestMysqlToRedshift):
+    table_name = 'test_index_sql_append_only'
+    args = FakeArgs(
+        database="mysqltest", tables=[table_name], num_processes=1
+    )
+
+    def setUp(self):
+        with self.source_conn.cursor() as cur:
+            cur.execute(f"DROP TABLE IF EXISTS {self.table_name};")
+            cur.execute(
+                f"""
+                CREATE TABLE `druzhba_test`.`{self.table_name}` (
+                  `id` INT(11) unsigned NOT NULL,
+                  `created_at` DATETIME NOT NULL,
+                  `deleted_at` DATETIME DEFAULT NULL
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+                """
+            )
+
+    def tearDown(self):
+        with self.target_conn.cursor() as cur:
+            cur.execute(
+                f"""
+                DROP TABLE IF EXISTS druzhba_test.{self.table_name};
+                DROP TABLE IF EXISTS druzhba_test.pipeline_table_index;
+                """
+            )
+
+    def test_append_only(self):
+        """
+        Runs a Druzhba pipeline for a table without a PK + the append_only
+        setting.
+
+        Also, `index_sql` is used idiomatically, as if loading a write-only
+        log table.
+        """
+
+        with self.source_conn.cursor() as cur:
+            cur.executemany(
+                f"INSERT INTO druzhba_test.{self.table_name} VALUES (%s, %s, %s);",
+                [(1, t.t0, None), (2, t.t0, None),],
+            )
+
+        run_druzhba(self.args)
+
+        with self.source_conn.cursor() as cur:
+            cur.executemany(
+                f"INSERT INTO druzhba_test.{self.table_name} VALUES (%s, %s, %s);",
+                [(2, t.t0, t.t1), (3, t.t1, None),],
+            )
+
+        run_druzhba(self.args)
+
+        with self.target_conn.cursor() as cur:
+            cur.execute(f"SELECT * FROM druzhba_test.{self.table_name}")
+            results = cur.fetchall()
+
+            self.assertSetEqual(
+                set(results),
+                {
+                    (1, t.t0, None),
+                    (2, t.t0, None),
+                    (2, t.t0, t.t1),
+                    (3, t.t1, None),
+                },
             )
