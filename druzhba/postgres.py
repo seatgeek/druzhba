@@ -91,7 +91,7 @@ class PostgreSQLTableConfig(TableConfig):
     def _get_table_attributes(self):
         query = """
 
-        SELECT obj_description('{0}'::regclass, 'pg_class') AS comment;
+        SELECT pg_catalog.obj_description('{0}'::regclass, 'pg_class') AS comment;
 
         """.format(
             self.source_table_name
