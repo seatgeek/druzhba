@@ -54,7 +54,10 @@ class MSSQLTableConfig(TableConfig):
         with closing(pymssql.connect(**self.connection_vars)) as conn:
             with closing(conn.cursor(as_dict=True)) as cursor:
                 cursor.execute(sql)
-                return table_attributes, ((col[0], col[1]) for col in cursor.description)
+                return (
+                    table_attributes,
+                    ((col[0], col[1]) for col in cursor.description),
+                )
 
     def query_to_redshift_create_table(self, sql, table_name):
         if self.schema_file:

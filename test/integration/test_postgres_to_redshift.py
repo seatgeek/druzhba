@@ -337,16 +337,13 @@ class TestDataTypes(BaseTestPostgresToRedshift):
 
             cur.executemany(
                 "INSERT INTO test_basic VALUES (%s, %s, %s);",
-                [(1, t.t0, "citext1"),
-                 (2, t.t1, "Citext2")],
+                [(1, t.t0, "citext1"), (2, t.t1, "Citext2")],
             )
 
         run_druzhba(self.args)
 
         with self.target_conn.cursor() as cur:
-            cur.execute(
-                "SELECT * FROM druzhba_test.test_basic ORDER BY pk"
-            )
+            cur.execute("SELECT * FROM druzhba_test.test_basic ORDER BY pk")
             result = cur.fetchall()
-            self.assertTupleEqual(result[0], (1, t.t0, 'citext1'))
-            self.assertTupleEqual(result[1], (2, t.t1, 'Citext2'))
+            self.assertTupleEqual(result[0], (1, t.t0, "citext1"))
+            self.assertTupleEqual(result[1], (2, t.t1, "Citext2"))

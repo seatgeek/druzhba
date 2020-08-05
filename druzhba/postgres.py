@@ -38,7 +38,7 @@ class PostgreSQLTableConfig(TableConfig):
             "date",
             "time",
             "timestampz",
-            "citext"
+            "citext",
         },
         "int": {},  # prefer long to int
         "long": {"int2", "int4", "oid", "int8", "serial8"},
@@ -97,7 +97,9 @@ class PostgreSQLTableConfig(TableConfig):
             self.source_table_name
         )
         rows = [row for row in self.query(query)]
-        assert len(rows) == 1, "Expected one row to be returned when retrieving table attributes."
+        assert (
+            len(rows) == 1
+        ), "Expected one row to be returned when retrieving table attributes."
         return {"comment": rows[0]["comment"]}
 
     def _get_column_attributes(self):
@@ -142,27 +144,31 @@ class PostgreSQLTableConfig(TableConfig):
                 conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
             ) as cursor:
                 cursor.execute(sql.rstrip("; \n") + " LIMIT 1")
-                return table_attributes, (
+                return (
+                    table_attributes,
                     (
-                        col.name,
-                        self.type_map.get(
-                            self.pg_types[col.type_code], self.pg_types[col.type_code],
-                        ),
-                        None,
-                        col.internal_size,
-                        col.precision,
-                        col.scale,
-                        column_attributes.get(col.name, {}).get("is_nullable"),
-                        column_attributes.get(col.name, {}).get("comment"),
-                    )
-                    for col in cursor.description
+                        (
+                            col.name,
+                            self.type_map.get(
+                                self.pg_types[col.type_code],
+                                self.pg_types[col.type_code],
+                            ),
+                            None,
+                            col.internal_size,
+                            col.precision,
+                            col.scale,
+                            column_attributes.get(col.name, {}).get("is_nullable"),
+                            column_attributes.get(col.name, {}).get("comment"),
+                        )
+                        for col in cursor.description
+                    ),
                 )
 
     def query_to_redshift_create_table(self, sql, table_name):
         if self.schema_file:
             create_table = load_query(self.schema_file, CONFIG_DIR).rstrip("; \n\t")
             create_table += self.create_table_keys()
-            create_table += ';\n'
+            create_table += ";\n"
             # TODO: add support for table and column comments in yaml config file.
             return create_table
         else:
@@ -189,10 +195,21 @@ class PostgreSQLTableConfig(TableConfig):
                     """COMMENT ON TABLE "{}"."{}" IS '{}'""".format(
                         self.destination_schema_name,
                         table_name,
-                        table_comment.replace("'", "''"),  # escape single quotes in the creation statement
+                        table_comment.replace(
+                            "'", "''"
+                        ),  # escape single quotes in the creation statement
                     )
                 )
-            for (name, type_code, _, internal_size, precision, scale, null_ok, comment) in columns:
+            for (
+                name,
+                type_code,
+                _,
+                internal_size,
+                precision,
+                scale,
+                null_ok,
+                comment,
+            ) in columns:
                 size_str = "({}".format(precision) if precision else ""
                 size_str += ",{}".format(scale) if scale else ""
                 size_str += ")" if size_str else ""
@@ -216,15 +233,17 @@ class PostgreSQLTableConfig(TableConfig):
                             self.destination_schema_name,
                             table_name,
                             name,
-                            comment.replace("'", "''"),  # escape single quotes in the creation statement
+                            comment.replace(
+                                "'", "''"
+                            ),  # escape single quotes in the creation statement
                         )
                     )
 
             create_table += "\n  , ".join(field_strs)
             create_table += "\n)\n"
             create_table += self.create_table_keys()
-            create_table += ';\n'
-            create_table += ';\n'.join(comments)
+            create_table += ";\n"
+            create_table += ";\n".join(comments)
             return create_table
 
     def query(self, sql):
