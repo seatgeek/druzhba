@@ -439,7 +439,7 @@ class TestUnloadCopy(unittest.TestCase):
             return self._dw_columns
 
         def get_sql_description(self, sql):
-            return self._desc
+            return {}, self._desc
 
         @property
         def avro_type_map(self):

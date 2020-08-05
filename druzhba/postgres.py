@@ -88,10 +88,25 @@ class PostgreSQLTableConfig(TableConfig):
                     )
         return self._pg_types
 
-    def _get_column_is_nullable(self):
-        is_nullable_query = """
+    def _get_table_attributes(self):
+        query = """
 
-        SELECT column_name, (is_nullable = 'YES') AS is_nullable
+        SELECT obj_description('{0}'::regclass, 'pg_class') AS comment;
+
+        """.format(
+            self.source_table_name
+        )
+        rows = [row for row in self.query(query)]
+        assert len(rows) == 1, "Expected one row to be returned when retrieving table attributes."
+        return {"comment": rows[0]["comment"]}
+
+    def _get_column_attributes(self):
+        query = """
+
+        SELECT
+            column_name
+          , (is_nullable = 'YES') AS is_nullable
+          , pg_catalog.col_description('{0}'::regclass, ordinal_position::INT) AS comment
         FROM information_schema.columns
         WHERE table_name = '{0}';
 
@@ -100,8 +115,11 @@ class PostgreSQLTableConfig(TableConfig):
         )
 
         return {
-            row["column_name"]: row["is_nullable"]
-            for row in self.query(is_nullable_query)
+            row["column_name"]: {
+                "is_nullable": row["is_nullable"],
+                "comment": row["comment"],
+            }
+            for row in self.query(query)
         }
 
     def _load_new_index_value(self):
@@ -112,9 +130,11 @@ class PostgreSQLTableConfig(TableConfig):
 
     def get_sql_description(self, sql):
         if self.query_file is None:
-            column_is_nullable = self._get_column_is_nullable()
+            table_attributes = self._get_table_attributes()
+            column_attributes = self._get_column_attributes()
         else:
-            column_is_nullable = {}
+            table_attributes = {}
+            column_attributes = {}
 
         with closing(psycopg2.connect(**self.connection_vars)) as conn:
             conn.set_client_encoding(ENCODING)
@@ -122,7 +142,7 @@ class PostgreSQLTableConfig(TableConfig):
                 conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
             ) as cursor:
                 cursor.execute(sql.rstrip("; \n") + " LIMIT 1")
-                return (
+                return table_attributes, (
                     (
                         col.name,
                         self.type_map.get(
@@ -132,7 +152,8 @@ class PostgreSQLTableConfig(TableConfig):
                         col.internal_size,
                         col.precision,
                         col.scale,
-                        column_is_nullable.get(col.name),
+                        column_attributes.get(col.name, {}).get("is_nullable"),
+                        column_attributes.get(col.name, {}).get("comment"),
                     )
                     for col in cursor.description
                 )
@@ -141,6 +162,8 @@ class PostgreSQLTableConfig(TableConfig):
         if self.schema_file:
             create_table = load_query(self.schema_file, CONFIG_DIR).rstrip("; \n\t")
             create_table += self.create_table_keys()
+            create_table += ';\n'
+            # TODO: add support for table and column comments in yaml config file.
             return create_table
         else:
             if self.query_file is not None:
@@ -155,12 +178,21 @@ class PostgreSQLTableConfig(TableConfig):
                     table_name,
                 )
 
-            desc = self.get_sql_description(sql)
+            table_attributes, columns = self.get_sql_description(sql)
             create_table = """CREATE TABLE "{}"."{}" (\n    """.format(
                 self.destination_schema_name, table_name
             )
-            field_strs = []
-            for (name, type_code, _, internal_size, precision, scale, null_ok,) in desc:
+            field_strs, comments = [], []
+            table_comment = table_attributes.get("comment")
+            if table_comment is not None:
+                comments.append(
+                    """COMMENT ON TABLE "{}"."{}" IS '{}'""".format(
+                        self.destination_schema_name,
+                        table_name,
+                        table_comment.replace("'", "''"),  # escape single quotes in the creation statement
+                    )
+                )
+            for (name, type_code, _, internal_size, precision, scale, null_ok, comment) in columns:
                 size_str = "({}".format(precision) if precision else ""
                 size_str += ",{}".format(scale) if scale else ""
                 size_str += ")" if size_str else ""
@@ -178,10 +210,21 @@ class PostgreSQLTableConfig(TableConfig):
                         null_ok="" if null_ok else " NOT NULL",
                     )
                 )
+                if comment is not None:
+                    comments.append(
+                        """COMMENT ON COLUMN "{}"."{}"."{}" IS '{}';""".format(
+                            self.destination_schema_name,
+                            table_name,
+                            name,
+                            comment.replace("'", "''"),  # escape single quotes in the creation statement
+                        )
+                    )
 
             create_table += "\n  , ".join(field_strs)
             create_table += "\n)\n"
             create_table += self.create_table_keys()
+            create_table += ';\n'
+            create_table += ';\n'.join(comments)
             return create_table
 
     def query(self, sql):

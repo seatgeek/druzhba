@@ -456,9 +456,8 @@ class TableConfig(object):
     @property
     def columns(self):
         if not self._columns:
-            self._columns = [
-                row[0] for row in self.get_sql_description(self.get_query_sql())
-            ]
+            _table_attributes, columns = self.get_sql_description(self.get_query_sql())
+            self._columns = [column[0] for column in columns]
         return self._columns
 
     def query(self, sql):
@@ -713,10 +712,10 @@ class TableConfig(object):
             raise RuntimeError("Unhandled case in get_destination_table_status")
 
     def query_description_to_avro(self, sql):
-        desc = self.get_sql_description(sql)
+        _table_attributes, columns = self.get_sql_description(sql)
         fields = []
 
-        for col_desc in desc:
+        for col_desc in columns:
             col_name = col_desc[0]
             schema = {"name": col_name}
             try:

@@ -143,10 +143,11 @@ class MySQLTableConfig(TableConfig):
         }
 
     def get_sql_description(self, sql):
+        table_attributes = {}  # TODO: retrieve table attributes
         with closing(pymysql.connect(**self.connection_vars)) as conn:
             with closing(conn.cursor(pymysql.cursors.SSDictCursor)) as cursor:
                 cursor.execute(sql + " LIMIT 1")
-                return cursor.description
+                return table_attributes, cursor.description
 
     def _mysql_to_redshift_type(self, input_type):
         # Note other non-implemented MySQL 8 types:
