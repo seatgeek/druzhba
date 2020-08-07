@@ -176,6 +176,9 @@ class TableConfig(object):
                'char(35)': 'varchar(70)',
                'bigint(20) unsigned': 'bigint'
             }
+    include_comments : boolean, optional
+        flag to specify whether or not to ingest table and column comments
+        when building or rebuilding the target table.
 
     Attributes
     ----------
@@ -184,9 +187,6 @@ class TableConfig(object):
     foreign_keys : list of str
         generated from the `create table` syntax, a list of foreign key
         relationships to create for a table after all tables are created
-    comments : list of str
-        generated from the `create table` syntax, a list of COMMENT ON
-        commands to add comments to table columns
     pks : list of str
         generated from the `create table` syntax, a list of source column
         names that define the PK
@@ -243,6 +243,7 @@ class TableConfig(object):
         data=None,
         append_only=False,
         db_template_data=None,
+        include_comments=True,
     ):
         self.database_alias = database_alias
         self.db_host = db_connection_params.host
@@ -271,7 +272,6 @@ class TableConfig(object):
         )
         self.not_null_date = not_null_date
         self.foreign_keys = []
-        self.comments = []
         self.pks = []
         self._old_index_value = "notset"
         self._new_index_value = "notset"
@@ -280,6 +280,7 @@ class TableConfig(object):
         self.db_template_data = db_template_data
         self.index_schema = index_schema
         self.index_table = index_table
+        self.include_comments = include_comments
 
         self.date_key = datetime.datetime.strftime(
             datetime.datetime.utcnow(), "%Y%m%dT%H%M%S"
