@@ -190,7 +190,7 @@ class PostgreSQLTableConfig(TableConfig):
             )
             field_strs, comments = [], []
             table_comment = table_attributes.get("comment")
-            if table_comment is not None:
+            if self.include_comments and table_comment is not None:
                 comments.append(
                     """COMMENT ON TABLE "{}"."{}" IS '{}'""".format(
                         self.destination_schema_name,
@@ -227,7 +227,7 @@ class PostgreSQLTableConfig(TableConfig):
                         null_ok="" if null_ok else " NOT NULL",
                     )
                 )
-                if comment is not None:
+                if self.include_comments and comment is not None:
                     comments.append(
                         """COMMENT ON COLUMN "{}"."{}"."{}" IS '{}';""".format(
                             self.destination_schema_name,
