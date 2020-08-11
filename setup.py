@@ -46,7 +46,7 @@ setuptools.setup(
         "psycopg2-binary>=2.7.3.2",
         "pyaml>=17.10.0",
         "pymssql<3.0",  # TODO: replace with PyODBC
-        "pymysql>=0.7.11",
+        "pymysql>=0.7.11,<0.10",
         "sentry-sdk>=0.11.0,<0.14",
         "statsd>=3.3.0",
     ],
