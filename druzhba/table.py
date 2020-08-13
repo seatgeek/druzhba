@@ -176,6 +176,9 @@ class TableConfig(object):
                'char(35)': 'varchar(70)',
                'bigint(20) unsigned': 'bigint'
             }
+    include_comments : boolean, optional
+        flag to specify whether or not to ingest table and column comments
+        when building or rebuilding the target table.
 
     Attributes
     ----------
@@ -184,9 +187,6 @@ class TableConfig(object):
     foreign_keys : list of str
         generated from the `create table` syntax, a list of foreign key
         relationships to create for a table after all tables are created
-    comments : list of str
-        generated from the `create table` syntax, a list of COMMENT ON
-        commands to add comments to table columns
     pks : list of str
         generated from the `create table` syntax, a list of source column
         names that define the PK
@@ -243,6 +243,7 @@ class TableConfig(object):
         data=None,
         append_only=False,
         db_template_data=None,
+        include_comments=True,
     ):
         self.database_alias = database_alias
         self.db_host = db_connection_params.host
@@ -271,7 +272,6 @@ class TableConfig(object):
         )
         self.not_null_date = not_null_date
         self.foreign_keys = []
-        self.comments = []
         self.pks = []
         self._old_index_value = "notset"
         self._new_index_value = "notset"
@@ -280,6 +280,7 @@ class TableConfig(object):
         self.db_template_data = db_template_data
         self.index_schema = index_schema
         self.index_table = index_table
+        self.include_comments = include_comments
 
         self.date_key = datetime.datetime.strftime(
             datetime.datetime.utcnow(), "%Y%m%dT%H%M%S"
@@ -456,9 +457,8 @@ class TableConfig(object):
     @property
     def columns(self):
         if not self._columns:
-            self._columns = [
-                row[0] for row in self.get_sql_description(self.get_query_sql())
-            ]
+            _table_attributes, columns = self.get_sql_description(self.get_query_sql())
+            self._columns = [column[0] for column in columns]
         return self._columns
 
     def query(self, sql):
@@ -713,10 +713,10 @@ class TableConfig(object):
             raise RuntimeError("Unhandled case in get_destination_table_status")
 
     def query_description_to_avro(self, sql):
-        desc = self.get_sql_description(sql)
+        _table_attributes, columns = self.get_sql_description(sql)
         fields = []
 
-        for col_desc in desc:
+        for col_desc in columns:
             col_name = col_desc[0]
             schema = {"name": col_name}
             try:
@@ -829,8 +829,10 @@ class TableConfig(object):
                     self.get_query_sql(), self.destination_table_name
                 )
             except NotImplementedError:
-                raise MigrationError("Automatic table creation was not implemented for "
-                                     "this database, manual migration needed.")
+                raise MigrationError(
+                    "Automatic table creation was not implemented for "
+                    "this database, manual migration needed."
+                )
         elif self._destination_table_status == self.DESTINATION_TABLE_INCORRECT:
             raise InvalidSchemaError(
                 "Extra columns exist in redshift table. Migration needed"
@@ -1138,15 +1140,20 @@ class TableConfig(object):
         permissions_result = cursor.fetchall()
 
         if len(permissions_result) == 0:
-            self.logger.info("No existing permissions found for %s.%s",
-                             self.destination_schema_name, self.destination_table_name)
+            self.logger.info(
+                "No existing permissions found for %s.%s",
+                self.destination_schema_name,
+                self.destination_table_name,
+            )
             return None
         elif len(permissions_result) > 1:
             raise MigrationError("Got multiple permissions rows for table")
 
         is_owner, permissions_str = permissions_result[0]
         if not is_owner:
-            raise MigrationError("Can't rebuild target table because it has another owner")
+            raise MigrationError(
+                "Can't rebuild target table because it has another owner"
+            )
 
         self.logger.info(
             "Got existing permissions for table to add to %s: %s",
@@ -1156,7 +1163,9 @@ class TableConfig(object):
         permissions = Permissions.parse(permissions_str)
         if permissions is None:
             raise MigrationError(
-                "Couldn't parse permissions {} to rebuild target table".format(permissions_str)
+                "Couldn't parse permissions {} to rebuild target table".format(
+                    permissions_str
+                )
             )
 
         grant_template = "GRANT {grant} ON {table} TO {group}{name};"

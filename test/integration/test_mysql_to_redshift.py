@@ -189,10 +189,8 @@ class TestNullDatetime(BaseTestMysqlToRedshift):
 
 
 class TestIndexSqlAppendOnly(BaseTestMysqlToRedshift):
-    table_name = 'test_index_sql_append_only'
-    args = FakeArgs(
-        database="mysqltest", tables=[table_name], num_processes=1
-    )
+    table_name = "test_index_sql_append_only"
+    args = FakeArgs(database="mysqltest", tables=[table_name], num_processes=1)
 
     def setUp(self):
         with self.source_conn.cursor() as cur:
@@ -247,10 +245,5 @@ class TestIndexSqlAppendOnly(BaseTestMysqlToRedshift):
 
             self.assertSetEqual(
                 set(results),
-                {
-                    (1, t.t0, None),
-                    (2, t.t0, None),
-                    (2, t.t0, t.t1),
-                    (3, t.t1, None),
-                },
+                {(1, t.t0, None), (2, t.t0, None), (2, t.t0, t.t1), (3, t.t1, None),},
             )
