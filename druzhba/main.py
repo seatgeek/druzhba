@@ -161,7 +161,8 @@ def _process_database(
             except (InvalidSchemaError, MigrationError):
                 logger.exception(
                     "Error preparing target table %s.%s",
-                    table.destination_schema_name, table.destination_table_name
+                    table.destination_schema_name,
+                    table.destination_table_name,
                 )
                 advance_to_next_table = True
 
