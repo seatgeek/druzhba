@@ -114,5 +114,5 @@ class DatabaseConfig(object):
             port=parsed.port,
             user=parsed.username,
             password=parsed.password,
-            additional=parse_qs(parsed.query),
+            additional={k: v[0] for k, v in parse_qs(parsed.query).items()},
         )
