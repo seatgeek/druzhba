@@ -292,7 +292,7 @@ class PostgreSQLTableConfig(TableConfig):
                 SELECT a.attname
                 FROM pg_index i
                     JOIN pg_attribute a ON a.attrelid = i.indrelid
-                                        AND a.attnum = ANY(i.indkey)
+                                        AND a.attnum = ANY(string_to_array(textin(int2vectorout(i.indkey)), ' '))
                 WHERE i.indrelid = '{}'::regclass
                     AND i.indisprimary;
                 """.format(
@@ -307,7 +307,7 @@ class PostgreSQLTableConfig(TableConfig):
                 """
             SELECT column_name
             FROM information_schema.columns
-            WHERE table_schema = CURRENT_SCHEMA
+            WHERE table_schema = CURRENT_SCHEMA()
                 AND "table_name"= '{}'
                 AND column_name NOT IN ('{}')
             ORDER BY ordinal_position

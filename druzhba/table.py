@@ -1283,17 +1283,22 @@ class TableConfig(object):
                 self.logger.info("Swapping staging table into %s", destination_table)
                 # DNE overrides rebuild, so we can assume the table exists
                 query = generate_drop_query(destination_table)
+                self.logger.debug(query)
                 cur.execute(query)
                 query = generate_rename_query(staging_table, destination_table)
+                self.logger.debug(query)
                 cur.execute(query)
                 query = generate_count_query(destination_table)
+                self.logger.debug(query)
                 cur.execute(query)
                 self.rows_inserted = cur.fetchall()[0]
             else:
                 query = generate_insert_all_query(staging_table, destination_table)
+                self.logger.debug(query)
                 cur.execute(query)
                 self.rows_inserted = cur.rowcount
                 query = generate_drop_query(staging_table)
+                self.logger.debug(query)
                 cur.execute(query)
             cur.execute("END TRANSACTION;")
             self.register_and_cleanup()
