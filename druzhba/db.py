@@ -1,6 +1,6 @@
 import os
 from collections import namedtuple
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
 
 import psycopg2
 import pymssql
@@ -11,7 +11,7 @@ from druzhba.mysql import MySQLTableConfig
 from druzhba.postgres import PostgreSQLTableConfig
 
 ConnectionParams = namedtuple(
-    "ConnectionParams", ["name", "host", "port", "user", "password"]
+    "ConnectionParams", ["name", "host", "port", "user", "password", "additional"]
 )
 
 
@@ -114,4 +114,5 @@ class DatabaseConfig(object):
             port=parsed.port,
             user=parsed.username,
             password=parsed.password,
+            additional=parse_qs(parsed.query),
         )

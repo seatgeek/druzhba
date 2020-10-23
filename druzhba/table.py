@@ -251,6 +251,7 @@ class TableConfig(object):
         self.db_name = db_connection_params.name
         self.db_user = db_connection_params.user
         self.db_password = db_connection_params.password
+        self.db_additional_parameters = db_connection_params.additional
         self._columns = None
         self.columns_to_drop = columns_to_drop or []
         self.destination_table_name = destination_table_name
@@ -905,7 +906,7 @@ class TableConfig(object):
 
         query = """
             INSERT INTO "public"."table_load_detail" VALUES (
-                %(task_id)s, %(class_name)s, %(task_date_params)s, 
+                %(task_id)s, %(class_name)s, %(task_date_params)s,
                 %(task_other_params)s, %(target_table)s, %(start_dt)s,
                 %(end_dt)s, %(run_time_sec)s, %(extract_task_update_id)s,
                 %(data_path)s, %(manifest_cleaned)s, %(rows_inserted)s,
@@ -1111,7 +1112,9 @@ class TableConfig(object):
             ]
             constraint_string = " AND ".join(constraints)
             return 'DELETE FROM "{}" USING "{}" WHERE {};'.format(
-                self.destination_table_name, self.staging_table_name, constraint_string,
+                self.destination_table_name,
+                self.staging_table_name,
+                constraint_string,
             )
         else:
             # Should only land here when append_only
@@ -1119,8 +1122,8 @@ class TableConfig(object):
             return None
 
     def get_grant_sql(self, cursor):
-        """ Get SQL statements to restore permissions
-        to the staging table after a rebuild. """
+        """Get SQL statements to restore permissions
+        to the staging table after a rebuild."""
 
         get_permissions_sql = """
         SELECT

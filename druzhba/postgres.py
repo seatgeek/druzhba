@@ -64,13 +64,18 @@ class PostgreSQLTableConfig(TableConfig):
 
     @property
     def connection_vars(self):
-        return {
+        parameters = {
             "database": self.db_name,
             "host": self.db_host,
             "port": self.db_port,
             "user": self.db_user,
             "password": self.db_password,
         }
+
+        if self.db_additional_parameters:
+            parameters.update(self.db_additional_parameters)
+
+        return parameters
 
     @property
     def pg_types(self):
