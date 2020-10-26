@@ -25,8 +25,12 @@ class PostgresTest(unittest.TestCase):
         more_params_table_config = PostgreSQLTableConfig(
             "db",
             ConnectionParams(
-                "name", "host", "port", "user", "password",
-                {'connect_timeout': "60", 'sslmode': "disable"}
+                "name",
+                "host",
+                "port",
+                "user",
+                "password",
+                {"connect_timeout": "60", "sslmode": "disable"},
             ),
             "table",
             "schema",
@@ -39,12 +43,12 @@ class PostgresTest(unittest.TestCase):
         self.assertEqual(
             more_params_table_config.connection_vars,
             {
-                'database': "name",
-                'host': "host",
-                'port': "port",
-                'user': "user",
-                'password': "password",
-                'connect_timeout': "60",
-                'sslmode': "disable"
-            }
+                "database": "name",
+                "host": "host",
+                "port": "port",
+                "user": "user",
+                "password": "password",
+                "connect_timeout": "60",
+                "sslmode": "disable",
+            },
         )

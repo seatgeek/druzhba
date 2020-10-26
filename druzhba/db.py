@@ -13,7 +13,7 @@ from druzhba.postgres import PostgreSQLTableConfig
 ConnectionParams = namedtuple(
     "ConnectionParams",
     ["name", "host", "port", "user", "password", "additional"],
-    defaults=(None, )  # default "additional" to None
+    defaults=(None,),  # default "additional" to None
 )
 
 
