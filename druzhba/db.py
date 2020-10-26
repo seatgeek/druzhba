@@ -11,7 +11,9 @@ from druzhba.mysql import MySQLTableConfig
 from druzhba.postgres import PostgreSQLTableConfig
 
 ConnectionParams = namedtuple(
-    "ConnectionParams", ["name", "host", "port", "user", "password", "additional"]
+    "ConnectionParams",
+    ["name", "host", "port", "user", "password", "additional"],
+    defaults=(None)  # default "additional" to None
 )
 
 

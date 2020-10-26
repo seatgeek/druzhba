@@ -291,9 +291,10 @@ class PostgreSQLTableConfig(TableConfig):
                     """
                 SELECT a.attname
                 FROM pg_index i
-                    JOIN pg_attribute a ON a.attrelid = i.indrelid
-                                        AND a.attnum = ANY(string_to_array(textin(int2vectorout(i.indkey)), ' '))
-                WHERE i.indrelid = '{}'::regclass
+                    JOIN pg_attribute a
+                        ON a.attrelid = i.indrelid
+                        AND a.attnum::TEXT = ANY(STRING_TO_ARRAY(TEXTIN(INT2VECTOROUT(i.indkey)), ' '))
+                WHERE i.indrelid = '{}'::REGCLASS
                     AND i.indisprimary;
                 """.format(
                         self.source_table_name
