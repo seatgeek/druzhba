@@ -69,6 +69,7 @@ def _process_database(
     rebuild=None,
 ):
     dbconfig, missing_vars = load_config_file("{}/{}.yaml".format(CONFIG_DIR, db_alias))
+    _handle_missing_vars(missing_vars)
     db = DatabaseConfig(
         db_alias,
         db_type,
@@ -233,6 +234,16 @@ def _process_database(
         )
 
 
+def _handle_missing_vars(missing_vars):
+    if not COMPILE_ONLY and not PRINT_SQL_ONLY and not VALIDATE_ONLY:
+        if missing_vars:
+            logger.error(
+                "Could not find required environment variable(s): %s",
+                ", ".join(missing_vars),
+            )
+            sys.exit(1)
+
+
 @monitor.timer("full-run-time")
 def run(args):
     # pylint: disable=global-statement
@@ -260,13 +271,7 @@ def run(args):
     VALIDATE_ONLY = args.validate_only
 
     destination_config, missing_vars = load_destination_config(CONFIG_DIR)
-    if not COMPILE_ONLY and not PRINT_SQL_ONLY and not VALIDATE_ONLY:
-        if missing_vars:
-            logger.error(
-                "Could not find required environment variable(s): %s",
-                ", ".join(missing_vars),
-            )
-            sys.exit(1)
+    _handle_missing_vars(missing_vars)
 
     index_schema = destination_config["index"]["schema"]
     index_table = destination_config["index"]["table"]
