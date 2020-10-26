@@ -53,7 +53,7 @@ These aliases point to other files in the same directory, e.g. ``pgtest.yaml``.
 For an entry in ``sources``:
 
 - ``alias``: an arbitrary name used to reference a single source databsae
-- ``type``: indicates which database driver Druzhba should use. ``postgres``, 
+- ``type``: indicates which database driver Druzhba should use. ``postgres``,
   ``mysql``, or ``mssql``.
 - ``enabled``: if false, indicates that while this database is configured, a
   Druzhba run should not include it by default. It may still be requested
@@ -94,6 +94,8 @@ Database Configuration
 ----------------------
 
 ``<db_alias>.yaml`` defines the configuration for a specific source database.
+Like the pipeline configuration, this also supports interpolation from
+environment variables using ``${ENV_VAR}``.
 
 Other top-level keys in this file are:
 
@@ -106,7 +108,10 @@ Other top-level keys in this file are:
     used in the database connection.
 
 - ``connection_string``: an explicit connection URI like
-  ``protocol://user:pass@host:post/database_name`` in most cases.
+  ``protocol://user:pass@host:post/database_name`` in most cases. Note that user
+  and password must be URL encoded if there are special characters like ``?``.
+  Additional parameter keywords can also be passed via the connection string,
+  like ``protocol://user:pass@host:post/database_name?keyword=value&key=val``
 - ``connection_string_env``: an alternate environment variable for this
   database's `connection_string`.
 
@@ -125,7 +130,7 @@ Options configuring the creation of the target table for automatic tables.
 
 - ``destination_name``: desired table name in target database
 - ``destination_schema``: schema in target database. *This schema must already
-  exist*. 
+  exist*.
 - ``distribution_key``: Optional. A single column to be used as the table
   ``distkey``. It should be unique or mostly unique. Good examples are primary
   key IDs and high-resolution timestamps. You can read more about distkeys_
