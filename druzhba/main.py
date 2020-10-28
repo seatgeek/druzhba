@@ -12,7 +12,7 @@ import psycopg2
 import yaml
 from botocore.vendored.requests.exceptions import SSLError
 
-from druzhba.config import CONFIG_DIR, load_destination_config
+from druzhba.config import CONFIG_DIR, load_config_file, load_destination_config
 from druzhba.db import DatabaseConfig
 from druzhba.monitoring import DefaultMonitoringProvider, configure_logging
 from druzhba.redshift import create_index_table, init_redshift
@@ -68,16 +68,16 @@ def _process_database(
     full_refresh=None,
     rebuild=None,
 ):
-    with open("{}/{}.yaml".format(CONFIG_DIR, db_alias), "r") as f:
-        dbconfig = yaml.safe_load(f)
-        db = DatabaseConfig(
-            db_alias,
-            db_type,
-            connection_string=dbconfig.get("connection_string"),
-            connection_string_env=dbconfig.get("connection_string_env"),
-            object_schema_name=dbconfig.get("data", {}).get("object_schema_name"),
-            db_template_data=dbconfig.get("data", {}),
-        )
+    dbconfig, missing_vars = load_config_file("{}/{}.yaml".format(CONFIG_DIR, db_alias))
+    _handle_missing_vars(missing_vars)
+    db = DatabaseConfig(
+        db_alias,
+        db_type,
+        connection_string=dbconfig.get("connection_string"),
+        connection_string_env=dbconfig.get("connection_string_env"),
+        object_schema_name=dbconfig.get("data", {}).get("object_schema_name"),
+        db_template_data=dbconfig.get("data", {}),
+    )
 
     tables_yaml = dbconfig["tables"]
 
@@ -221,7 +221,9 @@ def _process_database(
                 raise
 
             logger.info(
-                "Done with %s table %s", table.database_alias, table.source_table_name,
+                "Done with %s table %s",
+                table.database_alias,
+                table.source_table_name,
             )
 
     if len(invalids) > 0:
@@ -230,6 +232,16 @@ def _process_database(
                 db.database_alias, ",".join(invalids)
             )
         )
+
+
+def _handle_missing_vars(missing_vars):
+    if not COMPILE_ONLY and not PRINT_SQL_ONLY and not VALIDATE_ONLY:
+        if missing_vars:
+            logger.error(
+                "Could not find required environment variable(s): %s",
+                ", ".join(missing_vars),
+            )
+            sys.exit(1)
 
 
 @monitor.timer("full-run-time")
@@ -259,13 +271,7 @@ def run(args):
     VALIDATE_ONLY = args.validate_only
 
     destination_config, missing_vars = load_destination_config(CONFIG_DIR)
-    if not COMPILE_ONLY and not PRINT_SQL_ONLY and not VALIDATE_ONLY:
-        if missing_vars:
-            logger.error(
-                "Could not find required environment variable(s): %s",
-                ", ".join(missing_vars),
-            )
-            sys.exit(1)
+    _handle_missing_vars(missing_vars)
 
     index_schema = destination_config["index"]["schema"]
     index_table = destination_config["index"]["table"]

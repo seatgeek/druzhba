@@ -251,6 +251,7 @@ class TableConfig(object):
         self.db_name = db_connection_params.name
         self.db_user = db_connection_params.user
         self.db_password = db_connection_params.password
+        self.db_additional_parameters = db_connection_params.additional
         self._columns = None
         self.columns_to_drop = columns_to_drop or []
         self.destination_table_name = destination_table_name
@@ -905,7 +906,7 @@ class TableConfig(object):
 
         query = """
             INSERT INTO "public"."table_load_detail" VALUES (
-                %(task_id)s, %(class_name)s, %(task_date_params)s, 
+                %(task_id)s, %(class_name)s, %(task_date_params)s,
                 %(task_other_params)s, %(target_table)s, %(start_dt)s,
                 %(end_dt)s, %(run_time_sec)s, %(extract_task_update_id)s,
                 %(data_path)s, %(manifest_cleaned)s, %(rows_inserted)s,
@@ -1111,7 +1112,9 @@ class TableConfig(object):
             ]
             constraint_string = " AND ".join(constraints)
             return 'DELETE FROM "{}" USING "{}" WHERE {};'.format(
-                self.destination_table_name, self.staging_table_name, constraint_string,
+                self.destination_table_name,
+                self.staging_table_name,
+                constraint_string,
             )
         else:
             # Should only land here when append_only
@@ -1119,8 +1122,8 @@ class TableConfig(object):
             return None
 
     def get_grant_sql(self, cursor):
-        """ Get SQL statements to restore permissions
-        to the staging table after a rebuild. """
+        """Get SQL statements to restore permissions
+        to the staging table after a rebuild."""
 
         get_permissions_sql = """
         SELECT
@@ -1280,17 +1283,22 @@ class TableConfig(object):
                 self.logger.info("Swapping staging table into %s", destination_table)
                 # DNE overrides rebuild, so we can assume the table exists
                 query = generate_drop_query(destination_table)
+                self.logger.debug(query)
                 cur.execute(query)
                 query = generate_rename_query(staging_table, destination_table)
+                self.logger.debug(query)
                 cur.execute(query)
                 query = generate_count_query(destination_table)
+                self.logger.debug(query)
                 cur.execute(query)
                 self.rows_inserted = cur.fetchall()[0]
             else:
                 query = generate_insert_all_query(staging_table, destination_table)
+                self.logger.debug(query)
                 cur.execute(query)
                 self.rows_inserted = cur.rowcount
                 query = generate_drop_query(staging_table)
+                self.logger.debug(query)
                 cur.execute(query)
             cur.execute("END TRANSACTION;")
             self.register_and_cleanup()

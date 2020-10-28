@@ -64,13 +64,18 @@ class PostgreSQLTableConfig(TableConfig):
 
     @property
     def connection_vars(self):
-        return {
+        parameters = {
             "database": self.db_name,
             "host": self.db_host,
             "port": self.db_port,
             "user": self.db_user,
             "password": self.db_password,
         }
+
+        if self.db_additional_parameters:
+            parameters.update(self.db_additional_parameters)
+
+        return parameters
 
     @property
     def pg_types(self):
@@ -286,9 +291,10 @@ class PostgreSQLTableConfig(TableConfig):
                     """
                 SELECT a.attname
                 FROM pg_index i
-                    JOIN pg_attribute a ON a.attrelid = i.indrelid
-                                        AND a.attnum = ANY(i.indkey)
-                WHERE i.indrelid = '{}'::regclass
+                    JOIN pg_attribute a
+                        ON a.attrelid = i.indrelid
+                        AND a.attnum::TEXT = ANY(STRING_TO_ARRAY(TEXTIN(INT2VECTOROUT(i.indkey)), ' '))
+                WHERE i.indrelid = '{}'::REGCLASS
                     AND i.indisprimary;
                 """.format(
                         self.source_table_name
@@ -302,7 +308,7 @@ class PostgreSQLTableConfig(TableConfig):
                 """
             SELECT column_name
             FROM information_schema.columns
-            WHERE table_schema = CURRENT_SCHEMA
+            WHERE table_schema = CURRENT_SCHEMA()
                 AND "table_name"= '{}'
                 AND column_name NOT IN ('{}')
             ORDER BY ordinal_position

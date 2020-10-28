@@ -383,3 +383,12 @@ class TestDataTypes(BaseTestPostgresToRedshift):
             result = cur.fetchall()
             self.assertTupleEqual(result[0], (1, t.t0, "citext1"))
             self.assertTupleEqual(result[1], (2, t.t1, "Citext2"))
+
+    def tearDown(self):
+        with self.target_conn.cursor() as cur:
+            cur.execute(
+                """
+            DROP TABLE IF EXISTS druzhba_test.test_basic;
+            DROP TABLE IF EXISTS druzhba_test.pipeline_table_index;
+            """
+            )
