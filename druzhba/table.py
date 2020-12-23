@@ -582,6 +582,8 @@ class TableConfig(object):
 
     @property
     def old_index_value(self):
+        if self.full_refresh:
+            return None
         # we use 'notset' rather than None because None is a valid output
         if self._old_index_value is "notset":
             self._old_index_value = self._load_old_index_value()

@@ -208,6 +208,25 @@ class TableTest(unittest.TestCase):
                     table_config.where_clause(), "\nWHERE id > '13' AND id <= '42'"
                 )
 
+    def test_full_refresh(self):
+        with patch(
+            "druzhba.table.TableConfig._load_old_index_value", new_callable=Mock
+        ) as loiv:
+            loiv.return_value = 13
+            # no index column
+            table_config = TableConfig(
+                "alias",
+                mock_conn,
+                "table",
+                "schema",
+                "source",
+                "index_schema",
+                "index_table",
+                index_column="id",
+                full_refresh=True,
+            )
+            self.assertEqual(table_config.old_index_value, None)
+
 
 class TestTableIndexLogic(unittest.TestCase):
     logging.disable(logging.CRITICAL)
