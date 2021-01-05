@@ -9,7 +9,6 @@ from multiprocessing import cpu_count
 from multiprocessing.dummy import Pool
 
 import psycopg2
-import yaml
 from botocore.vendored.requests.exceptions import SSLError
 
 from druzhba.config import CONFIG_DIR, load_config_file, load_destination_config
