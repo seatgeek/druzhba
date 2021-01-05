@@ -1,0 +1,24 @@
+name: Druzhba
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python 3.7
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.7'
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e '.[test]'
+    - name: Test with nosetests
+      run: |
+        python setup.py test
+    - name: Lint with pylint
+      run: |
+        pip install pylint
+        pylint -d C,R,W0511 druzhba
