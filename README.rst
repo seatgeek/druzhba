@@ -5,8 +5,8 @@
 
 .. begin-lede
 
-.. image:: https://travis-ci.com/seatgeek/druzhba.svg?branch=master
-  :target: https://travis-ci.com/seatgeek/druzhba
+.. image:: https://github.com/seatgeek/druzhba/workflows/Druzhba/badge.svg?branch=master
+  :target: https://github.com/seatgeek/druzhba/actions?query=branch%3Amaster
 
 .. image:: https://img.shields.io/pypi/v/druzhba.svg?style=flat
   :target: https://pypi.python.org/pypi/druzhba
@@ -118,7 +118,7 @@ credentials) and a single table to copy over. The contents of your_table in the
 source database will be copied to your_table in the `druzhba_raw` schema of the
 target database. New rows will be identified by the value of their `id` column
 and existing rows will be replaced if their `updated_at` column is greater than
-on the previous iteration. 
+on the previous iteration.
 
 Then, you'll need to set some environment variables corresponding to the
 template fields in the configuration file above.
@@ -151,7 +151,7 @@ Druzhba is an ongoing project. Feel free to open feature request issues or PRs.
 
 PRs should be unit-tested, and will require an integration test passes to merge.
 
-.. TODO: fix the link below once we have hosting correct 
+.. TODO: fix the link below once we have hosting correct
 
 See the docs_ for instructions on setting up a
 Docker-Compose-based test environment.
@@ -161,7 +161,7 @@ Docker-Compose-based test environment.
 License
 -------
 
-This project is licensed under the terms of the 
+This project is licensed under the terms of the
 `MIT license <https://github.com/seatgeek/druzhba/blob/master/LICENSE>`_.
 
 
