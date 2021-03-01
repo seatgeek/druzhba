@@ -36,6 +36,8 @@ def process_database(
     index_table,
     db_alias,
     db_type,
+    db_config_name,
+    db_config_override,
     only_table_names,
     full_refresh=None,
     rebuild=None,
@@ -48,6 +50,8 @@ def process_database(
                 index_table,
                 db_alias,
                 db_type,
+                db_config_name,
+                db_config_override,
                 only_table_names,
                 full_refresh,
                 rebuild,
@@ -63,19 +67,18 @@ def _process_database(
     index_table,
     db_alias,
     db_type,
+    db_config_name,
+    db_config_override,
     only_table_names,
     full_refresh=None,
     rebuild=None,
 ):
-    dbconfig, missing_vars = load_config_file("{}/{}.yaml".format(CONFIG_DIR, db_alias))
-    _handle_missing_vars(missing_vars)
-    db = DatabaseConfig(
+    db, dbconfig = set_up_database(
         db_alias,
         db_type,
-        connection_string=dbconfig.get("connection_string"),
-        connection_string_env=dbconfig.get("connection_string_env"),
-        object_schema_name=dbconfig.get("data", {}).get("object_schema_name"),
-        db_template_data=dbconfig.get("data", {}),
+        db_config_name,
+        db_config_override,
+        CONFIG_DIR,
     )
 
     tables_yaml = dbconfig["tables"]
@@ -233,6 +236,44 @@ def _process_database(
         )
 
 
+def set_up_database(
+    db_alias,
+    db_type,
+    db_config_name,
+    db_config_override,
+    config_dir,
+):
+    if db_config_name is None:
+        db_config_name = db_alias
+
+    if db_config_override is None:
+        db_config_override = {}
+
+    dbconfig, missing_vars = load_config_file(
+        "{}/{}.yaml".format(config_dir, db_config_name)
+    )
+    _handle_missing_vars(missing_vars)
+
+    # Combine pipeline data dict with dbconfig data dict
+    db_template_data = dbconfig.get("data", {})
+    db_template_data.update(db_config_override.get("data", {}))
+
+    db = DatabaseConfig(
+        db_alias,
+        db_type,
+        connection_string=db_config_override.get(
+            "connection_string", dbconfig.get("connection_string")
+        ),
+        connection_string_env=db_config_override.get(
+            "connection_string_env", dbconfig.get("connection_string_env")
+        ),
+        object_schema_name=dbconfig.get("data", {}).get("object_schema_name"),
+        db_template_data=db_template_data,
+    )
+
+    return db, dbconfig
+
+
 def _handle_missing_vars(missing_vars):
     if not COMPILE_ONLY and not PRINT_SQL_ONLY and not VALIDATE_ONLY:
         if missing_vars:
@@ -288,6 +329,8 @@ def run(args):
                 index_table,
                 db["alias"],
                 db["type"],
+                db.get("config_name"),
+                db.get("config"),
                 args.tables,
                 args.full_refresh,
                 args.rebuild,
@@ -305,6 +348,8 @@ def run(args):
                 index_table,
                 db["alias"],
                 db["type"],
+                db.get("config_name"),
+                db.get("config"),
                 args.tables,
                 None,
                 None,
