@@ -13,3 +13,10 @@ sources:
     type: postgres
   - alias: mysqltest
     type: mysql
+  - alias: pgtest_alias
+    type: postgres
+    enabled: false
+    config_name: pgtest_data  # explicitly specify database config file
+    config:
+      data:
+        bar: bar

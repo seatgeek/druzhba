@@ -31,9 +31,10 @@ Pipeline Configuration
 An example can be found in the |example-link|.
 
 The top level ``_pipeline.yaml`` defines details about the pipeline as a whole
-as well as connection info for the target database. We use a modified parser for
-YAML extended with support for interpolation like ``${REDSHIFT_URL}`` which will
-inject the value of the ``REDSHIFT_URL`` environment variable.
+as well as connection info for the target database (and optionally the source
+databases). We use a modified parser for YAML extended with support for
+interpolation like ``${REDSHIFT_URL}`` which will inject the value of the
+``REDSHIFT_URL`` environment variable.
 
 Besides the target configuration fields, ``_pipeline.yaml`` also includes a list
 of source databases under the ``sources`` element.
@@ -55,9 +56,15 @@ For an entry in ``sources``:
 - ``alias``: an arbitrary name used to reference a single source databsae
 - ``type``: indicates which database driver Druzhba should use. ``postgres``,
   ``mysql``, or ``mssql``.
-- ``enabled``: if false, indicates that while this database is configured, a
-  Druzhba run should not include it by default. It may still be requested
-  explicitly by passing its alias to ``--database``.
+- ``enabled``: (optional, default is true) if false, indicates that while this
+  database is configured, a Druzhba run should not include it by default. It may
+  still be requested explicitly by passing its alias to ``--database``.
+- ``config_name``: (optional) indicates the name of the source database config
+  YAML if not ``{alias}.yaml``.
+- ``config``: (optional) a dictionary that overrides the keys specifed in the
+  source database config YAML. Valid keys here are ``connection_string``,
+  ``connection_string_env``, and ``data``. See `database configuration
+  <#database-configuration>`_ for more info.
 
 Supported fields for the connection to the target database (currently only
 Redshift):

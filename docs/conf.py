@@ -96,5 +96,5 @@ rst_prolog = """
 .. |example-link| raw:: html
 
     <a href="https://github.com/seatgeek/druzhba/tree/{version}/test/integration/config">examples</a>
-""".format(version=version)
+""".format(version=release)
 
