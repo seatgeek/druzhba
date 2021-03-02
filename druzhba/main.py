@@ -267,7 +267,7 @@ def set_up_database(
         connection_string_env=db_config_override.get(
             "connection_string_env", dbconfig.get("connection_string_env")
         ),
-        object_schema_name=dbconfig.get("data", {}).get("object_schema_name"),
+        object_schema_name=db_template_data.get("object_schema_name"),
         db_template_data=db_template_data,
     )
 
