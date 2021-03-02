@@ -30,7 +30,7 @@ class ProcessDbTest(unittest.TestCase):
 
         self.assertEqual(db.database_alias, "pgtest")
         self.assertEqual(db.database_type, "postgres")
-        self.assertEqual(db._connection_string, "test_connection_string")
+        self.assertEqual(db._connection_string, "postgresql://user:password@host:1234/test_db")
         self.assertEqual(len(dbconfig["tables"]), 1)
 
     def test_conn_string(self):

@@ -1,5 +1,7 @@
+# sample database config file, not used in the integration testing
+# has sample data that can be overriden during testing
 ---
-connection_string: test_connection_string
+connection_string: postgresql://user:password@host:1234/test_db
 data:
   bar: foo
 tables:
