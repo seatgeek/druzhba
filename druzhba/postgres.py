@@ -57,6 +57,7 @@ class PostgreSQLTableConfig(TableConfig):
             "json": "varchar(max)",
             "array": "varchar(max)",
             "uuid": "char(36)",
+            "money": "decimal(19,2)",
         }
 
         type_map_defaults.update(self.type_map)
@@ -280,6 +281,21 @@ class PostgreSQLTableConfig(TableConfig):
                 for dict_row in cursor:
                     yield dict_row
 
+    def _format_column_query(self, column_name, data_type):
+        # PostgreSQL's MONEY type is a bit strange. It's an 8-byte fixed fractional precision value
+        # with the precision controlled by the value of lc_monetary (a locale setting).
+        # Redshift doesn't support MONEY and treats it as a string (expecting the $123.45 format),
+        # but it's also safe and lossless to cast to decimal/numeric in order to keep the value as
+        # a number, which is the approach we take here. The default precision and scale as defined
+        # in default_type_map above reflect the range of values in the en_US locale but can be
+        # overridden using the usual type_map mechanism.
+        # See: https://www.postgresql.org/docs/10/datatype-money.html
+        if data_type.lower() == 'money':
+            return '"{}"::{}'.format(column_name, self.type_map['money'])
+
+        # In the typical case we simply query the column by name, quoting for good measure.
+        return '"{}"'.format(column_name)
+
     def _get_query_sql(self):
         if self.query_file:
             return self.get_query_from_file()
@@ -303,10 +319,10 @@ class PostgreSQLTableConfig(TableConfig):
             ]
 
         columns = [
-            '"{}"'.format(c["column_name"])
+            self._format_column_query(c['column_name'], c['data_type'])
             for c in self.query(
                 """
-            SELECT column_name
+            SELECT column_name, data_type
             FROM information_schema.columns
             WHERE table_schema = CURRENT_SCHEMA()
                 AND "table_name"= '{}'
