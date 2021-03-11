@@ -11,6 +11,8 @@ psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
 psycopg2.extensions.register_type(psycopg2.extensions.UNICODEARRAY)
 
 ENCODING = "UTF8"
+MAX_DECIMAL_PRECISION = 38
+MAX_DECIMAL_SCALE = 37
 
 
 class PostgreSQLTableConfig(TableConfig):
@@ -216,12 +218,7 @@ class PostgreSQLTableConfig(TableConfig):
                 null_ok,
                 comment,
             ) in columns:
-                size_str = "({}".format(precision) if precision else ""
-                size_str += ",{}".format(scale) if scale else ""
-                size_str += ")" if size_str else ""
-                if self.type_map.get(type_code, type_code) == "varchar":
-                    length = internal_size if internal_size > 0 else "max"
-                    size_str = "({})".format(length)
+                size_str = self._get_column_size(type_code, internal_size, precision, scale)
 
                 red_type = "{}{}".format(
                     self.type_map.get(type_code, type_code), size_str
@@ -280,6 +277,20 @@ class PostgreSQLTableConfig(TableConfig):
                 cursor.execute(sql)
                 for dict_row in cursor:
                     yield dict_row
+
+    def _get_column_size(self, column_type, internal_size, precision, scale):
+        if self.type_map.get(column_type, column_type).lower() == "decimal":
+            precision = min(int(precision), MAX_DECIMAL_PRECISION)
+            scale = min(int(scale), MAX_DECIMAL_SCALE)
+
+        size_str = "({}".format(precision) if precision else ""
+        size_str += ",{}".format(scale) if scale else ""
+        size_str += ")" if size_str else ""
+        if self.type_map.get(column_type, column_type) == "varchar":
+            length = internal_size if internal_size > 0 else "max"
+            size_str = "({})".format(length)
+
+        return size_str
 
     def _format_column_query(self, column_name, data_type):
         # PostgreSQL's MONEY type is a bit strange. It's an 8-byte fixed fractional precision value
