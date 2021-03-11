@@ -279,7 +279,7 @@ class PostgreSQLTableConfig(TableConfig):
                     yield dict_row
 
     def _get_column_size(self, column_type, internal_size, precision, scale):
-        if self.type_map.get(column_type, column_type).lower() == "decimal":
+        if self.type_map.get(column_type, column_type).lower() in ('decimal', 'numeric'):
             precision = min(int(precision), MAX_DECIMAL_PRECISION)
             scale = min(int(scale), MAX_DECIMAL_SCALE)
 
