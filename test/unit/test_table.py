@@ -1032,7 +1032,7 @@ class TestUnloadCopy(unittest.TestCase):
 
 class TestPermissions(unittest.TestCase):
     def test_parse(self):
-        x = "{user1=arwdRxt/admin,user2=r/admin,user3=a*r*w*d*R*x*t*/admin,group group1=r/admin,group group2=r/admin}"
+        x = "{user1=arwdRxtD/admin,user2=r/admin,user3=a*r*w*d*R*x*t*D*/admin,group group1=r/admin,group group2=r/admin}"
         output = Permissions.parse(x)
         expected = [
             Permissions("user1", False, [Permissions.all_grants], "admin"),
