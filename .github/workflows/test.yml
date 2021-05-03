@@ -21,4 +21,4 @@ jobs:
     - name: Lint with pylint
       run: |
         pip install pylint
-        pylint -d C,R,W0511 druzhba
+        pylint -d C,R,W0511 --extension-pkg-whitelist=pymssql druzhba

@@ -54,14 +54,12 @@ class MigrationError(Exception):
 
 
 class Permissions(namedtuple("Permissions", ["name", "is_group", "grants", "owner"])):
-    all_str = "arwdRxt"
-    all_grants = "ALL PRIVILEGES"
     char_to_grant = {
         "r": "SELECT",  # read
         "w": "UPDATE",  # write
         "a": "INSERT",  # append
         "d": "DELETE",
-        "D": "TRUNCATE",
+        "D": "DROP",
         "x": "REFERENCES",
         "t": "TRIGGER",
         "R": "RULE",  # not documented, apparently
@@ -98,10 +96,7 @@ class Permissions(namedtuple("Permissions", ["name", "is_group", "grants", "owne
 
                 # A following * represents WITH GRANT OPTION - ignore
                 levels_stripped = levels.replace("*", "")
-                if levels_stripped == cls.all_str:
-                    grants = [cls.all_grants]
-                else:
-                    grants = [cls.char_to_grant[c] for c in levels_stripped]
+                grants = [cls.char_to_grant[c] for c in levels_stripped]
 
                 output.append(cls(name, is_group, grants, owner))
             return output
