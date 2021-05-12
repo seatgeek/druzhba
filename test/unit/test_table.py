@@ -457,7 +457,7 @@ class TestUnloadCopy(unittest.TestCase):
         def get_destination_table_columns(self):
             return self._dw_columns
 
-        def get_sql_description(self, sql):
+        def _get_sql_description(self, sql):
             return {}, self._desc
 
         @property
