@@ -609,6 +609,7 @@ class TableConfig(object):
                 self._new_index_value = self._load_new_index_value()
             else:
                 self._new_index_value = None
+            self.logger.info("New index found: %s", self._new_index_value)
         if self.query_file and self.index_sql and self._new_index_value is None:
             # Handles a special case where the index_sql query returns no rows
             # but the custom sql file is expecting both old and new index values
