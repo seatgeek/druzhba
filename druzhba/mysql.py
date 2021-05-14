@@ -142,7 +142,7 @@ class MySQLTableConfig(TableConfig):
             "charset": "utf8",
         }
 
-    def get_sql_description(self, sql):
+    def _get_sql_description(self, sql):
         table_attributes = {}  # TODO: retrieve table attributes
         with closing(pymysql.connect(**self.connection_vars)) as conn:
             with closing(conn.cursor(pymysql.cursors.SSDictCursor)) as cursor:

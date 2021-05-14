@@ -138,7 +138,7 @@ class PostgreSQLTableConfig(TableConfig):
         )
         return self.query_fetchone(query)["index_value"]
 
-    def get_sql_description(self, sql):
+    def _get_sql_description(self, sql):
         if self.query_file is None:
             table_attributes = self._get_table_attributes()
             column_attributes = self._get_column_attributes()
