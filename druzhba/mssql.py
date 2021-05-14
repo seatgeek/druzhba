@@ -49,7 +49,7 @@ class MSSQLTableConfig(TableConfig):
             "charset": "UTF-8",  # default, but be explicit
         }
 
-    def _get_sql_description(self, sql):
+    def get_sql_description(self, sql):
         table_attributes = {}  # TODO: retrieve table attributes
         with closing(pymssql.connect(**self.connection_vars)) as conn:
             with closing(conn.cursor(as_dict=True)) as cursor:

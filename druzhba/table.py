@@ -296,8 +296,6 @@ class TableConfig(object):
         self.logger = logging.getLogger(f"druzhba.{database_alias}.{source_table_name}")
         self.s3 = Session().client("s3")
 
-        self._sql_description_mapping = {}
-
     @classmethod
     def _clean_type_map(cls, type_map):
         if not type_map:
@@ -441,16 +439,6 @@ class TableConfig(object):
         )
 
     def get_sql_description(self, sql):
-        # Both check_destination_table_status and extract load the description which involves actually
-        # executing a query against the source database. The cache here prevents us from doing so multiple times.
-        # In the typical case we'll only call this with a single distinct query, but the keyed cache plays
-        # it safe since the current API does allow for the result of get_query_sql() to change.
-        if sql not in self._sql_description_mapping:
-            self.logger.info("Getting SQL description for %s table %s", self.db_name, self.source_table_name)
-            self._sql_description_mapping[sql] = self._get_sql_description(sql)
-        return self._sql_description_mapping[sql]
-
-    def _get_sql_description(self, sql):
         raise NotImplementedError
 
     def get_query_sql(self):
