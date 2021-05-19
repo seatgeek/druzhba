@@ -239,6 +239,7 @@ class TableConfig(object):
         append_only=False,
         db_template_data=None,
         include_comments=True,
+        monitor_tables_config=None,
     ):
         self.database_alias = database_alias
         self.db_host = db_connection_params.host
@@ -277,6 +278,7 @@ class TableConfig(object):
         self.index_schema = index_schema
         self.index_table = index_table
         self.include_comments = include_comments
+        self.monitor_tables_config = monitor_tables_config
 
         self.date_key = datetime.datetime.strftime(
             datetime.datetime.utcnow(), "%Y%m%dT%H%M%S"
@@ -848,9 +850,14 @@ class TableConfig(object):
         endtime : datetime.datetime
             datetime object generated at the end of the data extraction
         """
+        if self.monitor_tables_config is None:
+            return
 
-        query = """
-        INSERT INTO "public"."table_extract_detail" VALUES (
+        monitor_schema = self.monitor_tables_config["schema"]
+        extract_monitor_table = self.monitor_tables_config["extract_monitor_table"]
+
+        query = f"""
+        INSERT INTO "{monitor_schema}"."{extract_monitor_table}" VALUES (
             %(task_id)s, %(class_name)s, %(task_date_params)s,
             %(task_other_params)s, %(start_dt)s, %(end_dt)s, %(run_time_sec)s,
             %(manifest_path)s, %(data_path)s, %(output_exists)s, %(row_count)s,
@@ -880,7 +887,7 @@ class TableConfig(object):
             "exception": None,
         }
 
-        self.logger.info("Inserting record into table_extract_detail")
+        self.logger.info("Inserting record into extract monitor table")
         with get_redshift().cursor() as cur:
             cur.execute(query, args)
 
@@ -902,8 +909,14 @@ class TableConfig(object):
             command
         """
 
-        query = """
-            INSERT INTO "public"."table_load_detail" VALUES (
+        if self.monitor_tables_config is None:
+            return
+
+        monitor_schema = self.monitor_tables_config["schema"]
+        load_monitor_table = self.monitor_tables_config["load_monitor_table"]
+
+        query = f"""
+            INSERT INTO "{monitor_schema}"."{load_monitor_table}" VALUES (
                 %(task_id)s, %(class_name)s, %(task_date_params)s,
                 %(task_other_params)s, %(target_table)s, %(start_dt)s,
                 %(end_dt)s, %(run_time_sec)s, %(extract_task_update_id)s,
@@ -938,7 +951,7 @@ class TableConfig(object):
             "exception": None,
         }
 
-        self.logger.info("Inserting record into table_load_detail")
+        self.logger.info("Inserting record into load monitor table")
         with get_redshift().cursor() as cur:
             cur.execute(query, args)
 
@@ -948,8 +961,7 @@ class TableConfig(object):
         The data will be uploaded either as a single file or as a set of files
         with a manifest
         """
-        # TODO: Do we not currently execute the extract monitor?
-        # starttime = datetime.datetime.utcnow()
+        starttime = datetime.datetime.utcnow()
 
         results_schema = self.query_description_to_avro(self.get_query_sql())
         results_iter = self.row_generator()
@@ -968,8 +980,8 @@ class TableConfig(object):
         if self.manifest_mode:
             self.write_manifest_file()
 
-        # endtime = datetime.datetime.utcnow()
-        # self.register_extract_monitor(starttime, endtime)
+        endtime = datetime.datetime.utcnow()
+        self.register_extract_monitor(starttime, endtime)
 
     def avro_to_s3(self, results_iter, results_schema):
         """Attempts to serialize a result set to an AVRO file
@@ -1306,8 +1318,8 @@ class TableConfig(object):
         self.set_last_updated_index()
 
         # Register in monitor table
-        # self.endtime = datetime.datetime.utcnow()
-        # self.register_load_monitor()
+        self.endtime = datetime.datetime.utcnow()
+        self.register_load_monitor()
 
         # Clean up S3
         for key in self.data_file_keys():

@@ -41,6 +41,7 @@ def process_database(
     only_table_names,
     full_refresh=None,
     rebuild=None,
+    monitor_tables_config=None,
 ):
     logger.info("Beginning database %s", db_alias)
     try:
@@ -55,6 +56,7 @@ def process_database(
                 only_table_names,
                 full_refresh,
                 rebuild,
+                monitor_tables_config,
             )
         logger.info("Done with database %s", db_alias)
     except Exception as e:
@@ -72,6 +74,7 @@ def _process_database(
     only_table_names,
     full_refresh=None,
     rebuild=None,
+    monitor_tables_config=None,
 ):
     db, dbconfig = set_up_database(
         db_alias,
@@ -118,7 +121,8 @@ def _process_database(
         elif full_refresh:
             table_params["full_refresh"] = True
         table = db.get_table_config(
-            table_params, index_schema=index_schema, index_table=index_table
+            table_params, index_schema=index_schema, index_table=index_table,
+            monitor_tables_config=monitor_tables_config,
         )
         table.validate_runtime_configuration()
 
@@ -316,6 +320,9 @@ def run(args):
     index_schema = destination_config["index"]["schema"]
     index_table = destination_config["index"]["table"]
 
+    # The monitor tables configuration is optional. If enabled, the tables must already exist.
+    monitor_tables_config = destination_config.get("monitor_tables")
+
     init_redshift(destination_config)
 
     # Create the index table if it doesn't exist
@@ -334,6 +341,7 @@ def run(args):
                 args.tables,
                 args.full_refresh,
                 args.rebuild,
+                monitor_tables_config,
             )
             for db in destination_config["sources"]
             if db["alias"] == args.database
@@ -353,6 +361,7 @@ def run(args):
                 args.tables,
                 None,
                 None,
+                monitor_tables_config,
             )
             for db in destination_config["sources"]
             if db.get("enabled", True)
