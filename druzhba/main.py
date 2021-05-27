@@ -14,7 +14,12 @@ from botocore.vendored.requests.exceptions import SSLError
 from druzhba.config import CONFIG_DIR, load_config_file, load_destination_config
 from druzhba.db import DatabaseConfig
 from druzhba.monitoring import DefaultMonitoringProvider, configure_logging
-from druzhba.redshift import create_index_table, init_redshift
+from druzhba.redshift import (
+    create_extract_monitor_table,
+    create_index_table,
+    create_load_monitor_table,
+    init_redshift
+)
 from druzhba.table import (
     ConfigurationError,
     InvalidSchemaError,
@@ -320,14 +325,20 @@ def run(args):
     index_schema = destination_config["index"]["schema"]
     index_table = destination_config["index"]["table"]
 
-    # The monitor tables configuration is optional. If enabled, the tables must already exist.
-    monitor_tables_config = destination_config.get("monitor_tables")
-
     init_redshift(destination_config)
 
-    # Create the index table if it doesn't exist
+    # The monitor tables an optional configuration. If not set, Druzhba will not populate monitor data.
+    monitor_tables_config = destination_config.get("monitor_tables")
+
+    # Create the index and monitor (if configured) tables if they don't already exist.
     if not COMPILE_ONLY and not PRINT_SQL_ONLY and not VALIDATE_ONLY:
         create_index_table(index_schema, index_table)
+        if monitor_tables_config is not None:
+            monitor_schema = monitor_tables_config["schema"]
+            extract_monitor_table = monitor_tables_config["extract_monitor_table"]
+            load_monitor_table = monitor_tables_config["load_monitor_table"]
+            create_extract_monitor_table(monitor_schema, extract_monitor_table)
+            create_load_monitor_table(monitor_schema, load_monitor_table)
 
     if args.database:
         dbs = [

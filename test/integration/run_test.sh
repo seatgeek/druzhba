@@ -19,12 +19,6 @@ export REDSHIFT_TEST_URL=postgresql://druzhba_test_user:Test12345@${REDSHIFT_HOS
 psql ${REDSHIFT_ADMIN_URL} -c "CREATE USER druzhba_test_user PASSWORD 'Test12345';"
 psql ${REDSHIFT_ADMIN_URL} -c "CREATE SCHEMA druzhba_test AUTHORIZATION druzhba_test_user;"
 
-# Create the monitor tables as derived from those in use during deployment; this should potentially help to catch any incompatible changes.
-psql ${REDSHIFT_ADMIN_URL} -c "CREATE TABLE druzhba_test.table_extract_detail (LIKE ${EXTRACT_MONITOR_TEMPLATE_TABLE} INCLUDING DEFAULTS);"
-psql ${REDSHIFT_ADMIN_URL} -c "ALTER TABLE druzhba_test.table_extract_detail OWNER TO druzhba_test_user;"
-psql ${REDSHIFT_ADMIN_URL} -c "CREATE TABLE druzhba_test.table_load_detail (LIKE ${LOAD_MONITOR_TEMPLATE_TABLE} INCLUDING DEFAULTS);"
-psql ${REDSHIFT_ADMIN_URL} -c "ALTER TABLE druzhba_test.table_load_detail OWNER TO druzhba_test_user;"
-
 # Set up source and target databases
 if [[ ${TEST_POSTGRES} == 1 ]]; then
     echo "Setting up postgres source database"
