@@ -225,7 +225,7 @@ class PostgreSQLTableConfig(TableConfig):
                 size_str = self._get_column_size(type_code, internal_size, precision, scale)
 
                 red_type = self._format_red_type(self.type_map.get(type_code, type_code), size_str)
-                logger.info("type for column with name {} is {} with size {} from type map default {}".format(name, red_type, size_str, self.type_map.get(type_code, type_code)))
+                logger.info("type for column with name %s is %s with size %s from type map default %s", name, red_type, size_str, self.type_map.get(type_code, type_code))
 
                 field_strs.append(
                     '"{name}" {type}{null_ok}'.format(
