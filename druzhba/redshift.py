@@ -113,23 +113,27 @@ def generate_lock_query(table):
     return 'LOCK TABLE "{}";'.format(table)
 
 
+def _table_exists(schema, table, cur):
+    cur.execute(
+        """SELECT COUNT(*) = 1
+           FROM pg_catalog.pg_class c
+           JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+           WHERE n.nspname = %s
+             AND c.relname = %s
+             AND c.relkind = 'r'    -- only tables
+        """,
+        (schema, table),
+    )
+    return cur.fetchone()[0]
+
+
 def create_index_table(index_schema, index_table):
     logger.info(
         "Checking for existence of index table %s.%s", index_schema, index_table
     )
     with get_redshift().cursor() as cur:
-        cur.execute(
-            """SELECT COUNT(*) = 1
-               FROM pg_catalog.pg_class c
-               JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
-               WHERE n.nspname = %s
-                 AND c.relname = %s
-                 AND c.relkind = 'r'    -- only tables
-            """,
-            (index_schema, index_table),
-        )
         # TODO: check format of this table that it's correct maybe?
-        if not cur.fetchone()[0]:
+        if not _table_exists(index_schema, index_table, cur):
             logger.warning(
                 "Index table %s.%s does not exist, creating", index_schema, index_table
             )
@@ -148,3 +152,64 @@ def create_index_table(index_schema, index_table):
             """
             )
             logger.info("Index table %s.%s created", index_schema, index_table)
+
+
+EXTRACT_MONITOR_CREATE_TABLE_TEMPLATE = """
+CREATE TABLE {schema}.{table} (
+    task_id VARCHAR(max) NOT NULL,
+    class_name VARCHAR(1024) NOT NULL,
+    task_date_params VARCHAR(1024),
+    task_other_params VARCHAR(max),
+    start_dt TIMESTAMP NOT NULL,
+    end_dt TIMESTAMP,
+    run_time_sec INTEGER,
+    manifest_path VARCHAR(max),
+    data_path VARCHAR(max),
+    output_exists BOOLEAN,
+    row_count INTEGER,
+    upload_size BIGINT,
+    exception VARCHAR(1024),
+    created_at TIMESTAMP DEFAULT getdate() NOT NULL
+)
+SORTKEY (created_at);
+"""
+
+LOAD_MONITOR_CREATE_TABLE_TEMPLATE = """
+CREATE TABLE {schema}.{table} (
+    task_id VARCHAR(max) NOT NULL,
+    class_name VARCHAR(1024) NOT NULL,
+    task_date_params VARCHAR(1024),
+    task_other_params VARCHAR(max),
+    target_table VARCHAR(1024) NOT NULL,
+    start_dt TIMESTAMP NOT NULL,
+    end_dt TIMESTAMP,
+    run_time_sec INTEGER,
+    extract_task_update_id VARCHAR(max),
+    s3_load_path VARCHAR(max),
+    manifest_cleaned BOOLEAN,
+    rows_inserted INTEGER,
+    rows_deleted INTEGER,
+    load_size BIGINT,
+    exception VARCHAR(1024),
+    created_at TIMESTAMP DEFAULT getdate() NOT NULL
+)
+SORTKEY (created_at);
+"""
+
+
+def _create_monitor_table(schema, table, create_table_template):
+    logger.info("Checking for existence of monitor table %s.%s", schema, table)
+    with get_redshift().cursor() as cur:
+        # TODO: check format of this table that it's correct maybe?
+        if not _table_exists(schema, table, cur):
+            logger.warning("Monitor table %s.%s does not exist, creating", schema, table)
+            cur.execute(create_table_template.format(schema=schema, table=table))
+            logger.info("Index table %s.%s created", schema, table)
+
+
+def create_extract_monitor_table(schema, table):
+    _create_monitor_table(schema, table, EXTRACT_MONITOR_CREATE_TABLE_TEMPLATE)
+
+
+def create_load_monitor_table(schema, table):
+    _create_monitor_table(schema, table, LOAD_MONITOR_CREATE_TABLE_TEMPLATE)

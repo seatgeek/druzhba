@@ -4,6 +4,10 @@ connection:
 index:
   schema: druzhba_test
   table: pipeline_table_index
+monitor_tables:
+  schema: druzhba_test
+  extract_monitor_table: table_extract_detail
+  load_monitor_table: table_load_detail
 s3:
   bucket: ${S3_BUCKET}
   prefix: ${S3_PREFIX}
