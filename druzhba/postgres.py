@@ -67,7 +67,7 @@ class PostgreSQLTableConfig(TableConfig):
 
         type_map_defaults.update(self.type_map)
         self.type_map = type_map_defaults
-        logger.info("type map for postgres table: "+ self.type_map)
+        logger.info(self.type_map)
 
     @property
     def connection_vars(self):
