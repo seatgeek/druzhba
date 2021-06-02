@@ -3,15 +3,12 @@ from contextlib import closing
 import psycopg2
 import psycopg2.extensions
 import psycopg2.extras
-import logging
 
 from druzhba.config import CONFIG_DIR
 from druzhba.table import TableConfig, load_query
 
 psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
 psycopg2.extensions.register_type(psycopg2.extensions.UNICODEARRAY)
-
-logger = logging.getLogger("druzhba.main")
 
 ENCODING = "UTF8"
 MAX_DECIMAL_PRECISION = 38
@@ -67,7 +64,6 @@ class PostgreSQLTableConfig(TableConfig):
 
         type_map_defaults.update(self.type_map)
         self.type_map = type_map_defaults
-        logger.info(self.type_map)
 
     @property
     def connection_vars(self):
@@ -225,7 +221,6 @@ class PostgreSQLTableConfig(TableConfig):
                 size_str = self._get_column_size(type_code, internal_size, precision, scale)
 
                 red_type = self._format_red_type(self.type_map.get(type_code, type_code), size_str, name)
-                logger.info("type for column with name %s is %s with size %s from type map default %s", name, red_type, size_str, self.type_map.get(type_code, type_code))
 
                 field_strs.append(
                     '"{name}" {type}{null_ok}'.format(
