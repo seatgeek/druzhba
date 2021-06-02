@@ -220,7 +220,7 @@ class PostgreSQLTableConfig(TableConfig):
             ) in columns:
                 size_str = self._get_column_size(type_code, internal_size, precision, scale)
 
-                redshift_type = self._format_redshift_type(self.type_map.get(type_code, type_code), size_str, name)
+                redshift_type = self._format_redshift_type(self.type_map.get(type_code, type_code), size_str)
 
                 field_strs.append(
                     '"{name}" {type}{null_ok}'.format(
