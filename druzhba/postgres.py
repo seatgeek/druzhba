@@ -220,12 +220,12 @@ class PostgreSQLTableConfig(TableConfig):
             ) in columns:
                 size_str = self._get_column_size(type_code, internal_size, precision, scale)
 
-                red_type = self._format_red_type(self.type_map.get(type_code, type_code), size_str, name)
+                redshift_type = self._format_redshift_type(self.type_map.get(type_code, type_code), size_str, name)
 
                 field_strs.append(
                     '"{name}" {type}{null_ok}'.format(
                         name=name,
-                        type=red_type,
+                        type=redshift_type,
                         null_ok="" if null_ok else " NOT NULL",
                     )
                 )
@@ -291,11 +291,11 @@ class PostgreSQLTableConfig(TableConfig):
 
         return size_str
 
-    def _format_red_type(self, type_name, size_str, name):
+    def _format_redshift_type(self, type_name, size_str, name):
         if name in self.type_map:
             return self.type_map[name]
         else:
-            return "{}{}".format(
+            return "{type}{size}".format(
                     type_name, size_str
                 )
 
