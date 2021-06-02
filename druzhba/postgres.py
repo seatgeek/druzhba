@@ -220,7 +220,7 @@ class PostgreSQLTableConfig(TableConfig):
             ) in columns:
                 size_str = self._get_column_size(type_code, internal_size, precision, scale)
 
-                redshift_type = self._format_redshift_type(self.type_map.get(type_code, type_code), size_str, name)
+                redshift_type = self._format_redshift_type(self.type_map.get(type_code, type_code), size_str)
 
                 field_strs.append(
                     '"{name}" {type}{null_ok}'.format(
@@ -291,14 +291,14 @@ class PostgreSQLTableConfig(TableConfig):
 
         return size_str
 
-    def _format_redshift_type(self, type_name, size_str, name):
-        if name in self.type_map:
-            return self.type_map[name]
-        else:
-            return "{type}{size}".format(
-                    type=type_name, 
-                    size=size_str
-                )
+    def _format_redshift_type(self, type_name, size_str):
+        final_type = "{type}{size}".format(
+                type=type_name, 
+                size=size_str
+            )
+        if final_type in self.type_map:
+            final_type = self.type_map[final_type]
+        return final_type
 
     def _format_column_query(self, column_name, data_type):
         # PostgreSQL's MONEY type is a bit strange. It's an 8-byte fixed fractional precision value
