@@ -296,7 +296,8 @@ class PostgreSQLTableConfig(TableConfig):
             return self.type_map[name]
         else:
             return "{type}{size}".format(
-                    type_name, size_str
+                    type=type_name, 
+                    size=size_str
                 )
 
     def _format_column_query(self, column_name, data_type):
