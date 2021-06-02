@@ -224,7 +224,7 @@ class PostgreSQLTableConfig(TableConfig):
             ) in columns:
                 size_str = self._get_column_size(type_code, internal_size, precision, scale)
 
-                red_type = self._format_red_type(self.type_map.get(type_code, type_code), size_str)
+                red_type = self._format_red_type(self.type_map.get(type_code, type_code), size_str, name)
                 logger.info("type for column with name %s is %s with size %s from type map default %s", name, red_type, size_str, self.type_map.get(type_code, type_code))
 
                 field_strs.append(
@@ -296,14 +296,10 @@ class PostgreSQLTableConfig(TableConfig):
 
         return size_str
 
-    def _format_red_type(self, type_name, size_str):
-        try:
-            paren_index = type_name.index('(')
-            main_type = type_name[:paren_index]
-            return "{}{}".format(
-                    main_type, size_str
-                )
-        except ValueError: # no ( found in type_name, no need to truncate
+    def _format_red_type(self, type_name, size_str, name):
+        if name in self.type_map:
+            return self.type_map[name]
+        else:
             return "{}{}".format(
                     type_name, size_str
                 )
