@@ -199,8 +199,17 @@ Column-specific configuration:
 .. code-block:: yaml
 
   type_map:
-    - your_column_name: smallint
-    - other_column_name: varchar(70)
+    - your_type_name: smallint
+    - other_type_name: varchar(70)
+
+  - ``columns``: Optional. Specified within type_map section, and allows for per-type column overrides. 
+
+  .. code-block:: yaml
+
+    type_map:
+      your_type_name: numeric(10,2) // standard type map declaration
+      columns:
+        your_column_name: numeric(12,2) // per column type map declaration
 
 Other configuration options:
 

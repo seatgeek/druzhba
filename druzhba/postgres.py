@@ -11,6 +11,7 @@ psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
 psycopg2.extensions.register_type(psycopg2.extensions.UNICODEARRAY)
 
 ENCODING = "UTF8"
+TYPE_MAP_COLUMN_SECTION = "columns"
 MAX_DECIMAL_PRECISION = 38
 MAX_DECIMAL_SCALE = 37
 
@@ -220,7 +221,7 @@ class PostgreSQLTableConfig(TableConfig):
             ) in columns:
                 size_str = self._get_column_size(type_code, internal_size, precision, scale)
 
-                redshift_type = self._format_redshift_type(self.type_map.get(type_code, type_code), size_str)
+                redshift_type = self._format_redshift_type(self.type_map.get(type_code, type_code), size_str, name)
 
                 field_strs.append(
                     '"{name}" {type}{null_ok}'.format(
@@ -291,7 +292,14 @@ class PostgreSQLTableConfig(TableConfig):
 
         return size_str
 
-    def _format_redshift_type(self, type_name, size_str):
+    def _format_redshift_type(self, type_name, size_str, column_name):
+        
+        hasColumnSection = TYPE_MAP_COLUMN_SECTION in self.type_map
+        hasColumnOverride = column_name in self.type_map[TYPE_MAP_COLUMN_SECTION]
+        
+        if hasColumnSection and hasColumnOverride:
+            return self.type_map[TYPE_MAP_COLUMN_SECTION][column_name]
+     
         final_type = "{type}{size}".format(
                 type=type_name, 
                 size=size_str
