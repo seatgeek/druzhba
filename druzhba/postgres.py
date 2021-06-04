@@ -293,16 +293,20 @@ class PostgreSQLTableConfig(TableConfig):
         return size_str
 
     def _format_redshift_type(self, type_name, size_str, column_name):
-        if TYPE_MAP_COLUMN_SECTION in self.type_map and column_name in self.type_map[TYPE_MAP_COLUMN_SECTION]:
+        
+        hasColumnSection = TYPE_MAP_COLUMN_SECTION in self.type_map
+        hasColumnOverride = column_name in self.type_map[TYPE_MAP_COLUMN_SECTION]
+        
+        if hasColumnSection and hasColumnOverride:
             return self.type_map[TYPE_MAP_COLUMN_SECTION][column_name]
-        else:
-            final_type = "{type}{size}".format(
-                    type=type_name, 
-                    size=size_str
-                )
-            if final_type in self.type_map:
-                final_type = self.type_map[final_type]
-            return final_type
+     
+        final_type = "{type}{size}".format(
+                type=type_name, 
+                size=size_str
+            )
+        if final_type in self.type_map:
+            final_type = self.type_map[final_type]
+        return final_type
 
     def _format_column_query(self, column_name, data_type):
         # PostgreSQL's MONEY type is a bit strange. It's an 8-byte fixed fractional precision value
