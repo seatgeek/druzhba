@@ -294,10 +294,8 @@ class PostgreSQLTableConfig(TableConfig):
 
     def _format_redshift_type(self, type_name, size_str, column_name):
         
-        hasColumnSection = TYPE_MAP_COLUMN_SECTION in self.type_map
-        hasColumnOverride = column_name in self.type_map[TYPE_MAP_COLUMN_SECTION]
-        
-        if hasColumnSection and hasColumnOverride:
+        hasColumnSection = TYPE_MAP_COLUMN_SECTION in self.type_map        
+        if hasColumnSection and column_name in self.type_map[TYPE_MAP_COLUMN_SECTION]:
             return self.type_map[TYPE_MAP_COLUMN_SECTION][column_name]
      
         final_type = "{type}{size}".format(
