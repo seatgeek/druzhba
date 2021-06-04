@@ -293,7 +293,7 @@ class PostgreSQLTableConfig(TableConfig):
         return size_str
 
     def _format_redshift_type(self, type_name, size_str, column_name):
-        if  TYPE_MAP_COLUMN_SECTION in self.type_map and column_name in self.type_map[TYPE_MAP_COLUMN_SECTION]:
+        if TYPE_MAP_COLUMN_SECTION in self.type_map and column_name in self.type_map[TYPE_MAP_COLUMN_SECTION]:
             return self.type_map[TYPE_MAP_COLUMN_SECTION][column_name]
         else:
             final_type = "{type}{size}".format(
