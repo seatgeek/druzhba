@@ -736,7 +736,11 @@ class TableConfig(object):
                 schema["type"] = ["null", "boolean"]
             elif col_type in self.avro_type_map["decimal"]:
                 # fastavro now supports decimal types, but Redshift does not
-                schema["type"] = ["null", "string"]
+                schema["type"] = ["null", {
+                    "type": "bytes",
+                    "logicalType": "decimal"
+                }]
+                
             else:
                 self.logger.warning(
                     "unmatched data type for column %s in %s table %s",
