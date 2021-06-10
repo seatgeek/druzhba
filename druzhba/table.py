@@ -735,7 +735,7 @@ class TableConfig(object):
             elif col_type in self.avro_type_map["boolean"]:
                 schema["type"] = ["null", "boolean"]
             elif col_type in self.avro_type_map["decimal"]:
-                # fastavro now supports decimal types, but Redshift does not
+                # string is used since they work fine and redshift may not copy decimal types from avro
                 schema["type"] = ["null", "string"]
             else:
                 self.logger.warning(
