@@ -525,7 +525,7 @@ class TableConfig(object):
         sql = self.get_query_sql()
         self._check_index_values()
         self.logger.info("Extracting %s table %s", self.db_name, self.source_table_name)
-        self.logger.debug("Running SQL: %s", sql)
+        self.logger.info("Running SQL: %s", sql)
         return self.query(sql)
 
     @property
@@ -628,7 +628,7 @@ class TableConfig(object):
             valid SQL featuring just the WHERE clause
         """
         where_clause = "\nWHERE "
-        if not self.index_column or self.full_refresh:
+        if not self.index_column:
             # If no index_column, there is no where clause. The whole
             # source table is dumped.
             return ""
@@ -637,12 +637,17 @@ class TableConfig(object):
             # Either the table is empty or the index_column is all NULL
             return ""
 
-        if self.old_index_value:
-            # This should always happen except on the initial load
+        if self.old_index_value and not self.full_refresh:
+            # This should always happen except on the initial load or if a
+            # full_refresh is explicitly requested. The old_index_value should
+            # be None in the full_refresh case but this adds an extra guard.
             where_clause += "{} > '{}' AND ".format(
                 self.index_column, self.old_index_value
             )
 
+        # Note that we include the new_index_value as an upper bound even in
+        # the initial load and full_refresh cases. This ensures that the value
+        # recorded in the index table correctly aligns with the data pulled.
         where_clause += "{} <= '{}'".format(self.index_column, self.new_index_value)
         return where_clause
 
