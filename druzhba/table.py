@@ -365,6 +365,12 @@ class TableConfig(object):
                 "support for passing in the table name to create."
             )
             raise ConfigurationError(msg, self.source_table_name)
+        elif self.rebuild and not self.full_refresh:
+            msg = (
+                "Cannot rebuild a table without also performing a "
+                "full refresh."
+            )
+            raise ConfigurationError(msg, self.source_table_name)
 
     @property
     def s3_key_prefix(self):
