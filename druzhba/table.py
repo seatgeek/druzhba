@@ -606,7 +606,8 @@ class TableConfig(object):
             could also be a date or string. Returns None if no previous index
             value found
         """
-
+        if self.lookback_value == 0:
+            return None
         query = f"""
         SELECT index_value
           FROM "{self.index_schema}"."{self.index_table}"
