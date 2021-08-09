@@ -207,6 +207,32 @@ class TableTest(unittest.TestCase):
                 self.assertEqual(
                     table_config.where_clause(), "\nWHERE id > '13' AND id <= '42'"
                 )
+        
+        with patch(
+            "druzhba.table.TableConfig.old_index_value", new_callable=PropertyMock
+        ) as oiv:
+            oiv.return_value = 13
+            with patch(
+                "druzhba.table.TableConfig.new_index_value", new_callable=PropertyMock
+            ) as niv:
+                niv.return_value = 42
+                with patch(
+                    "druzhba.table.TableConfig.lookback_index_value", new_callable=PropertyMock
+                ) as liv:
+                    liv.return_value = 10
+                    table_config = TableConfig(
+                        "alias",
+                        mock_conn,
+                        "table",
+                        "schema",
+                        "source",
+                        "index_schema",
+                        "index_table",
+                        index_column="id",
+                    )
+                    self.assertEqual(
+                        table_config.where_clause(), "\nWHERE id > '10' AND id <= '42'"
+                    )
 
     def test_full_refresh(self):
         with patch(
