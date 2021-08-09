@@ -186,6 +186,9 @@ Options defining a "manual" table rather than "managed" one.
   be generated from the contents of the query. Not compatible with the
   ``--rebuild`` command line argument.
 
+- ``lookback_value``: Optional. the number of indices to start from before the previous job's 
+  highest index. This option is meant to catch race conditions where some rows could be overlooked
+  
 Column-specific configuration:
 
 - ``columns_to_drop``: Optional. This is a list of columns that exist in the
