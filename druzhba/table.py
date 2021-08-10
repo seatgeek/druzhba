@@ -240,6 +240,7 @@ class TableConfig(object):
         db_template_data=None,
         include_comments=True,
         monitor_tables_config=None,
+        lookback_value=0,
     ):
         self.database_alias = database_alias
         self.db_host = db_connection_params.host
@@ -279,6 +280,8 @@ class TableConfig(object):
         self.index_table = index_table
         self.include_comments = include_comments
         self.monitor_tables_config = monitor_tables_config
+        self.lookback_value = lookback_value
+        self._lookback_index_value = "notset"
 
         self.date_key = datetime.datetime.strftime(
             datetime.datetime.utcnow(), "%Y%m%dT%H%M%S"
@@ -592,6 +595,55 @@ class TableConfig(object):
             self._old_index_value = self._load_old_index_value()
         return self._old_index_value
 
+    def _load_lookback_index_value(self):
+        """Sets and gets the lookback index_value property, retrieved from Redshift
+
+        Returns
+        -------
+        index_value : variable
+            Since index_value can vary from table to table, this can be many
+            different types. Most common will be a datetime or int, but
+            could also be a date or string. Returns None if no previous index
+            value found
+        """
+        if self.lookback_value == 0:
+            return None
+        query = f"""
+        SELECT index_value
+          FROM "{self.index_schema}"."{self.index_table}"
+         WHERE datastore_name = %s
+           AND database_name = %s
+           AND table_name = %s
+        ORDER BY created_ts DESC
+        LIMIT 1
+        OFFSET "{self.lookback_value}";
+        """
+        self.logger.debug("Querying Redshift for nth last updated index to lookback")
+        with get_redshift().cursor() as cur:
+            cur.execute(
+                query, (self.database_alias, self.db_name, self.source_table_name)
+            )
+            index_value = cur.fetchone()
+
+        if index_value is None:
+            self.logger.info(
+                "No lookback index found. Dumping entire table: %s.", self.source_table_name
+            )
+            return index_value
+        else:
+            self.logger.info("Lookback Index found: %s", index_value[0])
+            return index_value[0]
+
+    @property
+    def lookback_index_value(self):
+        if self.full_refresh:
+            return None
+        # we use 'notset' rather than None because None is a valid output
+        if self._lookback_index_value is "notset":
+            self._lookback_index_value = self._load_lookback_index_value()
+        return self._lookback_index_value
+
+
     def _load_new_index_value(self):
         # Abstract to support DB-specific quoting
         raise NotImplementedError
@@ -643,10 +695,16 @@ class TableConfig(object):
             # Either the table is empty or the index_column is all NULL
             return ""
 
-        if self.old_index_value and not self.full_refresh:
+        if self.lookback_index_value and not self.full_refresh:
             # This should always happen except on the initial load or if a
-            # full_refresh is explicitly requested. The old_index_value should
+            # full_refresh is explicitly requested. The lookback_index_value should
             # be None in the full_refresh case but this adds an extra guard.
+            where_clause += "{} > '{}' AND ".format(
+                            self.index_column, self.lookback_index_value
+                        )
+        elif self.old_index_value and not self.full_refresh:
+            # This should only happen if lookback value doesn't load for some reason.
+
             where_clause += "{} > '{}' AND ".format(
                 self.index_column, self.old_index_value
             )
