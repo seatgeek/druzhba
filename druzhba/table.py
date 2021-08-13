@@ -616,7 +616,7 @@ class TableConfig(object):
            AND table_name = %s
         ORDER BY created_ts DESC
         LIMIT 1
-        OFFSET "{self.lookback_value}";
+        OFFSET {self.lookback_value};
         """
         self.logger.debug("Querying Redshift for nth last updated index to lookback")
         with get_redshift().cursor() as cur:
