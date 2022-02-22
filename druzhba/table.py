@@ -895,9 +895,10 @@ class TableConfig(object):
             try:
                 # Only called to see if it raises, the actual table
                 # will be created later
-                self.query_to_redshift_create_table(
+                create_table = self.query_to_redshift_create_table(
                     self.get_query_sql(), self.destination_table_name
                 )
+                self.logger.info("Will create table using: %s", create_table)
             except NotImplementedError:
                 raise MigrationError(
                     "Automatic table creation was not implemented for "
