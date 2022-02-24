@@ -7,6 +7,7 @@ import uuid
 from fastavro._write_py import WRITERS
 from fastavro.write import Writer
 
+MAX_VARCHAR_SIZE = 65535
 
 def _avro_format(inp):
     if isinstance(inp, uuid.UUID):
@@ -30,8 +31,22 @@ def _avro_format(inp):
     return inp
 
 
+def _redshift_format(inp):
+    if isinstance(inp, str):
+        # The copy command already has TRUNCATECOLUMNS turned on which will do this for us 
+        # however this protects us from the case where a columns value is ridiciously large 
+        # preventing the row from being ingested.
+        return inp[:MAX_VARCHAR_SIZE]
+    return inp
+
+
+def _format_value(inp):
+    formatted_for_avro = _avro_format(inp)
+    return _redshift_format(formatted_for_avro)
+
+
 def _format_row(inp):
-    return {k: _avro_format(v) for k, v in inp.items()}
+    return {k: _format_value(v) for k, v in inp.items()}
 
 
 def write_avro_file(f, results_iter, fields, table, max_size=100 * 1024 ** 2):
