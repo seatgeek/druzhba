@@ -41,8 +41,8 @@ def _redshift_format(inp):
 
 
 def _format_value(inp):
-    formatted_for_redshift = _redshift_format(inp)
-    return _avro_format(formatted_for_redshift)
+    formatted_for_avro = _avro_format(inp)
+    return _redshift_format(formatted_for_avro)
 
 
 def _format_row(inp):
