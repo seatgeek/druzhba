@@ -35,7 +35,7 @@ def _redshift_format(inp):
     if isinstance(inp, str):
         # The copy command already has TRUNCATECOLUMNS turned on which will do this for us 
         # however this protects us from the case where the row size is ridiciously large 
-        # because of one column's value preventing the row from being ingested.
+        # preventing the row from being ingested.
         return inp[:MAX_VARCHAR_SIZE]
     return inp
 
