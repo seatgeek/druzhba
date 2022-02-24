@@ -50,7 +50,7 @@ def process_database(
 ):
     logger.info("Beginning database %s", db_alias)
     try:
-        with monitor.wrap("run-time", database=db_alias):
+        with monitor.wrap("run-time", db_alias=db_alias):
             _process_database(
                 index_schema,
                 index_table,
@@ -154,16 +154,16 @@ def _process_database(
         advance_to_next_table = False
         while not advance_to_next_table and retries_remaining > 0:
             try:
-                with monitor.wrap("create-redshift-table", database=db_alias):
+                with monitor.wrap("create-redshift-table", db_alias=db_alias):
                     table.check_destination_table_status()
 
                 with monitor.wrap(
-                    "extract-table", database=db_alias, table=table.source_table_name
+                    "extract-table", db_alias=db_alias, table=table.source_table_name
                 ):
                     table.extract()
 
                 with monitor.wrap(
-                    "load-table", database=db_alias, table=table.source_table_name
+                    "load-table", db_alias=db_alias, table=table.source_table_name
                 ):
                     table.load()
 
