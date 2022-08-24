@@ -41,7 +41,7 @@ setuptools.setup(
     install_requires=[
         "boto3>=1.10.34",
         "botocore>=1.13.35",
-        "fastavro>=0.21.22,<0.22",
+        "fastavro>=1.6.0,<1.7.0",
         "Jinja2>=2.10",
         "psycopg2-binary>=2.7.3.2",
         "pyaml>=17.10.0",
