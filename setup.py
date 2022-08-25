@@ -12,7 +12,7 @@ with open("druzhba/_version.py", "r") as f:
     exec(f.read(), package_vars)
 
 tests_require = [
-    "nose>=1.3.7",
+    "pytest>=7.1.2",
     "mock>=2.0.0",
     "pylint==2.5.3",
 ]

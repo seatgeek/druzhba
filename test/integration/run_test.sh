@@ -30,7 +30,7 @@ if [[ ${TEST_POSTGRES} == 1 ]]; then
     echo "Setup complete, running postgres test suite"
 
     PGTEST_DATABASE_URL=postgresql://druzhba_test_user:druzhba_password@druzhba_postgres_1:5432/druzhba_test \
-        nosetests --tests test/integration/test_postgres_to_redshift.py
+        pytest test/integration/test_postgres_to_redshift.py
 
     echo "Tearing down postgres source database"
 
@@ -51,7 +51,7 @@ if [[ ${TEST_MYSQL} == 1 ]]; then
     echo "Setup complete, running mysql test suite"
 
     MYSQLTEST_DATABASE_URL=mysql://druzhba_user:druzhba_password@druzhba_mysql_1:3306/druzhba_test \
-        nosetests --tests test/integration/test_mysql_to_redshift.py
+        pytest test/integration/test_mysql_to_redshift.py
 
     echo "Tearing down mysql source database"
 
