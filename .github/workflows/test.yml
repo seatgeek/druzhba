@@ -17,7 +17,7 @@ jobs:
         pip install -e '.[test]'
     - name: Test with pytest
       run: |
-        python -m pytest
+        python -m pytest test/unit
     - name: Lint with pylint
       run: |
         pip install pylint
