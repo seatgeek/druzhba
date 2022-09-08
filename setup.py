@@ -33,7 +33,7 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent"
     ],
-    python_requires=">=3.6",
+    python_requires=">=3.10.4",
     setup_requires=[
         "cython>=0.29.7"  # TODO: find a way to not pre-install this (needed for mssql)
     ],
