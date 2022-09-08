@@ -2,6 +2,7 @@ version: '3.7'
 services:
   postgres:
     image: postgres:10
+    hostname: druzhba_postgres_1
     ports:
       - "5433:5432"
     networks:
@@ -15,6 +16,7 @@ services:
 
   mysql:
     image: mysql/mysql-server:5.7
+    hostname: druzhba_mysql_1
     ports:
       - "3307:3306"
     networks:
@@ -25,6 +27,9 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: 'mysql_root_password'
   test:
+    depends_on:
+      - postgres
+      - mysql
     build:
       context: .
       dockerfile: Dockerfile

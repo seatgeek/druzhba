@@ -77,7 +77,7 @@ def write_avro_file(f, results_iter, fields, table, max_size=100 * 1024 ** 2):
 
     try:
         # writer.io buffers before writing
-        while f.tell() + writer.io.tell() < max_size:
+        while f.tell() + writer.io.tell() < max_size:  # pylint: disable=no-member
             writer.write(_format_row(next(results_iter)))
             row_count += 1
     except StopIteration:
