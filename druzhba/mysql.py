@@ -292,7 +292,7 @@ class MySQLTableConfig(TableConfig):
             c["column_name"]
             for c in self.query(
                 """
-            SELECT column_name
+            SELECT column_name AS "column_name"
             FROM information_schema.columns
             WHERE table_schema = DATABASE()
                 AND table_name='{}'
