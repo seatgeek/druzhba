@@ -28,6 +28,8 @@ def _avro_format(inp):
         return (
             unicodedata.normalize("NFKD", inp).encode("ascii", "ignore").decode("ascii")
         )
+    if isinstance(inp, bytes):
+        return inp.decode(encoding="utf-8")
     return inp
 
 
