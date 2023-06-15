@@ -1155,7 +1155,7 @@ class TableConfig(object):
                 return ""
             if self.truncate_file:
                 env = Environment(
-                    loader=FileSystemLoader(os.path.join("datacfg")),
+                    loader=FileSystemLoader(os.path.join(CONFIG_DIR)),
                     autoescape=select_autoescape(["sql"]),
                     undefined=StrictUndefined,
                 )
