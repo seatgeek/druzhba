@@ -22,6 +22,8 @@ def _avro_format(inp):
         return inp.isoformat()
     if isinstance(inp, datetime.timedelta):
         return (datetime.datetime.min + inp).time().isoformat()
+    if isinstance(inp, datetime.time):
+        return inp.isoformat()
     if isinstance(inp, decimal.Decimal):
         return str(inp)
     if isinstance(inp, str):
