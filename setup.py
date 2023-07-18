@@ -35,7 +35,7 @@ setuptools.setup(
     ],
     python_requires=">=3.6",
     setup_requires=[
-        "cython>=0.29.7"  # TODO: find a way to not pre-install this (needed for mssql)
+        "cython>=0.29.7, <3.0.0"  # TODO: find a way to not pre-install this (needed for mssql)
     ],
     # TODO: move specific DBs into extras
     install_requires=[
