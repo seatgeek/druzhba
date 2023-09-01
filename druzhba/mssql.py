@@ -47,6 +47,7 @@ class MSSQLTableConfig(TableConfig):
             "port": self.db_port,
             "login_timeout": 10,
             "charset": "UTF-8",  # default, but be explicit
+            "autocommit": True,
         }
 
     def get_sql_description(self, sql):
