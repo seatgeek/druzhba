@@ -94,7 +94,7 @@ class MSSQLTableConfig(TableConfig):
 
     def _get_query_sql(self):
         if self.query_file:
-            return self.get_query_from_file()
+            return self.get_query_from_file(self.query_file)
         else:
             msg = "auto generated queries not yet supported for MSSQL"
             raise NotImplementedError(msg)

@@ -323,7 +323,7 @@ class PostgreSQLTableConfig(TableConfig):
 
     def _get_query_sql(self):
         if self.query_file:
-            return self.get_query_from_file()
+            return self.get_query_from_file(self.query_file)
 
         if not self.pks:
             self.pks = [
