@@ -175,7 +175,7 @@ class PostgreSQLTableConfig(TableConfig):
 
     def query_to_redshift_create_table(self, sql, table_name):
         if self.schema_file:
-            create_table = load_query(self.schema_file, CONFIG_DIR).rstrip("; \n\t")
+            create_table = self.get_query_from_file(self.schema_file).rstrip("; \n\t")
             create_table += self.create_table_keys()
             create_table += ";\n"
             # TODO: add support for table and column comments in yaml config file.
