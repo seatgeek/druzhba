@@ -62,7 +62,7 @@ class MSSQLTableConfig(TableConfig):
 
     def query_to_redshift_create_table(self, sql, table_name):
         if self.schema_file:
-            query = load_query(self.schema_file, CONFIG_DIR)
+            query = self.get_query_from_file(self.schema_file)
             create_table = query.rstrip("; \n")
             create_table += self.create_table_keys()
             return create_table
@@ -94,7 +94,7 @@ class MSSQLTableConfig(TableConfig):
 
     def _get_query_sql(self):
         if self.query_file:
-            return self.get_query_from_file()
+            return self.get_query_from_file(self.query_file)
         else:
             msg = "auto generated queries not yet supported for MSSQL"
             raise NotImplementedError(msg)

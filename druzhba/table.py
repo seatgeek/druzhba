@@ -436,13 +436,13 @@ class TableConfig(object):
     def avro_type_map(self):
         raise NotImplementedError
 
-    def get_query_from_file(self):
+    def get_query_from_file(self, query_file: str):
         env = Environment(
             loader=FileSystemLoader(os.path.join(CONFIG_DIR)),
             autoescape=select_autoescape(["sql"]),
             undefined=StrictUndefined,
         )
-        template = env.get_template(self.query_file)
+        template = env.get_template(query_file)
         return template.render(
             db=self.db_template_data,
             table=self.table_template_data,
@@ -454,7 +454,7 @@ class TableConfig(object):
 
     def get_query_sql(self):
         if self.query_file:
-            return self.get_query_from_file()
+            return self.get_query_from_file(self.query_file)
         else:
             return self._get_query_sql() + self.where_clause()
 
