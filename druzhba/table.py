@@ -96,7 +96,7 @@ class Permissions(namedtuple("Permissions", ["name", "is_group", "grants", "owne
 
                 # A following * represents WITH GRANT OPTION - ignore
                 levels_stripped = levels.replace("*", "")
-                grants = [cls.char_to_grant[c] for c in levels_stripped]
+                grants = [cls.char_to_grant.get(c, None) for c in levels_stripped]
 
                 output.append(cls(name, is_group, grants, owner))
             return output
