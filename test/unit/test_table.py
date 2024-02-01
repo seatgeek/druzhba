@@ -1087,3 +1087,8 @@ class TestPermissions(unittest.TestCase):
         x = "something"
         output = Permissions.parse(x)
         self.assertEqual(output, None)
+
+    def test_parse_invalid_permission(self):
+        x = "{user4=xyz/admin}"
+        output = Permissions.parse(x)
+        self.assertIsNone(output)
