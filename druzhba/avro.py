@@ -32,6 +32,8 @@ def _avro_format(inp):
         )
     if isinstance(inp, bytes):
         return inp.decode(encoding="utf-8")
+    if isinstance(inp, memoryview):
+        return inp.tobytes().decode(encoding="utf-8")
     return inp
 
 
