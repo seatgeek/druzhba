@@ -270,6 +270,7 @@ class PostgreSQLTableConfig(TableConfig):
         cursor_name = "{}_{}".format(self.source_table_name, self.date_key)
         with closing(psycopg2.connect(**self.connection_vars)) as conn:
             conn.set_client_encoding(ENCODING)
+            conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_REPEATABLE_READ)
 
             with conn.cursor(
                 cursor_factory=psycopg2.extras.RealDictCursor, name=cursor_name
