@@ -549,6 +549,12 @@ class TableConfig(object):
             "old_index_value": self.old_index_value,
         }
 
+    @property
+    def index_template_data(self):
+        return {
+            "old_index_value": self.old_index_value
+        }
+
     def _load_old_index_value(self):
         """Sets and gets the index_value property, retrieved from Redshift
 
@@ -660,8 +666,7 @@ class TableConfig(object):
                 query = template.render(
                     db=self.db_template_data,
                     table=self.table_template_data,
-                    # Cannot include the run template data
-                    # here because we do not know the index values yet
+                    index=self.index_template_data,
                 )
                 self._new_index_value = self.query_fetchone(query)["index_value"]
 
