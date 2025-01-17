@@ -2,8 +2,7 @@ from contextlib import closing
 
 import pymssql
 
-from druzhba.config import CONFIG_DIR
-from druzhba.table import TableConfig, load_query
+from druzhba.table import TableConfig
 
 
 class MSSQLTableConfig(TableConfig):
