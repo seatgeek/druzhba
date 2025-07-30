@@ -174,6 +174,10 @@ class TableConfig(object):
     include_comments : boolean, optional
         flag to specify whether or not to ingest table and column comments
         when building or rebuilding the target table.
+    override_db_name : str, optional
+        override database name to use in the index tracking table instead of
+        the actual database name. This allows tracking multiple databases or
+        environments under a common name for index purposes.
 
     Attributes
     ----------
@@ -241,6 +245,7 @@ class TableConfig(object):
         include_comments=True,
         monitor_tables_config=None,
         lookback_value=0,
+        override_db_name=None,
     ):
         self.database_alias = database_alias
         self.db_host = db_connection_params.host
@@ -282,6 +287,7 @@ class TableConfig(object):
         self.monitor_tables_config = monitor_tables_config
         self.lookback_value = lookback_value
         self._lookback_index_value = "notset"
+        self.override_db_name = override_db_name
 
         self.date_key = datetime.datetime.strftime(
             datetime.datetime.utcnow(), "%Y%m%dT%H%M%S"
@@ -300,6 +306,14 @@ class TableConfig(object):
 
         self.logger = logging.getLogger(f"druzhba.{database_alias}.{source_table_name}")
         self.s3 = Session().client("s3")
+
+    @property
+    def index_db_name(self):
+        """Returns the database name to use for index tracking operations.
+        
+        Returns override_db_name if set, otherwise returns the actual db_name.
+        """
+        return self.override_db_name if self.override_db_name else self.db_name
 
     @classmethod
     def _clean_type_map(cls, type_map):
@@ -579,7 +593,7 @@ class TableConfig(object):
         self.logger.debug("Querying Redshift for last updated index")
         with get_redshift().cursor() as cur:
             cur.execute(
-                query, (self.database_alias, self.db_name, self.source_table_name)
+                query, (self.database_alias, self.index_db_name, self.source_table_name)
             )
             index_value = cur.fetchone()
 
@@ -627,7 +641,7 @@ class TableConfig(object):
         self.logger.debug("Querying Redshift for nth last updated index to lookback")
         with get_redshift().cursor() as cur:
             cur.execute(
-                query, (self.database_alias, self.db_name, self.source_table_name)
+                query, (self.database_alias, self.index_db_name, self.source_table_name)
             )
             index_value = cur.fetchone()
 
@@ -849,7 +863,7 @@ class TableConfig(object):
         with get_redshift().cursor() as cur:
             args = (
                 self.database_alias,
-                self.db_name,
+                self.index_db_name,
                 self.source_table_name,
                 new_index_value,
             )

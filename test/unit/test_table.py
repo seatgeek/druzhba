@@ -1087,3 +1087,51 @@ class TestPermissions(unittest.TestCase):
         x = "something"
         output = Permissions.parse(x)
         self.assertEqual(output, None)
+
+    def test_override_db_name(self):
+        """Test that override_db_name parameter works correctly for index tracking"""
+        from druzhba.table import TableConfig
+        from druzhba.db import ConnectionParams
+        
+        connection_params = ConnectionParams(
+            name="test_db",
+            host="localhost", 
+            port=5432,
+            user="test_user",
+            password="test_pass",
+            additional={}
+        )
+        
+        # Test without override - should use actual db_name
+        table_config = TableConfig(
+            database_alias="test_alias",
+            db_connection_params=connection_params,
+            destination_table_name="dest_table",
+            destination_schema_name="public",
+            source_table_name="source_table",
+            index_schema="idx_schema",
+            index_table="idx_table"
+        )
+        
+        self.assertEqual(table_config.index_db_name, "test_db")
+        self.assertEqual(table_config.db_name, "test_db")
+        
+        # Test with override - should use override_db_name
+        table_config_with_override = TableConfig(
+            database_alias="test_alias",
+            db_connection_params=connection_params,
+            destination_table_name="dest_table",
+            destination_schema_name="public",
+            source_table_name="source_table",
+            index_schema="idx_schema",
+            index_table="idx_table",
+            override_db_name="override_name"
+        )
+        
+        self.assertEqual(table_config_with_override.index_db_name, "override_name")
+        self.assertEqual(table_config_with_override.db_name, "test_db")
+        self.assertEqual(table_config_with_override.override_db_name, "override_name")
+
+
+if __name__ == "__main__":
+    unittest.main()
