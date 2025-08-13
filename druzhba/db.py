@@ -43,6 +43,11 @@ class DatabaseConfig(object):
     db_template_data : dict, optional
         parameters to interpolate into SQL queries, if this is
         a SQL-defined table.
+    override_db_name : str, optional
+        override database name to use in the index tracking table instead of
+        the actual database name. This allows tracking multiple databases or
+        environments under a common name for index purposes. If the override_db_name
+        is set on the table the override_db_name on the database is ignored.
 
     Attributes
     ----------
@@ -62,6 +67,7 @@ class DatabaseConfig(object):
         connection_string_env=None,
         object_schema_name=None,
         db_template_data=None,
+        override_db_name=None
     ):
         self.database_alias = database_alias
         self.database_type = database_type
@@ -70,6 +76,7 @@ class DatabaseConfig(object):
         self._connection_string_env = connection_string_env
         self._object_schema_name = object_schema_name
         self._db_template_data = db_template_data
+        self._override_db_name = override_db_name
 
         if self.database_type == "mysql":
             self._table_conf_cls = MySQLTableConfig
@@ -85,6 +92,8 @@ class DatabaseConfig(object):
             raise ValueError(msg)
 
     def get_table_config(self, table_params, index_schema, index_table, monitor_tables_config):
+        if table_params.get('override_db_name') is None and self._override_db_name is not None:
+            table_params['override_db_name'] = self._override_db_name
         return self._table_conf_cls(
             self.database_alias,
             self.get_connection_params(),
