@@ -56,6 +56,25 @@ class DbTest(unittest.TestCase):
             params.additional, {"sslmode": "disable", "connect_timeout": "60"}
         )
 
+    def test_database_override(self):
+        config = DatabaseConfig(
+            "test_db",
+            "mysql",
+            ("postgresql://test_user:test_password@test-db.prod:5439/" "test_db_name"),
+            override_db_name="overridden_database_name"
+        )
+
+        self.assertIsNotNone(config)
+        table_config = {
+            "database_alias": "alias",
+            "destination_table_name": "table",
+            "destination_schema_name": "schema",
+            "source_table_name": "source",
+            "index_column": "id",
+        }
+        table_config = config.get_table_config(table_config, "index_schema", "index_table", None)
+        self.assertEqual(table_config.override_db_name, "overridden_database_name")
+
 
 class ConnectionParamsTest(unittest.TestCase):
     def test_bad_connection_params(self):

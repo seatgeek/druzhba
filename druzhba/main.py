@@ -278,6 +278,7 @@ def set_up_database(
         ),
         object_schema_name=db_template_data.get("object_schema_name"),
         db_template_data=db_template_data,
+        override_db_name=dbconfig.get("override_db_name")
     )
 
     return db, dbconfig
