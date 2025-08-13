@@ -66,7 +66,6 @@ class DbTest(unittest.TestCase):
 
         self.assertIsNotNone(config)
         table_config = {
-            "database_alias": "alias",
             "destination_table_name": "table",
             "destination_schema_name": "schema",
             "source_table_name": "source",
