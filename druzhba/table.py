@@ -785,16 +785,25 @@ class TableConfig(object):
         elif len(unexpected_dw_columns) > 0:
             msg = (
                 "Columns exist in the warehouse table that are not in "
-                "the source: `%s`"
+                "the source: `%s` (source table: %s, destination table: %s)"
+            ) % (
+                "`, `".join(unexpected_dw_columns),
+                self.source_table_name,
+                self.destination_table_name,
             )
-            self.logger.warning(msg, "`, `".join(unexpected_dw_columns))
+            self.logger.warning(msg)
             return self.DESTINATION_TABLE_INCORRECT
         elif len(unexpected_source_columns) > 0:
             msg = (
                 "Columns exist in the source table that are not in the "
-                + "warehouse. Skipping column(s): `%s`"
+                "warehouse. Skipping column(s): `%s` "
+                "(source table: %s, destination table: %s)"
+            ) % (
+                "`, `".join(unexpected_source_columns),
+                self.source_table_name,
+                self.destination_table_name,
             )
-            self.logger.warning(msg, "`, `".join(unexpected_source_columns))
+            self.logger.warning(msg)
 
             # Copy from avro will just ignore the extra columns so we can proceed
             return self.DESTINATION_TABLE_OK
