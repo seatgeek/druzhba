@@ -16,7 +16,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 RUN curl https://pyenv.run | bash
-ENV PATH="/root/.pyenv/bin:${PATH}"
+ENV PATH="/root/.pyenv/shims:/root/.pyenv/bin:${PATH}"
 WORKDIR /app
 COPY . .
 ARG PYTHON_VERSION=3.10.4
