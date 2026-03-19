@@ -590,6 +590,44 @@ class TestUnloadCopy(unittest.TestCase):
         tt3.check_destination_table_status()
         self.assertEqual(tt3._destination_table_status, tt.DESTINATION_TABLE_REBUILD)
 
+    def test_unexpected_dw_columns_log_message(self):
+        tt = self.MockTable()
+        tt._dw_columns = ["col1", "col2", "extra_col"]
+        tt._columns = ["col1", "col2"]
+        logging.disable(logging.NOTSET)
+        try:
+            with self.assertLogs(tt.logger, level="WARNING") as cm:
+                result = tt.get_destination_table_status()
+            self.assertEqual(result, TableConfig.DESTINATION_TABLE_INCORRECT)
+            self.assertEqual(len(cm.output), 1)
+            self.assertEqual(
+                cm.output[0],
+                "WARNING:test_logger:Columns exist in the warehouse table that are "
+                "not in the source: `extra_col` "
+                "(source table: org_table, destination table: my_table)",
+            )
+        finally:
+            logging.disable(logging.CRITICAL)
+
+    def test_unexpected_source_columns_log_message(self):
+        tt = self.MockTable()
+        tt._dw_columns = ["col1", "col2"]
+        tt._columns = ["col1", "col2", "new_col"]
+        logging.disable(logging.NOTSET)
+        try:
+            with self.assertLogs(tt.logger, level="WARNING") as cm:
+                result = tt.get_destination_table_status()
+            self.assertEqual(result, TableConfig.DESTINATION_TABLE_OK)
+            self.assertEqual(len(cm.output), 1)
+            self.assertEqual(
+                cm.output[0],
+                "WARNING:test_logger:Columns exist in the source table that are "
+                "not in the warehouse. Skipping column(s): `new_col` "
+                "(source table: org_table, destination table: my_table)",
+            )
+        finally:
+            logging.disable(logging.CRITICAL)
+
     def test_query_description_to_avro(self):
         tt = self.MockTable()
         tt._desc = [["column_1", "db_str("], ["column_2", "db_int"]]
