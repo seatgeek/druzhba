@@ -96,11 +96,7 @@ class Permissions(namedtuple("Permissions", ["name", "is_group", "grants", "owne
 
                 # A following * represents WITH GRANT OPTION - ignore
                 levels_stripped = levels.replace("*", "")
-                grants = [
-                    cls.char_to_grant[c]
-                    for c in levels_stripped
-                    if cls.char_to_grant.get(c) is not None
-                ]
+                grants = [cls.char_to_grant[c] for c in levels_stripped if cls.char_to_grant.get(c) is not None]
 
                 output.append(cls(name, is_group, grants, owner))
             return output
@@ -219,7 +215,7 @@ class TableConfig(object):
     DESTINATION_TABLE_DNE = "non-existent"
     DESTINATION_TABLE_INCORRECT = "incorrect"
 
-    max_file_size = 100 * 1024**2
+    max_file_size = 100 * 1024 ** 2
 
     def __init__(
         self,
@@ -314,7 +310,7 @@ class TableConfig(object):
     @property
     def index_db_name(self):
         """Returns the database name to use for index tracking operations.
-
+        
         Returns override_db_name if set, otherwise returns the actual db_name.
         """
         return self.override_db_name if self.override_db_name else self.db_name
@@ -387,7 +383,10 @@ class TableConfig(object):
             )
             raise ConfigurationError(msg, self.source_table_name)
         elif self.rebuild and not self.full_refresh:
-            msg = "Cannot rebuild a table without also performing a " "full refresh."
+            msg = (
+                "Cannot rebuild a table without also performing a "
+                "full refresh."
+            )
             raise ConfigurationError(msg, self.source_table_name)
 
     @property
@@ -566,7 +565,9 @@ class TableConfig(object):
 
     @property
     def index_template_data(self):
-        return {"old_index_value": self.old_index_value}
+        return {
+            "old_index_value": self.old_index_value
+        }
 
     def _load_old_index_value(self):
         """Sets and gets the index_value property, retrieved from Redshift
@@ -646,8 +647,7 @@ class TableConfig(object):
 
         if index_value is None:
             self.logger.info(
-                "No lookback index found. Dumping entire table: %s.",
-                self.source_table_name,
+                "No lookback index found. Dumping entire table: %s.", self.source_table_name
             )
             return index_value
         else:
@@ -662,6 +662,7 @@ class TableConfig(object):
         if self._lookback_index_value is "notset":
             self._lookback_index_value = self._load_lookback_index_value()
         return self._lookback_index_value
+
 
     def _load_new_index_value(self):
         # Abstract to support DB-specific quoting
@@ -718,8 +719,8 @@ class TableConfig(object):
             # full_refresh is explicitly requested. The lookback_index_value should
             # be None in the full_refresh case but this adds an extra guard.
             where_clause += "{} > '{}' AND ".format(
-                self.index_column, self.lookback_index_value
-            )
+                            self.index_column, self.lookback_index_value
+                        )
         elif self.old_index_value and not self.full_refresh:
             # This should only happen if lookback value doesn't load for some reason.
 
@@ -1139,7 +1140,7 @@ class TableConfig(object):
         s3_path : string indicating the s3 location to write to
         """
 
-        MB = 1024**2
+        MB = 1024 ** 2
         s3_config = TransferConfig(multipart_threshold=10 * MB)
         f.seek(0)
 
