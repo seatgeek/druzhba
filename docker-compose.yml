@@ -33,7 +33,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    command: "python setup.py test"
+    command: "pytest test/unit/"
     env_file:
       - ./.env.test.docker
     volumes:
