@@ -14,7 +14,7 @@ with open("druzhba/_version.py", "r") as f:
 tests_require = [
     "pytest>=7.1.2",
     "mock>=2.0.0",
-    "pylint==2.5.3",
+    "pylint==4.0.9",
 ]
 
 setuptools.setup(
